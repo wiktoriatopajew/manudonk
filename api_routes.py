@@ -666,18 +666,34 @@ async def search_autocomplete(q: str):
         
         # Create filters for each word
         word_filters = []
+        # Check database type for regexp support
+        from database.models import DATABASE_URL
+        use_regexp = not DATABASE_URL.startswith("sqlite")
+        
         for word in search_words:
             if len(word) >= 2:  # Only search words with 2+ characters
                 search_term = f"%{word}%"
                 # Search in normalized fields (without special chars)
-                word_filters.append(
-                    or_(
-                        func.regexp_replace(func.lower(Product.brand), '[^a-z0-9 ]', '', 'g').like(search_term),
-                        func.regexp_replace(func.lower(Product.model), '[^a-z0-9 ]', '', 'g').like(search_term),
-                        func.regexp_replace(func.lower(Product.category), '[^a-z0-9 ]', '', 'g').like(search_term),
-                        func.regexp_replace(func.lower(Product.title), '[^a-z0-9 ]', '', 'g').like(search_term)
+                if use_regexp:
+                    # PostgreSQL: use regexp_replace to normalize
+                    word_filters.append(
+                        or_(
+                            func.regexp_replace(func.lower(Product.brand), '[^a-z0-9 ]', '', 'g').like(search_term),
+                            func.regexp_replace(func.lower(Product.model), '[^a-z0-9 ]', '', 'g').like(search_term),
+                            func.regexp_replace(func.lower(Product.category), '[^a-z0-9 ]', '', 'g').like(search_term),
+                            func.regexp_replace(func.lower(Product.title), '[^a-z0-9 ]', '', 'g').like(search_term)
+                        )
                     )
-                )
+                else:
+                    # SQLite: use simple LIKE (search term already normalized in Python)
+                    word_filters.append(
+                        or_(
+                            func.lower(Product.brand).like(search_term),
+                            func.lower(Product.model).like(search_term),
+                            func.lower(Product.category).like(search_term),
+                            func.lower(Product.title).like(search_term)
+                        )
+                    )
         
         # Get products matching all words
         if word_filters:

@@ -298,10 +298,23 @@ async def home(request: Request):
     try:
         # OPTIMIZED: Get main categories with ONE query using SQL expressions
         from sqlalchemy import case, func
+        from database.models import DATABASE_URL
+        
+        # Database-agnostic category splitting
+        if DATABASE_URL.startswith("sqlite"):
+            # SQLite: use substr and instr to extract first part before '/'
+            main_cat_expr = case(
+                [(func.instr(Product.category, '/') > 0, 
+                  func.substr(Product.category, 1, func.instr(Product.category, '/') - 1))],
+                else_=Product.category
+            )
+        else:
+            # PostgreSQL: use split_part
+            main_cat_expr = func.split_part(Product.category, '/', 1)
         
         # Get main categories and counts in a single query
         category_data = session.query(
-            func.split_part(Product.category, '/', 1).label('main_cat'),
+            main_cat_expr.label('main_cat'),
             func.count().label('count')
         ).filter(
             Product.category.isnot(None)
