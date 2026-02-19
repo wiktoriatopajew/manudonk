@@ -818,15 +818,40 @@ async def get_session_email(session_id: str):
         db_session.close()
 
 
+@orders_router.get("/config-check")
+async def check_configuration():
+    """Check if payment system is properly configured"""
+    return {
+        "stripe_configured": bool(stripe.api_key and stripe.api_key != "sk_test_placeholder"),
+        "stripe_key_prefix": stripe.api_key[:15] if stripe.api_key else "NOT SET",
+        "domain": DOMAIN,
+        "webhook_secret_set": bool(STRIPE_WEBHOOK_SECRET and STRIPE_WEBHOOK_SECRET != "whsec_your_webhook_secret_here")
+    }
+
+
 @orders_router.post("/create-checkout-session")
 async def create_checkout_session(request: CreateCheckoutSessionRequest):
     """Create Stripe checkout session"""
     session = get_session()
     try:
+        # Validate Stripe is configured
+        if not stripe.api_key or stripe.api_key == "sk_test_placeholder":
+            raise HTTPException(
+                status_code=500, 
+                detail="Payment system not configured. Please contact support."
+            )
+        
         # Get product
         product = session.query(Product).filter(Product.id == request.product_id).first()
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Validate product has a price
+        if not product.price or product.price <= 0:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Product {product.id} has invalid price: {product.price}"
+            )
         
         # Calculate price with discount if provided
         final_price = product.price

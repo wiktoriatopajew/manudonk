@@ -44,9 +44,21 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Custom 404 Exception Handler (for ALL 404 errors)
+# Custom Exception Handler - Returns JSON for API routes, HTML for web pages
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # Check if this is an API request (starts with /api/)
+    is_api_request = request.url.path.startswith("/api/")
+    
+    # For API requests, always return JSON
+    if is_api_request:
+        return Response(
+            content=f'{{"detail":"{exc.detail}"}}',
+            status_code=exc.status_code,
+            media_type="application/json"
+        )
+    
+    # For web pages, return HTML templates
     if exc.status_code == 404:
         return templates.TemplateResponse(
             "404.html",
