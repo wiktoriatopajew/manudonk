@@ -165,7 +165,7 @@ try:
                 
                 title = normalize_text(prev_row['Title'])
                 price = float(prev_row['Variant Price']) if prev_row.get('Variant Price') else 29.99
-                description = normalize_text(prev_row.get('Body (HTML)', ''))[:500]
+                description = normalize_text(prev_row.get('Body (HTML)', ''))
                 type_field = prev_row.get('Type', '')
                 
                 if len(title) >= 5:
@@ -250,7 +250,7 @@ try:
             
             title = normalize_text(prev_row['Title'])
             price = float(prev_row['Variant Price']) if prev_row.get('Variant Price') else 29.99
-            description = normalize_text(prev_row.get('Body (HTML)', ''))[:500]
+            description = normalize_text(prev_row.get('Body (HTML)', ''))
             type_field = prev_row.get('Type', '')
             
             if len(title) >= 5:

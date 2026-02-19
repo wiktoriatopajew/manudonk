@@ -131,34 +131,34 @@
             
             <div class="relative flex flex-col items-center text-center">
                 <div class="mb-4 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                    {% if 'Cars' in category.name %}
+                    {% if 'car' in category.name.lower() %}
                     <img src="/static/images/cars.png" alt="Cars" class="w-24 h-24 mx-auto">
-                    {% elif 'Motorcycle' in category.name %}
+                    {% elif 'motorcycle' in category.name.lower() %}
                     <img src="/static/images/motorbike.png" alt="Motorcycle" class="w-24 h-24 mx-auto">
-                    {% elif 'Truck' in category.name %}
+                    {% elif 'truck' in category.name.lower() %}
                     <img src="/static/images/truck.png" alt="Truck" class="w-24 h-24 mx-auto">
-                    {% elif 'ATV' in category.name %}
+                    {% elif 'atv' in category.name.lower() %}
                     <div class="text-6xl">🏎️</div>
-                    {% elif 'Marine' in category.name or 'Boat' in category.name %}
+                    {% elif 'marine' in category.name.lower() or 'boat' in category.name.lower() %}
                     <div class="text-6xl">⛵</div>
-                    {% elif 'Tractor' in category.name or 'Agriculture' in category.name %}
+                    {% elif 'tractor' in category.name.lower() or 'agriculture' in category.name.lower() %}
                     <div class="text-6xl">🚜</div>
-                    {% elif 'Construction' in category.name %}
+                    {% elif 'construction' in category.name.lower() %}
                     <img src="/static/images/construction.png" alt="Construction" class="w-24 h-24 mx-auto">
-                    {% elif 'Engine' in category.name %}
+                    {% elif 'engine' in category.name.lower() %}
                     <img src="/static/images/engines.png" alt="Engines" class="w-24 h-24 mx-auto">
-                    {% elif 'Home' in category.name or 'Appliance' in category.name %}
+                    {% elif 'home' in category.name.lower() or 'appliance' in category.name.lower() %}
                     <div class="text-6xl">🏠</div>
-                    {% elif 'Electronic' in category.name %}
+                    {% elif 'electronic' in category.name.lower() %}
                     <div class="text-6xl">📱</div>
-                    {% elif 'Tool' in category.name %}
+                    {% elif 'tool' in category.name.lower() %}
                     <div class="text-6xl">🔧</div>
                     {% else %}
                     <img src="/static/images/other.png" alt="Other" class="w-24 h-24 mx-auto">
                     {% endif %}
                 </div>
                 <h3 class="font-bold text-gray-900 group-hover:text-blue-600 transition text-xl mb-2">
-                    {{ category.name }}
+                    {{ category.name|title }}
                 </h3>
                 <p class="text-base text-gray-600 group-hover:text-blue-500 transition font-medium">
                     {{ category.count }} manuals
@@ -210,7 +210,7 @@
                 <!-- Product Info -->
                 <div class="p-5 flex-1 flex flex-col">
                     {% set cat_parts = product.category.split('/') %}
-                    <div class="text-xs font-bold text-yellow-500 mb-2">{% if cat_parts|length > 1 %}{{ cat_parts[1] }}{% else %}{{ product.category }}{% endif %}</div>
+                    <div class="text-xs font-bold text-yellow-500 mb-2">{% if cat_parts|length > 1 %}{{ cat_parts[1]|title }}{% else %}{{ product.category|title }}{% endif %}</div>
                     <h3 class="font-bold text-white mb-2 line-clamp-2 group-hover:text-yellow-400 transition cursor-pointer" onclick="window.location.href='{% if product.slug %}/manuals/{{ product.slug }}{% else %}/product/{{ product.id }}{% endif %}'">
                         {{ product.title }}
                     </h3>
