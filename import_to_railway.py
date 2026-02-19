@@ -6,7 +6,7 @@ import os
 import sys
 
 # Set DATABASE_URL BEFORE any imports
-os.environ['DATABASE_URL'] = 'postgresql://postgres:zjQZuVMwZLMsqSfdsowOpfJUlsupWrJh@nozomi.proxy.rlwy.net:18236/railway'
+os.environ['DATABASE_URL'] = 'postgresql://postgres:TeiduPLPjjISbQncemTWAkkBXNCdaRak@tramway.proxy.rlwy.net:38542/railway'
 
 import csv
 import re
@@ -16,20 +16,14 @@ from database.models import Base, Product
 from dotenv import load_dotenv
 from datetime import datetime
 
-# Category mapping
+# Category mapping - simplified to 6 main categories
 CATEGORY_MAPPING = {
-    'car': 'Automobiles',
-    'truck': 'Trucks & Commercial Vehicles',
-    'motorcycle': 'Motorcycles',
-    'atv': 'ATVs & Off-Road',
-    'boat': 'Marine & Boats',
-    'engine': 'Engines',
-    'tractor': 'Tractors & Agriculture',
-    'construction': 'Construction Equipment',
-    'home': 'Home Appliances',
-    'electronics': 'Electronics',
-    'tools': 'Tools & Equipment',
-    'other': 'Other Manuals'
+    'car': 'cars',
+    'truck': 'trucks',
+    'motorcycle': 'motorcycles',
+    'engine': 'engines',
+    'construction': 'construction',
+    'other': 'other'
 }
 
 def normalize_text(text):
@@ -71,42 +65,41 @@ def extract_brand_model_from_title(title):
     return None, None
 
 def categorize_product(title, type_str):
+    """Determine category based on title and type - returns one of 6 categories"""
     title_lower = title.lower()
     type_lower = type_str.lower() if type_str else ""
     
-    if 'car' in type_lower or any(brand in type_lower for brand in ['volkswagen', 'toyota', 'ford', 'honda', 'bmw']):
-        return 'Automobiles'
+    # Check type field first
+    if 'car' in type_lower or 'volkswagen' in type_lower or 'toyota' in type_lower or 'ford' in type_lower:
+        return 'cars'
     elif 'motorcycle' in type_lower or 'bike' in type_lower:
-        return 'Motorcycles'
+        return 'motorcycles'
     elif 'truck' in type_lower:
-        return 'Trucks & Commercial Vehicles'
-    elif 'atv' in type_lower:
-        return 'ATVs & Off-Road'
+        return 'trucks'
     
-    if any(word in title_lower for word in ['car', 'auto', 'vehicle', 'vw', 'toyota', 'ford', 'honda', 'bmw', 'audi', 'mercedes', 'nissan', 'mazda', 'lexus', 'volkswagen', 'chevrolet', 'hyundai', 'kia', 'subaru', 'volvo', 'jaguar', 'land rover', 'tesla', 'peugeot', 'renault', 'citroen', 'fiat', 'alfa romeo', 'skoda', 'seat']):
-        return 'Automobiles'
-    elif any(word in title_lower for word in ['motorcycle', 'bike', 'yamaha', 'kawasaki', 'suzuki', 'ducati', 'harley', 'ktm', 'triumph']):
-        return 'Motorcycles'
-    elif any(word in title_lower for word in ['truck', 'semi', 'lorry', 'pickup']):
-        return 'Trucks & Commercial Vehicles'
-    elif any(word in title_lower for word in ['atv', 'quad', 'buggy', 'utv']):
-        return 'ATVs & Off-Road'
-    elif any(word in title_lower for word in ['boat', 'marine', 'yacht', 'ship', 'outboard']):
-        return 'Marine & Boats'
-    elif any(word in title_lower for word in ['tractor', 'farm', 'agriculture', 'john deere', 'case', 'massey']):
-        return 'Tractors & Agriculture'
-    elif any(word in title_lower for word in ['excavator', 'bulldozer', 'loader', 'crane', 'forklift', 'construction']):
-        return 'Construction Equipment'
-    elif any(word in title_lower for word in ['engine', 'motor']):
-        return 'Engines'
-    elif any(word in title_lower for word in ['washer', 'dryer', 'refrigerator', 'dishwasher', 'oven', 'microwave', 'appliance']):
-        return 'Home Appliances'
-    elif any(word in title_lower for word in ['tv', 'phone', 'tablet', 'laptop', 'computer', 'camera', 'electronics']):
-        return 'Electronics'
-    elif any(word in title_lower for word in ['drill', 'saw', 'tool', 'hammer', 'wrench']):
-        return 'Tools & Equipment'
+    # Check title - Cars
+    if any(word in title_lower for word in ['car', 'auto', 'vehicle', 'vw', 'toyota', 'ford', 'honda', 'bmw', 'audi', 'mercedes', 'nissan', 'mazda', 'lexus', 'volkswagen', 'chevrolet', 'hyundai', 'kia', 'subaru', 'volvo', 'jaguar', 'land rover', 'tesla', 'peugeot', 'renault', 'citroen', 'fiat', 'alfa romeo', 'skoda', 'seat', 'opel', 'vauxhall', 'chrysler', 'dodge', 'jeep', 'ram', 'buick', 'cadillac', 'gmc', 'lincoln', 'acura', 'infiniti', 'pontiac', 'saturn', 'mercury', 'oldsmobile', 'plymouth', 'saab', 'hummer', 'scion', 'smart', 'mini', 'porsche', 'ferrari', 'lamborghini', 'maserati', 'bentley', 'rolls-royce', 'aston martin', 'bugatti', 'mclaren', 'lotus', 'morgan', 'tvr', 'caterham', 'dacia', 'lada', 'tata', 'mahindra', 'proton', 'perodua', 'geely', 'chery', 'byd', 'great wall', 'haval', 'mg', 'rover', 'austin', 'triumph', 'hillman', 'singer', 'sunbeam', 'talbot', 'humber', 'riley', 'wolseley']):
+        return 'cars'
+    
+    # Motorcycles
+    elif any(word in title_lower for word in ['motorcycle', 'bike', 'yamaha', 'kawasaki', 'suzuki', 'ducati', 'harley', 'ktm', 'triumph', 'indian', 'victory', 'buell', 'aprilia', 'mv agusta', 'moto guzzi', 'benelli', 'husqvarna', 'beta', 'gas gas', 'sherco', 'ossa', 'montesa', 'bultaco', 'norton', 'bsa', 'royal enfield', 'jawa', 'cz', 'ural']):
+        return 'motorcycles'
+    
+    # Trucks
+    elif any(word in title_lower for word in ['truck', 'semi', 'lorry', 'pickup', 'freightliner', 'kenworth', 'peterbilt', 'mack', 'international', 'volvo truck', 'scania', 'man truck', 'iveco', 'daf', 'mercedes truck', 'renault truck']):
+        return 'trucks'
+    
+    # Construction Equipment
+    elif any(word in title_lower for word in ['excavator', 'bulldozer', 'loader', 'crane', 'forklift', 'construction', 'bobcat', 'caterpillar', 'komatsu', 'hitachi', 'doosan', 'hyundai construction', 'jcb', 'case construction', 'new holland construction', 'volvo construction', 'liebherr', 'terex', 'kobelco', 'kubota construction', 'yanmar construction']):
+        return 'construction'
+    
+    # Engines
+    elif any(word in title_lower for word in ['engine', 'motor', 'cummins', 'caterpillar engine', 'detroit diesel', 'perkins', 'yanmar engine', 'kubota engine', 'kohler', 'briggs', 'tecumseh', 'onan']):
+        return 'engines'
+    
+    # Everything else goes to other
     else:
-        return 'Other Manuals'
+        return 'other'
 
 def create_slug(brand, model):
     text = f"{brand}-{model}".lower()
