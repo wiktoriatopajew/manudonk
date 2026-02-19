@@ -25,8 +25,8 @@ async def generate_google_merchant_feed():
         })
         
         channel = ET.SubElement(rss, 'channel')
-        ET.SubElement(channel, 'title').text = 'ManualBear - User Manuals'
-        ET.SubElement(channel, 'link').text = 'https://manualbear.com'
+        ET.SubElement(channel, 'title').text = 'Manual Donkey - User Manuals'
+        ET.SubElement(channel, 'link').text = 'https://manualdonkey.com'
         ET.SubElement(channel, 'description').text = 'Comprehensive database of user manuals for cars, motorcycles, and equipment'
         
         # Get all active products
@@ -41,8 +41,8 @@ async def generate_google_merchant_feed():
             ET.SubElement(item, 'g:id').text = str(product.id)
             ET.SubElement(item, 'g:title').text = product.title or f"{product.brand} {product.model} User Manual"
             ET.SubElement(item, 'g:description').text = product.description or f"Complete user manual for {product.brand} {product.model}. Digital download PDF format."
-            ET.SubElement(item, 'g:link').text = f"https://manualbear.com/manuals/{product.slug}"
-            ET.SubElement(item, 'g:image_link').text = product.image_url or "https://manualbear.com/static/images/logo.png"
+            ET.SubElement(item, 'g:link').text = f"https://manualdonkey.com/manuals/{product.slug}"
+            ET.SubElement(item, 'g:image_link').text = product.image_url or "https://manualdonkey.com/static/images/logo.png"
             ET.SubElement(item, 'g:condition').text = 'new'
             ET.SubElement(item, 'g:availability').text = 'in stock'
             ET.SubElement(item, 'g:price').text = f"{product.price:.2f} USD"
@@ -103,7 +103,7 @@ async def get_feed_stats():
         
         return {
             "total_products": total_products,
-            "feed_url": "https://manualbear.com/feed/google-merchant.xml",
+            "feed_url": "https://manualdonkey.com/feed/google-merchant.xml",
             "categories": categories,
             "last_generated": datetime.now().isoformat()
         }

@@ -1,12 +1,12 @@
 ==============================================
-MANUALBEAR - BUSINESS INFORMATION FOR POLICIES
+manualbear - BUSINESS INFORMATION FOR POLICIES
 ==============================================
 Last updated: January 15, 2026
 
 COMPANY DETAILS:
 -----------------
 Legal Name: Sebastian Kłosiński
-Business Name: ManualBear
+Business Name: manualbear
 Address: Ul.Gen. Władysława Sikorskiego 18/100
          Płock Mazowieckie 09-410
          Poland
@@ -53,7 +53,7 @@ PHYSICAL PRODUCTS:
 PRIVACY & DATA:
 ---------------
 - GDPR Compliant (Poland/EU)
-- Data Controller: Sebastian Kłosiński / ManualBear
+- Data Controller: Sebastian Kłosiński / manualbear
 - Data Storage: PostgreSQL (Railway), Redis cache
 - File Storage: Google Drive
 - Email Service: Transactional emails for orders

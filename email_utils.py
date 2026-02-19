@@ -21,7 +21,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "your-email@gmail.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-brevo-api-key")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@manuals.com")
-FROM_NAME = os.getenv("FROM_NAME", "Manual Bear")
+FROM_NAME = os.getenv("FROM_NAME", "Manual Donkey")
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")  # xkeysib-... key
 
 # Use Brevo API instead of SMTP (Railway blocks SMTP ports)
@@ -105,7 +105,7 @@ def send_email_smtp(to_email: str, subject: str, html_content: str):
 
 def send_verification_email(to_email: str, code: str):
     """Send email verification code"""
-    subject = "Verify Your Email - Manual Bear"
+    subject = "Verify Your Email - Manual Donkey"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -124,7 +124,7 @@ def send_verification_email(to_email: str, code: str):
             <div class="header">
                 <h1 style="color: #667eea;">Email Verification</h1>
             </div>
-            <p>Thank you for registering at Manual Bear!</p>
+            <p>Thank you for registering at Manual Donkey!</p>
             <p>Please use the following code to verify your email address:</p>
             <div class="code">{code}</div>
             <p>This code will expire in 15 minutes.</p>
@@ -153,7 +153,7 @@ def send_verification_email(to_email: str, code: str):
 
 def send_order_confirmation_email(to_email: str, order_id: int, product_title: str, price: float):
     """Send order confirmation email"""
-    subject = f"Order Confirmation #{order_id} - Manual Bear"
+    subject = f"Order Confirmation #{order_id} - Manual Donkey"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -183,7 +183,7 @@ def send_order_confirmation_email(to_email: str, order_id: int, product_title: s
             <p>Your manual will be delivered to your email within 1-5 minutes.</p>
             <p>Please check your inbox and spam folder.</p>
             <div style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">
-                <p>&copy; 2026 Manual Bear. All rights reserved.</p>
+                <p>&copy; 2026 Manual Donkey. All rights reserved.</p>
             </div>
         </div>
     </body>
@@ -350,7 +350,7 @@ def send_welcome_newsletter_email(to_email: str, discount_code: str):
         <div class="container">
             <div class="icon">✉️</div>
             <div class="header">
-                <h1>Welcome to Manual Bear!</h1>
+                <h1>Welcome to Manual Donkey!</h1>
             </div>
             
             <p class="info">Thank you for subscribing to our newsletter! 🎉</p>
@@ -374,7 +374,7 @@ def send_welcome_newsletter_email(to_email: str, discount_code: str):
             
             <div class="footer">
                 <p>💡 This code is valid for your next purchase</p>
-                <p style="margin-top: 10px;">&copy; 2026 Manual Bear. All rights reserved.</p>
+                <p style="margin-top: 10px;">&copy; 2026 Manual Donkey. All rights reserved.</p>
                 <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
                     You received this email because you subscribed to our newsletter.
                 </p>
@@ -464,7 +464,7 @@ def send_abandoned_cart_email(to_email: str, products: list, total_value: float)
             </div>
             
             <div class="footer">
-                <p>&copy; 2026 Manual Bear. All rights reserved.</p>
+                <p>&copy; 2026 Manual Donkey. All rights reserved.</p>
                 <p style="margin-top: 10px;">You received this email because you added items to your cart.</p>
             </div>
         </div>
@@ -535,7 +535,7 @@ def send_discount_reminder_email(to_email: str, discount_code: str):
             </div>
             
             <div class="footer">
-                <p>&copy; 2026 Manual Bear. All rights reserved.</p>
+                <p>&copy; 2026 Manual Donkey. All rights reserved.</p>
                 <p style="margin-top: 10px;">You received this email because you subscribed to our newsletter.</p>
             </div>
         </div>
@@ -554,7 +554,7 @@ def send_discount_reminder_email(to_email: str, discount_code: str):
 def send_admin_order_notification(order_id: int, customer_email: str, product_title: str, price: float, link_sent: bool = True):
     """Send notification to admin when a new order is placed"""
     admin_email = "wiktoriatopajew@gmail.com"
-    subject = f"🛒 New Order #{order_id} - Manual Bear"
+    subject = f"🛍 New Order #{order_id} - Manual Donkey"
     
     # Determine action message based on whether link was sent
     if link_sent:
@@ -598,7 +598,7 @@ def send_admin_order_notification(order_id: int, customer_email: str, product_ti
                 <h1>🎉 New Order Received!</h1>
             </div>
             <div class="content">
-                <p>Great news! You have a new order on Manual Bear.</p>
+                <p>Great news! You have a new order on Manual Donkey.</p>
                 
                 <div class="order-details">
                     <p style="margin: 5px 0;"><strong>Order ID:</strong> #{order_id}</p>
@@ -616,11 +616,11 @@ def send_admin_order_notification(order_id: int, customer_email: str, product_ti
                 {action_box}
                 
                 <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                    This is an automated notification from your Manual Bear store.
+                    This is an automated notification from your Manual Donkey store.
                 </p>
             </div>
             <div class="footer">
-                <p>&copy; 2026 Manual Bear. All rights reserved.</p>
+                <p>&copy; 2026 Manual Donkey. All rights reserved.</p>
             </div>
         </div>
     </body>

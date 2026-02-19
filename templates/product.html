@@ -16,14 +16,14 @@
   "category": "{{ product.category.split('/')[0] if product.category and '/' in product.category else product.category }}",
   "offers": {
     "@type": "Offer",
-    "url": "https://manualbear.com/manuals/{{ product.slug }}",
+    "url": "https://manualdonkey.com/manuals/{{ product.slug }}",
     "priceCurrency": "USD",
     "price": "{{ product.price }}",
     "availability": "https://schema.org/InStock",
     "seller": {
       "@type": "Organization",
-      "name": "ManualBear",
-      "url": "https://manualbear.com"
+      "name": "Manual Donkey",
+      "url": "https://manualdonkey.com"
     }
   }
 }

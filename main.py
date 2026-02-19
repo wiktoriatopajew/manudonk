@@ -227,7 +227,7 @@ if railway_domain:
     DOMAIN = f"https://{railway_domain}"
 else:
     # Use production domain or localhost
-    DOMAIN = os.getenv("DOMAIN", "https://manualbear.com")
+    DOMAIN = os.getenv("DOMAIN", "https://manualdonkey.com")
 
 # Add custom filter for regex search
 import re
@@ -288,7 +288,7 @@ async def home(request: Request):
                 "request": request,
                 "products": cached_data['products'],
                 "categories": cached_data['categories'],
-                "page_title": "Manual Bear - User Manuals & Service Guides",
+                "page_title": "Manual Donkey - User Manuals & Service Guides",
                 "page_description": "Download PDF user manuals and service guides. Over 1,000+ manuals for vehicles, electronics, and appliances. Instant digital delivery worldwide."
             }
         )
@@ -356,7 +356,7 @@ async def home(request: Request):
                 "request": request,
                 "products": latest_products,
                 "categories": categories,
-                "page_title": "Manual Bear - Product Catalog",
+                "page_title": "Manual Donkey - Product Catalog",
                 "page_description": "Find user manuals for your products. Over 1,000 manuals available online."
             }
         )
