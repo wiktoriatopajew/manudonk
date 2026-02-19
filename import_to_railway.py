@@ -143,28 +143,117 @@ try:
         reader = csv.DictReader(f)
         
         current_handle = None
+        current_images = []  # Collect all images for current product
         
         for row in reader:
             stats['total_rows'] += 1
             
-            if not row.get('Title') or row['Title'].strip() == '':
-                continue
-            
             handle = row['Handle']
             
-            if handle and handle != current_handle:
-                current_handle = handle
+            # Collect images for current product
+            if handle == current_handle:
+                # Same product, add image if present
+                img = row.get('Image Src', '').strip()
+                if img and img not in current_images:
+                    current_images.append(img)
+                continue
+            
+            # Process previous product if exists
+            if current_handle is not None:
+                # Import the previous product with all collected images
+                image_url = ','.join(current_images) if current_images else ''
                 
-                title = normalize_text(row['Title'])
-                price = float(row['Variant Price']) if row.get('Variant Price') else 29.99
-                description = normalize_text(row.get('Body (HTML)', ''))[:500]
-                type_field = row.get('Type', '')
-                image_url = row.get('Image Src', '')
+                title = normalize_text(prev_row['Title'])
+                price = float(prev_row['Variant Price']) if prev_row.get('Variant Price') else 29.99
+                description = normalize_text(prev_row.get('Body (HTML)', ''))[:500]
+                type_field = prev_row.get('Type', '')
                 
-                if len(title) < 5:
+                if len(title) >= 5:
+                    brand_from_type = extract_brand_from_type(type_field)
+                    brand_from_title, model_from_title = extract_brand_model_from_title(title)
+                    
+                    brand = brand_from_type if brand_from_type else brand_from_title
+                    model = model_from_title if model_from_title else 'MANUAL'
+                    
+                    if not brand:
+                        words = title.split()
+                        brand = words[0].upper() if words else 'UNKNOWN'
+                    
+                    if not model or len(model) < 2:
+                        model = current_handle.split('-')[0].upper()[:50]
+                    
+                    if brand and len(brand) >= 2:
+                        category_name = categorize_product(title, type_field)
+                        stats['categories_created'].add(category_name)
+                        stats['brands'].add(brand)
+                        
+                        year = extract_year_from_title(title)
+                        
+                        slug_base = create_slug(brand, model)
+                        slug = slug_base
+                        
+                        if year:
+                            slug = f"{slug_base}-{year}"
+                        
+                        counter = 1
+                        original_slug = slug
+                        while session.query(Product).filter(Product.slug == slug).first():
+                            slug = f"{original_slug}-{counter}"
+                            counter += 1
+                            if counter > 20:
+                                break
+                        
+                        product = Product(
+                            title=title[:200],
+                            brand=brand[:50],
+                            model=model[:50],
+                            year=int(year) if year and year.isdigit() else None,
+                            description=description,
+                            price=price,
+                            category=category_name,
+                            slug=slug,
+                            image_url=image_url if image_url else None,
+                            pdf_url=None
+                        )
+                        
+                        try:
+                            session.add(product)
+                            session.commit()
+                            stats['products_imported'] += 1
+                            if stats['products_imported'] % 100 == 0:
+                                print(f"✅ Imported {stats['products_imported']} products...")
+                        except Exception as e:
+                            session.rollback()
+                            print(f"❌ Error: {str(e)[:100]}")
+                            stats['products_skipped'] += 1
+                    else:
+                        stats['products_skipped'] += 1
+                else:
                     stats['products_skipped'] += 1
-                    continue
+            
+            # Start new product
+            if not row.get('Title') or row['Title'].strip() == '':
+                continue
                 
+            current_handle = handle
+            prev_row = row
+            current_images = []
+            
+            # Add first image
+            img = row.get('Image Src', '').strip()
+            if img:
+                current_images.append(img)
+        
+        # Process last product
+        if current_handle is not None:
+            image_url = ','.join(current_images) if current_images else ''
+            
+            title = normalize_text(prev_row['Title'])
+            price = float(prev_row['Variant Price']) if prev_row.get('Variant Price') else 29.99
+            description = normalize_text(prev_row.get('Body (HTML)', ''))[:500]
+            type_field = prev_row.get('Type', '')
+            
+            if len(title) >= 5:
                 brand_from_type = extract_brand_from_type(type_field)
                 brand_from_title, model_from_title = extract_brand_model_from_title(title)
                 
@@ -176,56 +265,47 @@ try:
                     brand = words[0].upper() if words else 'UNKNOWN'
                 
                 if not model or len(model) < 2:
-                    model = handle.split('-')[0].upper()[:50]
+                    model = current_handle.split('-')[0].upper()[:50]
                 
-                if not brand or len(brand) < 2:
-                    stats['products_skipped'] += 1
-                    continue
-                
-                category_name = categorize_product(title, type_field)
-                stats['categories_created'].add(category_name)
-                stats['brands'].add(brand)
-                
-                year = extract_year_from_title(title)
-                
-                slug_base = create_slug(brand, model)
-                slug = slug_base
-                
-                if year:
-                    slug = f"{slug_base}-{year}"
-                
-                counter = 1
-                original_slug = slug
-                while session.query(Product).filter(Product.slug == slug).first():
-                    slug = f"{original_slug}-{counter}"
-                    counter += 1
-                    if counter > 20:
-                        break
-                
-                product = Product(
-                    title=title[:200],
-                    brand=brand[:50],
-                    model=model[:50],
-                    year=int(year) if year and year.isdigit() else None,
-                    description=description,
-                    price=price,
-                    category=category_name,
-                    slug=slug,
-                    image_url=image_url if image_url else None,
-                    pdf_url=None
-                )
-                
-                try:
-                    session.add(product)
-                    session.commit()
-                    stats['products_imported'] += 1
-                    if stats['products_imported'] % 100 == 0:
-                        print(f"✅ Imported {stats['products_imported']} products...")
-                except Exception as e:
-                    session.rollback()
-                    print(f"❌ Error: {str(e)[:100]}")
-                    stats['products_skipped'] += 1
-                    continue
+                if brand and len(brand) >= 2:
+                    category_name = categorize_product(title, type_field)
+                    
+                    year = extract_year_from_title(title)
+                    
+                    slug_base = create_slug(brand, model)
+                    slug = slug_base
+                    
+                    if year:
+                        slug = f"{slug_base}-{year}"
+                    
+                    counter = 1
+                    original_slug = slug
+                    while session.query(Product).filter(Product.slug == slug).first():
+                        slug = f"{original_slug}-{counter}"
+                        counter += 1
+                        if counter > 20:
+                            break
+                    
+                    product = Product(
+                        title=title[:200],
+                        brand=brand[:50],
+                        model=model[:50],
+                        year=int(year) if year and year.isdigit() else None,
+                        description=description,
+                        price=price,
+                        category=category_name,
+                        slug=slug,
+                        image_url=image_url if image_url else None,
+                        pdf_url=None
+                    )
+                    
+                    try:
+                        session.add(product)
+                        session.commit()
+                        stats['products_imported'] += 1
+                    except Exception as e:
+                        session.rollback()
+                        stats['products_skipped'] += 1
 
     print(f"\n{'='*60}")
     print(f"📊 IMPORT SUMMARY")
