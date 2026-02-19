@@ -10,6 +10,7 @@ os.environ['DATABASE_URL'] = 'postgresql://postgres:oqaUYkSoHsdnycMDGTyflRMRBeWQ
 
 import csv
 import re
+import random
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database.models import Base, Product
@@ -32,6 +33,14 @@ def normalize_text(text):
     text = str(text).strip()
     text = text.replace('â€"', '-').replace('â€™', "'").replace('Â', ' ')
     return text
+
+def generate_nice_price():
+    """Generate nice random price between $16.85-$17.99"""
+    nice_prices = [
+        16.85, 16.89, 16.95, 16.99,
+        17.49, 17.79, 17.85, 17.89, 17.95, 17.99
+    ]
+    return random.choice(nice_prices)
 
 def extract_brand_from_type(type_str):
     if not type_str or '>' not in type_str:
@@ -164,7 +173,7 @@ try:
                 image_url = ','.join(current_images) if current_images else ''
                 
                 title = normalize_text(prev_row['Title'])
-                price = float(prev_row['Variant Price']) if prev_row.get('Variant Price') else 29.99
+                price = generate_nice_price()
                 description = normalize_text(prev_row.get('Body (HTML)', ''))
                 type_field = prev_row.get('Type', '')
                 
@@ -249,7 +258,7 @@ try:
             image_url = ','.join(current_images) if current_images else ''
             
             title = normalize_text(prev_row['Title'])
-            price = float(prev_row['Variant Price']) if prev_row.get('Variant Price') else 29.99
+            price = generate_nice_price()
             description = normalize_text(prev_row.get('Body (HTML)', ''))
             type_field = prev_row.get('Type', '')
             
