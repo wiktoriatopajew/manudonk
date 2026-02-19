@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar with Filters -->
+        <aside class="lg:w-72 flex-shrink-0">
+            <div class="bg-white rounded-lg shadow-md p-6 sticky top-8">
+                <h2 class="text-xl font-bold mb-6">Filters</h2>
+                
+                <!-- Search Form -->
+                <form action="/search" method="get" id="filterForm">
+                    <!-- Search Query -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input 
+                            type="text" 
+                            name="q" 
+                            value="{{ query }}"
+                            placeholder="Search manuals..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select 
+                            name="category" 
+                            id="categorySelect"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>
+                                {{ cat }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Brand Filter -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                        <select 
+                            name="brand" 
+                            id="brandSelect"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">All Brands</option>
+                            {% for brand_item in brands %}
+                            <option value="{{ brand_item }}" {% if brand_item == selected_brand %}selected{% endif %}>
+                                {{ brand_item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Apply Button -->
+                    <button 
+                        type="submit"
+                        class="w-full bg-yellow-500 text-black py-2.5 rounded-lg font-medium hover:bg-yellow-600 transition"
+                    >
+                        Apply Filters
+                    </button>
+                    
+                    <!-- Clear Button -->
+                    <a 
+                        href="/search"
+                        class="block w-full text-center text-gray-600 py-2 mt-2 hover:text-gray-900 text-sm"
+                    >
+                        Clear All
+                    </a>
+                </form>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-1">
+            <!-- Results Header -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                    {% if query %}
+                        Results for: "{{ query }}"
+                    {% else %}
+                        Product Catalog
+                    {% endif %}
+                </h1>
+                <p class="text-gray-600">
+                    Found <span class="font-semibold text-yellow-600">{{ total_count }}</span> products
+                </p>
+            </div>
+            
+            <!-- Products Grid -->
+            {% if products %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {% for product in products %}
+                <div class="group">
+                    <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
+                        <!-- Product Image -->
+                        {% if product.image_url %}
+                        <div class="h-64 overflow-hidden relative cursor-pointer bg-white" onclick="window.location.href='{% if product.slug %}/manuals/{{ product.slug }}{% else %}/product/{{ product.id }}{% endif %}'">
+                            {% set image_urls = product.image_url.split(',') %}
+                            <img src="{{ image_urls[0].strip() }}" 
+                                 alt="{{ product.title }}" 
+                                 class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                                 onError="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;bg-gradient-to-br from-blue-100 to-indigo-100 h-64 flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition&quot;><svg class=&quot;w-20 h-20 text-blue-400&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;><path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2&quot; d=&quot;M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z&quot;></path></svg></div>'">
+                        </div>
+                        {% else %}
+                        <div class="bg-gradient-to-br from-blue-100 to-indigo-100 h-64 flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition cursor-pointer" onclick="window.location.href='{% if product.slug %}/manuals/{{ product.slug }}{% else %}/product/{{ product.id }}{% endif %}'">
+                            <svg class="w-20 h-20 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Product Info -->
+                        <div class="p-5 flex-1 flex flex-col">
+                            {% set cat_parts = product.category.split('/') %}
+                            <div class="text-xs font-semibold text-yellow-500 mb-2">{% if cat_parts|length > 1 %}{{ cat_parts[1] }}{% else %}{{ product.category }}{% endif %}</div>
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-yellow-600 transition cursor-pointer" onclick="window.location.href='{% if product.slug %}/manuals/{{ product.slug }}{% else %}/product/{{ product.id }}{% endif %}'">
+                                {{ product.title }}
+                            </h3>
+                            <p class="text-sm text-gray-600 mb-3">
+                                {{ product.brand }} - {{ product.model }}
+                            </p>
+                            <div class="mt-auto">
+                                <div class="text-2xl font-bold text-gray-900 mb-3">
+                                    ${{ "%.2f"|format(product.price) }}
+                                </div>
+                                <!-- Action buttons -->
+                                <div class="space-y-2">
+                                    <button 
+                                        class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg text-sm transition"
+                                        data-product-id="{{ product.id }}"
+                                        data-product-title="{{ product.title|replace('"', '&quot;') }}"
+                                        data-product-price="{{ product.price }}"
+                                        data-product-image="{% if product.image_url %}{{ product.image_url.split(',')[0].strip() }}{% endif %}"
+                                        onclick="addToCartFromGrid(this.dataset.productId, this.dataset.productTitle, parseFloat(this.dataset.productPrice), this.dataset.productImage)">
+                                        Add to Cart
+                                    </button>
+                                    <a href="{% if product.slug %}/manuals/{{ product.slug }}{% else %}/product/{{ product.id }}{% endif %}" class="block w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-semibold py-2 px-4 rounded-lg text-sm text-center transition">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-center items-center space-x-2">
+                    <!-- Previous Button -->
+                    {% if page > 1 %}
+                    <a href="?q={{ query }}&year_from={{ year_from or '' }}&category={{ selected_category or '' }}&brand={{ selected_brand or '' }}&page={{ page - 1 }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        ← Previous
+                    </a>
+                    {% endif %}
+                    
+                    <!-- Page Numbers -->
+                    {% set start_page = [1, page - 2]|max %}
+                    {% set end_page = [total_pages, page + 2]|min %}
+                    
+                    {% if start_page > 1 %}
+                    <a href="?q={{ query }}&year_from={{ year_from or '' }}&category={{ selected_category or '' }}&brand={{ selected_brand or '' }}&page=1" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">1</a>
+                    {% if start_page > 2 %}
+                    <span class="px-2">...</span>
+                    {% endif %}
+                    {% endif %}
+                    
+                    {% for p in range(start_page, end_page + 1) %}
+                    <a href="?q={{ query }}&year_from={{ year_from or '' }}&category={{ selected_category or '' }}&brand={{ selected_brand or '' }}&page={{ p }}" 
+                       class="px-4 py-2 border rounded-lg transition {% if p == page %}bg-yellow-500 text-black border-yellow-500{% else %}border-gray-300 hover:bg-gray-50{% endif %}">
+                        {{ p }}
+                    </a>
+                    {% endfor %}
+                    
+                    {% if end_page < total_pages %}
+                    {% if end_page < total_pages - 1 %}
+                    <span class="px-2">...</span>
+                    {% endif %}
+                    <a href="?q={{ query }}&year_from={{ year_from or '' }}&category={{ selected_category or '' }}&brand={{ selected_brand or '' }}&page={{ total_pages }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">{{ total_pages }}</a>
+                    {% endif %}
+                    
+                    <!-- Next Button -->
+                    {% if page < total_pages %}
+                    <a href="?q={{ query }}&year_from={{ year_from or '' }}&category={{ selected_category or '' }}&brand={{ selected_brand or '' }}&page={{ page + 1 }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Next →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <!-- No Results -->
+            <div class="bg-white rounded-lg shadow-sm p-12 text-center">
+                <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+                <p class="text-gray-600 mb-6">Try changing your search criteria or remove filters</p>
+                <a href="/search" class="inline-block bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition">
+                    Clear Filters
+                </a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+
+<script>
+    // Dynamic brand loading based on selected category
+    async function updateBrands() {
+        const categorySelect = document.getElementById('categorySelect');
+        const brandSelect = document.getElementById('brandSelect');
+        const category = categorySelect.value;
+        
+        // Fetch brands for selected category
+        const response = await fetch(`/api/brands?category=${encodeURIComponent(category)}`);
+        const data = await response.json();
+        
+        // Update brand options
+        brandSelect.innerHTML = '<option value="">All Brands</option>';
+        data.brands.forEach(brand => {
+            const option = document.createElement('option');
+            option.value = brand;
+            option.textContent = brand;
+            brandSelect.appendChild(option);
+        });
+    }
+
+// Add to Cart functionality for product grid
+function addToCartFromGrid(productId, title, price, imageUrl) {
+    // Ensure productId is a number for consistent comparison
+    productId = parseInt(productId);
+    
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existingItem = cart.find(item => parseInt(item.id) === productId);
+    
+    if (existingItem) {
+        // Remove from cart
+        removeFromCartById(productId);
+    } else {
+        // Add to cart
+        addToCart(productId, title, price, 1, imageUrl);
+    }
+}
+
+function removeFromCartById(productId) {
+    // Ensure productId is a number for consistent comparison
+    productId = parseInt(productId);
+    
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    cart = cart.filter(item => parseInt(item.id) !== productId);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    if (typeof window.updateCartCount === 'function') {
+        window.updateCartCount();
+    } else {
+        updateCartCountLocal();
+    }
+    
+    if (typeof window.updateCartSidebar === 'function') {
+        window.updateCartSidebar();
+    }
+    
+    updateAddToCartButtons();
+    showCartNotification('Removed from cart!');
+}
+
+function addToCart(productId, title, price, quantity, imageUrl) {
+    // Ensure productId is stored as a number for consistent comparison
+    productId = parseInt(productId);
+    
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    cart.push({
+        id: productId,
+        title: title,
+        price: price,
+        quantity: 1,
+        imageUrl: imageUrl || ''
+    });
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Update cart count (call from window if exists, or define locally)
+    if (typeof window.updateCartCount === 'function') {
+        window.updateCartCount();
+    } else {
+        updateCartCountLocal();
+    }
+    
+    // Update button to show "Added"
+    updateAddToCartButtons();
+    
+    // Show success message
+    showCartNotification('Added to cart!');
+}
+
+// Update all "Add to Cart" buttons based on cart contents
+function updateAddToCartButtons() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cartIds = cart.map(item => parseInt(item.id));
+    
+    // Find all add to cart buttons
+    document.querySelectorAll('[data-product-id]').forEach(button => {
+        const productId = parseInt(button.dataset.productId);
+        if (cartIds.includes(productId)) {
+            button.textContent = 'Added ✓';
+            button.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+            button.classList.add('bg-green-500', 'hover:bg-green-600', 'text-white');
+        } else {
+            button.textContent = 'Add to Cart';
+            button.classList.remove('bg-green-500', 'hover:bg-green-600', 'text-white');
+            button.classList.add('bg-gray-200', 'hover:bg-gray-300');
+        }
+    });
+}
+
+// Call on page load and after category/search updates
+document.addEventListener('DOMContentLoaded', updateAddToCartButtons);
+
+// Local cart count updater in case base.html function is not available yet
+function updateCartCountLocal() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = totalItems;
+        cartCountElement.style.display = totalItems > 0 ? 'block' : 'none';
+    }
+    
+    const cartCountMobileElement = document.getElementById('cartCountMobile');
+    if (cartCountMobileElement) {
+        cartCountMobileElement.textContent = totalItems;
+    }
+}
+
+function showCartNotification(message) {
+    // Update cart sidebar
+    if (typeof window.updateCartSidebar === 'function') {
+        window.updateCartSidebar();
+    }
+    
+    // Show simple notification instead of opening cart
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[10000] animate-fade-in flex items-center gap-2';
+    notification.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+}
+</script>
+
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}

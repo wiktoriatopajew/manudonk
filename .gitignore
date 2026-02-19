@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+database/products.db
+
+# Preview cache
+previews_cache/
+
+# Environment
+.env
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.txt
+!requirements.txt
+!BUSINESS_INFO_FOR_POLICIES.txt
+
+# CSV files - import data
+*.csv
+
+# Image duplicates - keep only in static/images/
+*.png
+!static/images/*.png
+!static/images/**/*.png
+*.jpg
+!static/images/*.jpg
+!static/images/**/*.jpg
+*.jpeg
+!static/images/*.jpeg
+!static/images/**/*.jpeg
+
+# PDF Processing System
+google_drive_credentials.json
+google_drive_config.json
+storage/
+*.json
+!package.json
+!nixpacks.toml
+pdf_processing_results.json
+google_drive_upload_results.json
+complete_results.json
+
+# Static files (previews can be large)
+static/images/previews/
+
+# Secret files - tokens and API keys
+token.pickle
+test_brevo.py
+*.pickle

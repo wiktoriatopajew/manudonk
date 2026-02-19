@@ -1,0 +1,423 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="bg-white rounded-2xl shadow-2xl p-12 text-center">
+        <!-- Success Icon -->
+        <div class="mb-8">
+            <div class="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto">
+                <svg class="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Success Message -->
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+            Thank you for your purchase! 🎉
+        </h1>
+        
+        <p class="text-xl text-gray-700 mb-8" id="purchaseEmail">
+            Your order has been received and paid for.
+        </p>
+        
+        <!-- Create Account Section -->
+        <div id="createAccountSection" class="bg-gradient-to-r from-slate-50 to-cyan-50 border-2 border-cyan-200 rounded-xl p-8 mb-8" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                🎁 Create your account to track your orders
+            </h2>
+            <p class="text-gray-700 mb-6">
+                Create a password to access your personal panel where you can see all your orders and download links.
+            </p>
+            
+            <form id="createAccountForm" class="max-w-md mx-auto">
+                <input type="hidden" id="accountEmail" name="email" />
+                
+                <div class="mb-4">
+                    <label for="password" class="block text-left text-sm font-semibold text-gray-700 mb-2">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Enter password"
+                        required
+                        minlength="6"
+                    />
+                </div>
+                
+                <div class="mb-6">
+                    <label for="confirmPassword" class="block text-left text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Confirm password"
+                        required
+                        minlength="6"
+                    />
+                </div>
+                
+                <button 
+                    type="submit" 
+                    class="w-full bg-gradient-to-r from-slate-700 to-cyan-600 hover:from-slate-800 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition hover:scale-105"
+                >
+                    Create Account & View Orders
+                </button>
+                
+                <p class="text-sm text-gray-600 mt-4">
+                    Already have an account? <a href="/login" class="text-cyan-600 hover:text-cyan-800 font-semibold">Login here</a>
+                </p>
+            </form>
+            
+            <div id="accountSuccess" class="hidden">
+                <div class="bg-green-100 border-2 border-green-400 rounded-lg p-4 mb-4">
+                    <p class="text-green-800 font-semibold">✅ Account created successfully!</p>
+                </div>
+                <a href="/my-orders" class="inline-block bg-gradient-to-r from-slate-700 to-cyan-600 hover:from-slate-800 hover:to-cyan-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:scale-105">
+                    View My Orders
+                </a>
+            </div>
+        </div>
+        
+        <!-- Delivery Info Box -->
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-8 mb-8">
+            <div class="flex items-start justify-center mb-4">
+                <svg class="w-8 h-8 text-blue-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                <div class="text-left">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">
+                        Your manual will be sent to your email
+                    </h2>
+                    <p class="text-lg text-gray-700 mb-4">
+                        <strong>Delivery time: 1-5 minutes</strong>
+                    </p>
+                    <p class="text-gray-600">
+                        Check your mailbox (including SPAM folder). 
+                        You will receive a message with a link to download the manual in PDF format.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Back to home
+            </a>
+            
+            <a href="/search" class="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Browse more products
+            </a>
+        </div>
+        
+        <!-- Contact Info -->
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <p class="text-gray-600">
+                Have questions? Contact us: 
+                <a href="mailto:contact@manuals.com" class="text-blue-600 hover:text-blue-800 font-semibold">
+                    contact@manuals.com
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Clear cart after successful payment
+    localStorage.setItem('cart', JSON.stringify([]));
+    if (typeof window.updateCartCount === 'function') {
+        window.updateCartCount();
+    }
+    
+    // Get session_id from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    let customerEmail = null;
+    
+    // Fetch session details from backend to get customer email
+    if (sessionId) {
+        fetch(`/api/orders/session-email?session_id=${sessionId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.email) {
+                    customerEmail = data.email;
+                    document.getElementById('accountEmail').value = customerEmail;
+                    document.getElementById('purchaseEmail').innerHTML = `Your order has been sent to <strong>${customerEmail}</strong>`;
+                    
+                    // Google Ads Conversion Tracking
+                    if (typeof gtag !== 'undefined' && data.order_total && data.order_id) {
+                        gtag('event', 'conversion', {
+                            'send_to': 'AW-17877008797/UnJuCLXA0-QbEJ2DtsxC',
+                            'value': parseFloat(data.order_total),
+                            'currency': 'USD',
+                            'transaction_id': data.order_id
+                        });
+                        console.log('Google Ads conversion tracked:', data.order_id, data.order_total);
+                    }
+                    
+                    // Auto-login if user exists and token is provided
+                    if (data.access_token) {
+                        localStorage.setItem('access_token', data.access_token);
+                        console.log('Auto-logged in existing user');
+                        // Hide create account section since user is now logged in
+                        const createAccountSection = document.getElementById('createAccountSection');
+                        if (createAccountSection) {
+                            createAccountSection.style.display = 'none';
+                        }
+                    }
+                     else {
+                        // User doesn't exist - show create account section
+                        const createAccountSection = document.getElementById('createAccountSection');
+                        if (createAccountSection) {
+                            createAccountSection.style.display = 'block';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    
+    // Handle create account form submission
+    document.getElementById('createAccountForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const email = document.getElementById('accountEmail').value;
+        
+        if (!email) {
+            alert('Email not found. Please try again.');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+        }
+        
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters long!');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/auth/create-account-after-purchase', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Save token to localStorage
+                localStorage.setItem('access_token', data.access_token);
+                
+                // Show success message
+                document.getElementById('createAccountForm').style.display = 'none';
+                document.getElementById('accountSuccess').classList.remove('hidden');
+                
+                // Redirect to my orders after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/my-orders';
+                }, 2000);
+            } else {
+                alert(data.detail || 'Error creating account. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    });
+</script>
+
+{% endblock %}
+        {% if request.query_params.get('order') %}
+        <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <h3 class="text-sm font-semibold text-gray-600 mb-2">Order number</h3>
+            <p class="text-lg font-mono text-gray-900">{{ request.query_params.get('order') }}</p>
+        </div>
+        {% endif %}
+        
+        <!-- What's Next -->
+        <div class="border-t border-gray-200 pt-8 mb-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">What's next?</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                <div class="flex items-start">
+                    <div class="bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-blue-600 font-bold">1</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-1">Check email</h4>
+                        <p class="text-sm text-gray-600">
+                            Within 1-5 minutes you will receive a message with the manual
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-blue-600 font-bold">2</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-1">Download PDF</h4>
+                        <p class="text-sm text-gray-600">
+                            Click the link and download the file to your device
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-blue-600 font-bold">3</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-1">Done!</h4>
+                        <p class="text-sm text-gray-600">
+                            You can open, print or save the manual
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Back to home
+            </a>
+            
+            <a href="/search" class="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Browse more products
+            </a>
+        </div>
+        
+        <!-- Contact Info -->
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <p class="text-gray-600">
+                Have questions? Contact us: 
+                <a href="mailto:contact@manuals.com" class="text-blue-600 hover:text-blue-800 font-semibold">
+                    contact@manuals.com
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get session_id from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    let customerEmail = null;
+    
+    // Fetch session details from backend to get customer email
+    if (sessionId) {
+        fetch(`/api/orders/session-email?session_id=${sessionId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.email) {
+                    customerEmail = data.email;
+                    document.getElementById('accountEmail').value = customerEmail;
+                    document.getElementById('purchaseEmail').innerHTML = `Your order has been sent to <strong>${customerEmail}</strong>`;
+                    
+                    // Auto-login if user exists and token is provided
+                    if (data.access_token) {
+                        localStorage.setItem('access_token', data.access_token);
+                        console.log('Auto-logged in existing user');
+                        // Hide create account section since user is now logged in
+                        const createAccountSection = document.getElementById('createAccountSection');
+                        if (createAccountSection) {
+                            createAccountSection.style.display = 'none';
+                        }
+                    }
+                     else {
+                        // User doesn't exist - show create account section
+                        const createAccountSection = document.getElementById('createAccountSection');
+                        if (createAccountSection) {
+                            createAccountSection.style.display = 'block';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    
+    // Handle create account form submission
+    document.getElementById('createAccountForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const email = document.getElementById('accountEmail').value;
+        
+        if (!email) {
+            alert('Email not found. Please try again.');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+        }
+        
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters long!');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/auth/create-account-after-purchase', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Save token to localStorage
+                localStorage.setItem('token', data.access_token);
+                
+                // Show success message
+                document.getElementById('createAccountForm').style.display = 'none';
+                document.getElementById('accountSuccess').classList.remove('hidden');
+                
+                // Redirect to my orders after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/my-orders';
+                }, 2000);
+            } else {
+                alert(data.detail || 'Error creating account. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    });
+</script>
+

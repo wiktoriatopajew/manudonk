@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Import Monitor - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        .pulse-green {
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0%, 100% { background-color: #10b981; }
+            50% { background-color: #34d399; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-upload mr-2"></i>
+                    Bulk Import Monitor
+                </h1>
+                <div class="flex space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <label for="csvFile" class="text-sm font-medium text-gray-700">CSV File:</label>
+                        <select id="csvFile" class="border border-gray-300 rounded px-3 py-1 text-sm">
+                            <option value="">Select CSV file...</option>
+                        </select>
+                        <button onclick="refreshCsvFiles()" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-refresh text-sm"></i>
+                        </button>
+                    </div>
+                    <button onclick="startImport()" id="startBtn" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-play mr-2"></i>Start Import
+                    </button>
+                    <button onclick="stopImport()" id="stopBtn" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors" disabled>
+                        <i class="fas fa-stop mr-2"></i>Stop Import
+                    </button>
+                    <a href="/admin/dashboard" 
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Status Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Status Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Status</p>
+                        <p id="statusText" class="text-2xl font-bold text-gray-900">Idle</p>
+                    </div>
+                    <div id="statusIcon" class="flex-shrink-0">
+                        <i class="fas fa-pause text-3xl text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Progress</p>
+                        <p id="progressText" class="text-2xl font-bold text-gray-900">0 / 0</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-chart-line text-3xl text-blue-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Percentage Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Completion</p>
+                        <p id="percentageText" class="text-2xl font-bold text-gray-900">0%</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-percentage text-3xl text-green-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ETA Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">ETA</p>
+                        <p id="etaText" class="text-2xl font-bold text-gray-900">--:--</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock text-3xl text-purple-500"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Import Progress</h2>
+                <span id="batchInfo" class="text-sm text-gray-500">Batch: 0</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                <div id="progressBar" class="progress-bar bg-blue-600 h-4 rounded-full" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600">
+                <span id="progressDetails">Ready to start import</span>
+                <span id="progressSpeed">0 products/sec</span>
+            </div>
+        </div>
+
+        <!-- Live Log -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-terminal mr-2"></i>Import Log
+                    </h2>
+                    <button onclick="clearLog()" 
+                            class="text-red-600 hover:text-red-700 text-sm">
+                        <i class="fas fa-trash mr-1"></i>Clear Log
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="importLog" class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto">
+                    <div class="text-gray-500">[SYSTEM] Import monitor ready. Click 'Start Import' to begin.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Panel (hidden by default) -->
+        <div id="errorPanel" class="mt-8 bg-red-50 border border-red-200 rounded-lg p-6 hidden">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                <h3 class="text-lg font-semibold text-red-800">Import Errors</h3>
+            </div>
+            <div id="errorList" class="space-y-2">
+                <!-- Errors will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let importStatus = null;
+        let updateInterval = null;
+        let startTime = null;
+
+        // Update status every 2 seconds during import
+        function startStatusUpdates() {
+            if (updateInterval) clearInterval(updateInterval);
+            
+            updateInterval = setInterval(async () => {
+                await fetchImportStatus();
+            }, 2000);
+        }
+
+        function stopStatusUpdates() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
+        async function fetchImportStatus() {
+            try {
+                const response = await fetch('/api/import/status');
+                const status = await response.json();
+                
+                updateUI(status);
+                
+                // Stop polling if import is not active
+                if (!status.active && updateInterval) {
+                    stopStatusUpdates();
+                }
+            } catch (error) {
+                console.error('Failed to fetch import status:', error);
+                logMessage('[ERROR] Failed to fetch import status', 'text-red-400');
+            }
+        }
+
+        function updateUI(status) {
+            importStatus = status;
+
+            // Update status text and icon
+            const statusText = document.getElementById('statusText');
+            const statusIcon = document.getElementById('statusIcon');
+            
+            if (status.active) {
+                statusText.textContent = 'Running';
+                statusIcon.innerHTML = '<i class="fas fa-play text-3xl text-green-500 pulse-green"></i>';
+                
+                // Enable/disable buttons
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+            } else {
+                statusText.textContent = 'Idle';
+                statusIcon.innerHTML = '<i class="fas fa-pause text-3xl text-gray-400"></i>';
+                
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+
+            // Update progress
+            document.getElementById('progressText').textContent = `${status.progress.toLocaleString()} / ${status.total.toLocaleString()}`;
+            document.getElementById('percentageText').textContent = `${status.percentage}%`;
+            document.getElementById('batchInfo').textContent = `Batch: ${status.current_batch}`;
+
+            // Update progress bar
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = `${status.percentage}%`;
+
+            // Update ETA
+            if (status.estimated_completion && status.active) {
+                const eta = new Date(status.estimated_completion);
+                const now = new Date();
+                const diff = eta - now;
+                
+                if (diff > 0) {
+                    const minutes = Math.floor(diff / 60000);
+                    const seconds = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('etaText').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    document.getElementById('etaText').textContent = 'Complete';
+                }
+            } else {
+                document.getElementById('etaText').textContent = '--:--';
+            }
+
+            // Calculate speed
+            if (status.started_at && status.progress > 0) {
+                const startTime = new Date(status.started_at);
+                const elapsed = (new Date() - startTime) / 1000;
+                const speed = Math.round(status.progress / elapsed);
+                document.getElementById('progressSpeed').textContent = `${speed} products/sec`;
+            }
+
+            // Update details
+            if (status.active && status.progress > 0) {
+                document.getElementById('progressDetails').textContent = 
+                    `Processing batch ${status.current_batch}, ${status.progress.toLocaleString()} products imported`;
+            } else if (status.percentage === 100) {
+                document.getElementById('progressDetails').textContent = 'Import completed successfully!';
+            } else {
+                document.getElementById('progressDetails').textContent = 'Ready to start import';
+            }
+
+            // Update errors
+            if (status.errors && status.errors.length > 0) {
+                showErrors(status.errors);
+            }
+        }
+
+        function showErrors(errors) {
+            const errorPanel = document.getElementById('errorPanel');
+            const errorList = document.getElementById('errorList');
+            
+            errorList.innerHTML = '';
+            
+            errors.forEach(error => {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'bg-white border border-red-200 rounded p-3';
+                errorDiv.innerHTML = `
+                    <div class="text-sm text-gray-600">${error.time}</div>
+                    <div class="text-red-700 font-medium">${error.error}</div>
+                `;
+                errorList.appendChild(errorDiv);
+            });
+            
+            errorPanel.classList.remove('hidden');
+        }
+
+        async function startImport() {
+            const selectedFile = document.getElementById('csvFile').value;
+            
+            if (!selectedFile) {
+                logMessage('[ERROR] Please select a CSV file first', 'text-red-400');
+                return;
+            }
+            
+            try {
+                logMessage(`[SYSTEM] Starting bulk import from ${selectedFile}...`, 'text-blue-400');
+                
+                const response = await fetch('/api/import/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        csv_file: selectedFile
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    logMessage(`[SUCCESS] ${result.message}`, 'text-green-400');
+                    startStatusUpdates();
+                } else {
+                    const error = await response.json();
+                    logMessage(`[ERROR] ${error.detail}`, 'text-red-400');
+                }
+            } catch (error) {
+                logMessage(`[ERROR] Failed to start import: ${error.message}`, 'text-red-400');
+            }
+        }
+
+        async function refreshCsvFiles() {
+            try {
+                const response = await fetch('/api/import/csv-files');
+                if (response.ok) {
+                    const data = await response.json();
+                    const select = document.getElementById('csvFile');
+                    select.innerHTML = '<option value="">Select CSV file...</option>';
+                    
+                    data.files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file.name;
+                        option.textContent = `${file.name} (${file.products} products)`;
+                        select.appendChild(option);
+                    });
+                    
+                    logMessage(`[INFO] Found ${data.files.length} CSV files`, 'text-blue-400');
+                } else {
+                    logMessage('[ERROR] Failed to load CSV files', 'text-red-400');
+                }
+            } catch (error) {
+                logMessage(`[ERROR] Failed to refresh CSV files: ${error.message}`, 'text-red-400');
+            }
+        }
+
+        async function stopImport() {
+            try {
+                logMessage('[SYSTEM] Stopping bulk import...', 'text-yellow-400');
+                
+                const response = await fetch('/api/import/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    logMessage(`[SUCCESS] ${result.message}`, 'text-green-400');
+                    stopStatusUpdates();
+                } else {
+                    const error = await response.json();
+                    logMessage(`[ERROR] ${error.detail}`, 'text-red-400');
+                }
+            } catch (error) {
+                logMessage(`[ERROR] Failed to stop import: ${error.message}`, 'text-red-400');
+            }
+        }
+
+        function logMessage(message, className = 'text-green-400') {
+            const log = document.getElementById('importLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = className;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            log.appendChild(logEntry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            const log = document.getElementById('importLog');
+            log.innerHTML = '<div class="text-gray-500">[SYSTEM] Log cleared.</div>';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check initial status
+            fetchImportStatus();
+            
+            // Load available CSV files
+            refreshCsvFiles();
+            
+            // Log system ready
+            logMessage('[SYSTEM] Import monitor initialized', 'text-blue-400');
+        });
+    </script>
+</body>
+</html>

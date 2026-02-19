@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">My Orders</h1>
+                <p class="text-gray-600 mt-2" id="userEmail">Loading...</p>
+            </div>
+            <button 
+                onclick="logout()" 
+                class="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg transition"
+            >
+                Logout
+            </button>
+        </div>
+        
+        <!-- Orders Table -->
+        <div id="ordersContainer" class="overflow-x-auto">
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                <p class="text-gray-600 mt-4">Loading your orders...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Check if user is logged in
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = '/login';
+    }
+    
+    // Function to make authenticated requests
+    async function fetchWithAuth(url, options = {}) {
+        const headers = {
+            'Authorization': `Bearer ${token}`,
+            ...options.headers
+        };
+        
+        const response = await fetch(url, { ...options, headers });
+        
+        if (response.status === 401) {
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+            return null;
+        }
+        
+        return response;
+    }
+    
+    // Load user info
+    async function loadUserInfo() {
+        try {
+            const response = await fetchWithAuth('/api/auth/me');
+            if (response) {
+                const data = await response.json();
+                document.getElementById('userEmail').textContent = data.email;
+            }
+        } catch (error) {
+            console.error('Error loading user info:', error);
+        }
+    }
+    
+    // Load orders
+    async function loadOrders() {
+        try {
+            const response = await fetchWithAuth('/api/auth/my-orders');
+            if (response) {
+                const orders = await response.json();
+                displayOrders(orders);
+            }
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            document.getElementById('ordersContainer').innerHTML = `
+                <div class="text-center py-8 text-red-600">
+                    <p>Error loading orders. Please try again later.</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Display orders
+    function displayOrders(orders) {
+        if (orders.length === 0) {
+            document.getElementById('ordersContainer').innerHTML = `
+                <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                    <p class="text-gray-600 text-lg">You haven't made any purchases yet.</p>
+                    <a href="/" class="inline-block mt-4 bg-gradient-to-r from-slate-700 to-cyan-600 hover:from-slate-800 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg">
+                        Browse Products
+                    </a>
+                </div>
+            `;
+            return;
+        }
+        
+        const ordersHTML = `
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Order ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Download</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    ${orders.map(order => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="font-mono text-sm text-gray-900">#${order.id}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-semibold text-gray-900">${order.product_title}</div>
+                                <div class="text-sm text-gray-600">${order.product_brand} - ${order.product_model}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm font-bold text-gray-900">$${order.price.toFixed(2)}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                }">
+                                    ${order.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                ${order.download_link ? 
+                                    `<a href="${order.download_link}" target="_blank" class="bg-gradient-to-r from-slate-700 to-cyan-600 hover:from-slate-800 hover:to-cyan-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                                        </svg>
+                                        Download
+                                    </a>` 
+                                    : '<span class="text-gray-500 italic">Pending (1-5 minutes)</span>'
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                ${new Date(order.created_at).toLocaleDateString()}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        
+        document.getElementById('ordersContainer').innerHTML = ordersHTML;
+    }
+    
+    // Logout function
+    function logout() {
+        localStorage.removeItem('access_token');
+        window.location.href = '/';
+    }
+    
+    // Load data on page load
+    loadUserInfo();
+    loadOrders();
+</script>
+
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-600">
+                        📂 PDF Cache Manager
+                    </h1>
+                    <p class="text-gray-600 mt-2">Zarządzaj cache podglądów PDF</p>
+                </div>
+                <a href="/admin" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    ← Powrót
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Card -->
+        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <p class="text-amber-100 text-sm mb-2">Liczba plików</p>
+                    <p class="text-5xl font-bold" id="cacheCount">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-amber-100 text-sm mb-2">Zajęte miejsce</p>
+                    <p class="text-5xl font-bold" id="cacheSize">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-amber-100 text-sm mb-2">Folder</p>
+                    <p class="text-lg font-mono mt-4">Database (PostgreSQL)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Akcje</h2>
+            
+            <div class="space-y-4">
+                <button 
+                    onclick="refreshStats()" 
+                    class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-xl font-semibold transition flex items-center justify-center gap-3 text-lg"
+                >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Odśwież statystyki
+                </button>
+
+                <button 
+                    onclick="clearCache()" 
+                    class="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-4 rounded-xl font-semibold transition flex items-center justify-center gap-3 text-lg"
+                >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Usuń wszystkie pliki cache
+                </button>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6">
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-blue-500 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-900 mb-2">ℹ️ Informacje o cache</h3>
+                    <ul class="text-blue-800 space-y-1">
+                        <li>• Cache przechowuje wygenerowane podglądy PDF w bazie danych PostgreSQL</li>
+                        <li>• Pierwszy podgląd produktu trwa ~8-10 sekund, kolejne są natychmiastowe</li>
+                        <li>• Pliki cache są trwałe - pozostają po restarcie serwera</li>
+                        <li>• Cache jest automatycznie ponownie używany dla tego samego produktu</li>
+                        <li>• Bezpieczne usunięcie - pliki zostaną wygenerowane ponownie przy następnym podglądzie</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load stats on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshStats();
+    });
+
+    async function refreshStats() {
+        try {
+            const response = await fetch('/api/admin/cache-stats');
+            const data = await response.json();
+            
+            document.getElementById('cacheCount').textContent = data.count;
+            document.getElementById('cacheSize').textContent = data.size;
+            
+            // Success notification
+            showNotification('Statystyki odświeżone', 'success');
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Błąd pobierania statystyk', 'error');
+        }
+    }
+
+    async function clearCache() {
+        if (!confirm('Czy na pewno chcesz usunąć wszystkie pliki cache?\n\nPliki zostaną wygenerowane ponownie przy następnym podglądzie.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/cache-clear', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(`Usunięto ${data.deleted} plików`, 'success');
+                refreshStats();
+            } else {
+                showNotification('Błąd usuwania cache', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Błąd usuwania cache', 'error');
+        }
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50 ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white font-semibold`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s';
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

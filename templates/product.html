@@ -1,0 +1,1484 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Schema.org Product Structured Data for SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.title }}",
+  "description": "{{ product.description[:200] if product.description else 'Instrukcja obsługi ' + product.brand + ' ' + product.model }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ product.brand }}"
+  },
+  "model": "{{ product.model }}",
+  "category": "{{ product.category.split('/')[0] if product.category and '/' in product.category else product.category }}",
+  "offers": {
+    "@type": "Offer",
+    "url": "https://manualbear.com/manuals/{{ product.slug }}",
+    "priceCurrency": "USD",
+    "price": "{{ product.price }}",
+    "availability": "https://schema.org/InStock",
+    "seller": {
+      "@type": "Organization",
+      "name": "ManualBear",
+      "url": "https://manualbear.com"
+    }
+  }
+}
+</script>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumbs (Okruszki nawigacyjne) -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm" itemscope itemtype="https://schema.org/BreadcrumbList">
+            <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <a href="/" class="text-yellow-600 hover:text-yellow-700 transition" itemprop="item">
+                    <span itemprop="name">Home</span>
+                </a>
+                <meta itemprop="position" content="1" />
+            </li>
+            {% set cat_parts = product.category.split('/') if product.category else [] %}
+            {% if cat_parts|length >= 2 %}
+                <li class="text-gray-400">/</li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a href="/search?category={{ cat_parts[0]|urlencode }}" class="text-yellow-600 hover:text-yellow-700 transition" itemprop="item">
+                        <span itemprop="name">{{ cat_parts[0] }}</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li class="text-gray-400">/</li>
+                <li class="text-gray-900 font-semibold" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">{{ cat_parts[1] }}</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            {% elif cat_parts|length == 1 %}
+                <li class="text-gray-400">/</li>
+                <li class="text-gray-900 font-semibold" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">{{ cat_parts[0] }}</span>
+                    <meta itemprop="position" content="2" />
+                </li>
+            {% endif %}
+        </ol>
+    </nav>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Product Section -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <!-- Product Image Slider -->
+                {% if product.image_url %}
+                    {% set image_urls = product.image_url.split(',') %}
+                    {% if image_urls|length > 1 %}
+                    <!-- Multi-image slider -->
+                    <div class="relative rounded-lg h-[600px] overflow-hidden mb-8 bg-white">
+                        <div class="image-slider relative w-full h-full cursor-pointer">
+                            {% for image_url in image_urls %}
+                            <div class="slide {% if loop.first %}active{% endif %} absolute inset-0 opacity-0 transition-opacity duration-500" data-image-index="{{ loop.index0 }}">
+                                <img src="{{ image_url.strip() }}" 
+                                     alt="{{ product.title }} - Image {{ loop.index }}" 
+                                     class="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+                                     data-lightbox="product-gallery"
+                                     data-image-src="{{ image_url.strip() }}"
+                                     onError="this.parentElement.innerHTML='<div class=&quot;bg-gradient-to-br from-blue-100 to-indigo-100 w-full h-full flex items-center justify-center&quot;><svg class=&quot;w-32 h-32 text-blue-400&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;><path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2&quot; d=&quot;M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z&quot;></path></svg></div>'">
+                            </div>
+                            {% endfor %}
+                            
+                            <!-- Slider navigation -->
+                            <button class="slider-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition z-10">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <button class="slider-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition z-10">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                            
+                            <!-- Dots indicator -->
+                            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                                {% for image_url in image_urls %}
+                                <button class="dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-opacity-80 transition {% if loop.first %}active{% endif %}" data-slide="{{ loop.index0 }}"></button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Single image -->
+                    <div class="rounded-lg h-[500px] overflow-hidden mb-8 bg-gray-100 cursor-pointer">
+                        <img src="{{ image_urls[0].strip() }}" 
+                             alt="{{ product.title }}" 
+                             class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                             data-lightbox="product-gallery"
+                             data-image-src="{{ image_urls[0].strip() }}"
+                             onError="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg h-96 flex items-center justify-center&quot;><svg class=&quot;w-32 h-32 text-blue-400&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;><path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2&quot; d=&quot;M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z&quot;></path></svg></div>'">
+                    </div>
+                    {% endif %}
+                {% else %}
+                <div class="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg h-[500px] flex items-center justify-center mb-8">
+                    <svg class="w-32 h-32 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                {% endif %}
+                
+                <!-- Product Header -->
+                <div class="border-b border-gray-200 pb-6 mb-8">
+                    <!-- Product Title -->
+                    <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 leading-tight">
+                        {{ product.title }}
+                    </h1>
+                    
+                    <!-- Product Subtitle -->
+                    <p class="text-xl text-gray-600 mb-4 font-medium">
+                        Professional {{ product.brand }} {{ product.model }} Manual & Documentation
+                    </p>
+                    
+                    <!-- Product Meta -->
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <div class="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+                            <svg class="w-4 h-4 text-slate-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            <span class="text-slate-700 font-medium text-sm">{{ product.category.split('/')[0] if product.category and '/' in product.category else product.category }}</span>
+                        </div>
+                        <div class="inline-flex items-center px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                            <svg class="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                            </svg>
+                            <span class="text-blue-700 font-medium text-sm">{{ product.brand }}</span>
+                        </div>
+                        <div class="inline-flex items-center px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <svg class="w-4 h-4 text-emerald-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span class="text-emerald-700 font-medium text-sm">Model {{ product.model }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Quality Indicators -->
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center text-yellow-600">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                            </svg>
+                            <span class="font-medium">Premium Quality</span>
+                        </div>
+                        <div class="flex items-center text-green-600">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-medium">Verified Documentation</span>
+                        </div>
+                        <div class="flex items-center text-blue-600">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-medium">Instant Delivery</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Page Count Display -->
+                    {% if product.pdf_url %}
+                    <div class="mt-4 inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl shadow-sm">
+                        <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="text-purple-900 font-semibold text-base">
+                            Digital Manual - Instant Download
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Product Description -->
+                <div class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Manual Overview
+                    </h2>
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <!-- Manual Header -->
+                        <div class="bg-gradient-to-r from-slate-800 to-slate-700 text-white px-6 py-4">
+                            <h3 class="text-xl font-bold">{{ product.brand }} {{ product.model }}</h3>
+                            {% if product.year %}
+                            {% set year_match = product.title | regex_search('(\\d{4})[-–](\\d{4})') %}
+                            <p class="text-slate-200 text-sm">Model Year: {% if year_match %}{{ year_match }}{% else %}{{ product.year }}{% endif %}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Description Content -->
+                        <div class="p-6">
+                            <div class="prose prose-slate max-w-none">
+                                {% set desc_lines = product.description.split('\n') if product.description else [] %}
+                                {% for line in desc_lines %}
+                                    {% if line.strip() %}
+                                        {% if line.strip().startswith('-') or line.strip().startswith('•') %}
+                                            {% if not loop.previtem or not (loop.previtem.strip().startswith('-') or loop.previtem.strip().startswith('•')) %}
+                                                <ul class="space-y-2 my-5 ml-6">
+                                            {% endif %}
+                                            <li class="text-slate-700 leading-relaxed">{{ line.strip()[1:].strip() }}</li>
+                                            {% if loop.last or not (desc_lines[loop.index].strip().startswith('-') or desc_lines[loop.index].strip().startswith('•')) %}
+                                                </ul>
+                                            {% endif %}
+                                        {% elif ':' in line and line.split(':')[0]|length < 50 %}
+                                            <div class="bg-slate-50 border-l-4 border-blue-500 px-4 py-3 my-5">
+                                                <strong class="text-slate-900">{{ line.split(':')[0] }}:</strong>
+                                                <span class="text-slate-700">{{ line.split(':', 1)[1] }}</span>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-slate-700 leading-relaxed my-4">{{ line }}</p>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="my-3"></div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Key Features -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 text-emerald-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        What You Get
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-start space-x-3 p-4 bg-white border border-gray-200 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Complete Manual</h4>
+                                <p class="text-sm text-gray-600">Full {{ product.brand }} {{ product.model }} documentation</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 p-4 bg-white border border-gray-200 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">High Quality Content</h4>
+                                <p class="text-sm text-gray-600">Clear, detailed instructions and illustrations</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 p-4 bg-white border border-gray-200 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Printable PDF</h4>
+                                <p class="text-sm text-gray-600">Ready to print in any format</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 p-4 bg-white border border-gray-200 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Lifetime Access</h4>
+                                <p class="text-sm text-gray-600">Download anytime, forever</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Features -->
+                <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">What You'll Get</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700">Complete manual in PDF format</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700">Email delivery within 1-5 minutes</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700">Download and print capability</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700">100% legal and original document</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar with Purchase -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-lg p-6 sticky top-8">
+                <!-- Price -->
+                <div class="mb-6">
+                    <div class="text-gray-600 text-sm mb-1">Price</div>
+                    <div id="priceContainer">
+                        <div id="originalPrice" class="text-5xl font-bold text-gray-900">
+                            ${{ "%.2f"|format(product.price) }}
+                        </div>
+                        <div id="discountedPriceContainer" class="hidden">
+                            <div class="text-2xl text-gray-400 line-through">
+                                $<span id="originalPriceStrike">{{ "%.2f"|format(product.price) }}</span>
+                            </div>
+                            <div class="text-5xl font-bold text-green-600">
+                                $<span id="discountedPrice">{{ "%.2f"|format(product.price) }}</span>
+                            </div>
+                            <div class="text-sm text-green-600 font-semibold mt-1">
+                                You save: $<span id="savingsAmount">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Available
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Buy Now Button -->
+                <button 
+                    id="buyNowBtn"
+                    class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-5 px-8 rounded-xl text-lg shadow-lg transform transition hover:scale-[1.02] hover:shadow-xl mb-2 border border-yellow-500"
+                >
+                    <span class="flex items-center justify-center space-x-3">
+                        <span>Buy Now</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </span>
+                </button>
+                
+                <!-- Terms Agreement Notice -->
+                <p class="text-xs text-gray-400 text-center mb-6">
+                    By purchasing, you agree to our 
+                    <a href="/terms-of-service" target="_blank" class="text-yellow-500 hover:text-yellow-400 underline">Terms of Service</a> 
+                    and 
+                    <a href="/privacy-policy" target="_blank" class="text-yellow-500 hover:text-yellow-400 underline">Privacy Policy</a>
+                </p>
+                
+                <!-- Preview Button (ALWAYS SHOW FOR TESTING) -->
+                {% if product.pdf_url %}
+                <button 
+                    id="previewBtn"
+                    class="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3 px-6 rounded-lg text-base shadow-md transform transition hover:scale-[1.02] mb-4"
+                >
+                    <span class="flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        <span>📄 Quick Preview (10 Pages)</span>
+                    </span>
+                </button>
+                {% endif %}
+                
+                <!-- Add to Cart Button -->
+                <button 
+                    id="addToCartBtn"
+                    class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg text-lg transition mb-4"
+                >
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Add to Cart
+                    </span>
+                </button>
+                
+                <!-- Payment Methods -->
+                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                    <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        Secure Payment Options
+                    </h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <!-- Visa -->
+                        <div class="flex items-center justify-center py-3 px-2 bg-white rounded border border-gray-200 hover:border-blue-300 transition">
+                            <img src="/static/images/payment/visa.svg" alt="Visa" class="h-8">
+                        </div>
+                        <!-- Mastercard -->
+                        <div class="flex items-center justify-center py-3 px-2 bg-white rounded border border-gray-200 hover:border-red-300 transition">
+                            <img src="/static/images/payment/mastercard.svg" alt="Mastercard" class="h-8">
+                        </div>
+                        <!-- BLIK -->
+                        <div class="flex items-center justify-center py-3 px-2 bg-white rounded border border-gray-200 hover:border-pink-300 transition">
+                            <img src="/static/images/payment/blik.svg" alt="BLIK" class="h-8">
+                        </div>
+                        <!-- Apple Pay -->
+                        <div class="flex items-center justify-center py-3 px-2 bg-white rounded border border-gray-200 hover:border-gray-300 transition">
+                            <img src="/static/images/payment/apple-pay.svg" alt="Apple Pay" class="h-8">
+                        </div>
+                        <!-- Google Pay -->
+                        <div class="flex items-center justify-center py-3 px-2 bg-white rounded border border-gray-200 hover:border-blue-300 transition">
+                            <img src="/static/images/payment/google-pay.svg" alt="Google Pay" class="h-8">
+                        </div>
+                        <!-- American Express -->
+                        <div class="flex items-center justify-center py-3 px-2 bg-white rounded border border-gray-200 hover:border-blue-400 transition">
+                            <img src="/static/images/payment/amex.svg" alt="American Express" class="h-8">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trust & Guarantees -->
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-xl p-6 shadow-md">
+                    <h4 class="text-lg font-bold text-emerald-900 mb-5 flex items-center">
+                        <svg class="w-5 h-5 text-emerald-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        Our Guarantee
+                    </h4>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-emerald-900">Instant Delivery</p>
+                                <p class="text-xs text-emerald-700">Manual sent to your email within 1-5 minutes</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-emerald-900">Secure Payments</p>
+                                <p class="text-xs text-emerald-700">Protected by Stripe - trusted payment processing</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-emerald-900">1000+ Products</p>
+                                <p class="text-xs text-emerald-700">Huge database of manuals for cars, motorcycles, and equipment</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Discount Code Section -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        🎁 Have a discount code?
+                    </label>
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="productDiscountCode" 
+                            placeholder="Enter code (e.g. WELCOME10)"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm uppercase"
+                        >
+                        <button 
+                            id="validateDiscountBtn"
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-4 py-2 rounded-lg transition text-sm whitespace-nowrap"
+                        >
+                            Apply
+                        </button>
+                    </div>
+                    <div id="discountFeedback" class="mt-2 text-sm hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products -->
+    {% if related_products %}
+    <section class="mt-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Similar Products</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for related in related_products %}
+            <a href="{% if related.slug %}/manuals/{{ related.slug }}{% else %}/product/{{ related.id }}{% endif %}" class="group">
+                <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
+                    {% if related.image_url %}
+                    <div class="h-64 overflow-hidden relative bg-white">
+                        {% set image_urls = related.image_url.split(',') %}
+                        <img src="{{ image_urls[0].strip() }}" 
+                             alt="{{ related.title }}" 
+                             class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                             onError="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;bg-gradient-to-br from-blue-100 to-indigo-100 h-64 flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition&quot;><svg class=&quot;w-20 h-20 text-blue-400&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;><path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2&quot; d=&quot;M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z&quot;></path></svg></div>'">
+                    </div>
+                    {% else %}
+                    <div class="bg-gradient-to-br from-blue-100 to-indigo-100 h-64 flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition">
+                        <svg class="w-20 h-20 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    <div class="p-5 flex-1 flex flex-col">
+                        <div class="text-xs font-semibold text-yellow-500 mb-2">{{ related.category }}</div>
+                        <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-yellow-600 transition">
+                            {{ related.title }}
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-3">{{ related.brand }} - {{ related.model }}</p>
+                        <div class="mt-auto">
+                            <div class="text-2xl font-bold text-gray-900">
+                                ${{ "%.2f"|format(related.price) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<!-- Lightbox Modal -->
+<div id="lightboxModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center p-4">
+    <!-- Close button - positioned outside the main container for better click handling -->
+    <button id="closeLightbox" class="fixed top-4 right-4 text-white text-4xl hover:text-gray-300 transition-colors z-50 bg-black bg-opacity-70 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer">
+        ×
+    </button>
+    
+    <div class="relative max-w-6xl max-h-full w-full h-full flex items-center justify-center">
+        <!-- Main lightbox image -->
+        <div class="relative w-full h-full flex items-center justify-center">
+            <img id="lightboxImage" src="" alt="" class="max-w-full max-h-full object-contain">
+            
+            <!-- Navigation arrows for lightbox -->
+            <button id="lightboxPrev" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-4xl hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hidden cursor-pointer">
+                ‹
+            </button>
+            <button id="lightboxNext" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-4xl hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center hidden cursor-pointer">
+                ›
+            </button>
+        </div>
+        
+        <!-- Image counter -->
+        <div id="imageCounter" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-lg bg-black bg-opacity-50 px-4 py-2 rounded-full hidden">
+            <span id="currentImageIndex">1</span> / <span id="totalImages">1</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Reset button state when page is shown (including browser back button)
+    // Store validated discount info
+    let productDiscountInfo = null;
+    const productPrice = {{ product.price }};
+
+    // Update price display
+    function updatePriceDisplay(discountAmount = 0) {
+        const originalPriceDiv = document.getElementById('originalPrice');
+        const discountedContainer = document.getElementById('discountedPriceContainer');
+        
+        if (discountAmount > 0) {
+            const finalPrice = Math.max(0.50, productPrice - discountAmount);
+            
+            // Hide original price, show discounted
+            originalPriceDiv.classList.add('hidden');
+            discountedContainer.classList.remove('hidden');
+            
+            // Update values
+            document.getElementById('originalPriceStrike').textContent = productPrice.toFixed(2);
+            document.getElementById('discountedPrice').textContent = finalPrice.toFixed(2);
+            document.getElementById('savingsAmount').textContent = discountAmount.toFixed(2);
+        } else {
+            // Show original price, hide discounted
+            originalPriceDiv.classList.remove('hidden');
+            discountedContainer.classList.add('hidden');
+        }
+    }
+
+    // Discount code validation
+    document.getElementById('validateDiscountBtn').addEventListener('click', async function() {
+        const codeInput = document.getElementById('productDiscountCode');
+        const code = codeInput.value.trim().toUpperCase();
+        const feedback = document.getElementById('discountFeedback');
+        
+        if (!code) {
+            feedback.textContent = '⚠️ Please enter a discount code';
+            feedback.className = 'mt-2 text-sm text-orange-600';
+            feedback.classList.remove('hidden');
+            return;
+        }
+
+        this.disabled = true;
+        this.textContent = '...';
+        
+        try {
+            const response = await fetch(`/api/discount-codes/validate/${code}`);
+            const data = await response.json();
+            
+            if (data.valid) {
+                // Calculate discount amount
+                let discountAmount = 0;
+                if (data.type === 'percentage') {
+                    discountAmount = (productPrice * data.value) / 100;
+                } else {
+                    discountAmount = Math.min(data.value, productPrice);
+                }
+                
+                productDiscountInfo = {
+                    code: data.code,
+                    type: data.type,
+                    value: data.value,
+                    discountAmount: discountAmount
+                };
+                
+                // Update price display
+                updatePriceDisplay(discountAmount);
+                
+                const discountText = data.type === 'percentage' 
+                    ? `${data.value}%` 
+                    : `$${data.value}`;
+                feedback.innerHTML = `✅ Code applied! Discount: <strong>${discountText}</strong>`;
+                feedback.className = 'mt-2 text-sm text-green-700 font-semibold';
+                feedback.classList.remove('hidden');
+                codeInput.disabled = true;
+                this.textContent = '✓';
+                this.classList.remove('bg-cyan-600', 'hover:bg-cyan-700');
+                this.classList.add('bg-green-500', 'cursor-not-allowed');
+            } else {
+                productDiscountInfo = null;
+                updatePriceDisplay(0);
+                feedback.textContent = '❌ Invalid or inactive code';
+                feedback.className = 'mt-2 text-sm text-red-600';
+                feedback.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error validating discount:', error);
+            feedback.textContent = '⚠️ Error validating code';
+            feedback.className = 'mt-2 text-sm text-red-600';
+            feedback.classList.remove('hidden');
+        } finally {
+            this.disabled = false;
+            if (this.textContent === '...') {
+                this.textContent = 'Apply';
+            }
+        }
+    });
+
+    // Allow Enter key to validate discount
+    document.getElementById('productDiscountCode').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('validateDiscountBtn').click();
+        }
+    });
+
+    window.addEventListener('pageshow', function(event) {
+        const buyButton = document.getElementById('buyNowBtn');
+        if (buyButton) {
+            buyButton.disabled = false;
+            buyButton.innerHTML = 'Buy Now';
+        }
+    });
+
+    // Stripe Checkout Integration
+    document.getElementById('buyNowBtn').addEventListener('click', async function() {
+        try {
+            this.disabled = true;
+            this.innerHTML = '<span class="flex items-center justify-center">Processing...</span>';
+            
+            // Prepare request body
+            const requestBody = {
+                product_id: {{ product.id }}
+            };
+            
+            // Add discount code if validated
+            if (productDiscountInfo && productDiscountInfo.code) {
+                requestBody.discount_code = productDiscountInfo.code;
+            }
+            
+            // Create Stripe checkout session
+            const response = await fetch('/api/orders/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+            
+            const data = await response.json();
+            
+            if (data.url) {
+                // Redirect to Stripe Checkout
+                window.location.href = data.url;
+            } else {
+                alert('Error creating checkout session. Please try again.');
+                this.disabled = false;
+                this.innerHTML = '<span class="flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>Buy Now</span>';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            this.disabled = false;
+            this.innerHTML = '<span class="flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>Buy Now</span>';
+        }
+    });
+
+    // Image slider functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Lightbox elements (always initialize)
+        const lightboxModal = document.getElementById('lightboxModal');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const closeLightbox = document.getElementById('closeLightbox');
+        const lightboxPrev = document.getElementById('lightboxPrev');
+        const lightboxNext = document.getElementById('lightboxNext');
+        const imageCounter = document.getElementById('imageCounter');
+        const currentImageIndex = document.getElementById('currentImageIndex');
+        const totalImagesSpan = document.getElementById('totalImages');
+
+        // Slider elements
+        const slider = document.querySelector('.image-slider');
+        
+        let lightboxCurrentIndex = 0;
+        let imageUrls = [];
+
+        // Get all image URLs if slider exists
+        if (slider) {
+            const slides = slider.querySelectorAll('.slide');
+            const prevBtn = slider.querySelector('.slider-prev');
+            const nextBtn = slider.querySelector('.slider-next');
+            const dots = slider.querySelectorAll('.dot');
+            
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            // Get all image URLs from slides
+            imageUrls = Array.from(slides).map(slide => {
+                const img = slide.querySelector('img');
+                return img.getAttribute('data-image-src') || img.src;
+            });
+
+            if (totalSlides > 1) {
+                // Slider functionality only if multiple slides exist
+                function showSlide(index) {
+                    // Hide all slides
+                    slides.forEach((slide, i) => {
+                        slide.style.opacity = i === index ? '1' : '0';
+                        slide.classList.toggle('active', i === index);
+                    });
+
+                    // Update dots
+                    dots.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === index);
+                        dot.style.backgroundColor = i === index ? 'white' : 'rgba(255,255,255,0.5)';
+                    });
+
+                    currentSlide = index;
+                }
+
+                function nextSlide() {
+                    const next = (currentSlide + 1) % totalSlides;
+                    showSlide(next);
+                }
+
+                function prevSlide() {
+                    const prev = (currentSlide - 1 + totalSlides) % totalSlides;
+                    showSlide(prev);
+                }
+
+                // Event listeners for slider
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        nextSlide();
+                    });
+                }
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        prevSlide();
+                    });
+                }
+
+                dots.forEach((dot, index) => {
+                    dot.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showSlide(index);
+                    });
+                });
+
+                // Auto-play slider
+                let autoPlay = setInterval(nextSlide, 5000);
+                
+                // Pause auto-play on hover
+                slider.addEventListener('mouseenter', () => clearInterval(autoPlay));
+                slider.addEventListener('mouseleave', () => {
+                    autoPlay = setInterval(nextSlide, 5000);
+                });
+
+                // Initialize first slide
+                showSlide(0);
+            }
+
+            // Lightbox event listeners for slider
+            slides.forEach((slide, index) => {
+                const img = slide.querySelector('img');
+                if (img) {
+                    img.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openLightbox(index, imageUrls);
+                    });
+                }
+                // Also add to the slide div itself as fallback
+                slide.addEventListener('click', (e) => {
+                    if (!e.target.closest('.slider-prev, .slider-next, .dot')) {
+                        e.preventDefault();
+                        openLightbox(index, imageUrls);
+                    }
+                });
+            });
+        }
+
+        // Lightbox functions
+        function openLightbox(imageIndex = 0, customImageUrls = null) {
+            // Use custom images if provided (for single image), otherwise use slider images
+            const urls = customImageUrls || imageUrls;
+            window.currentLightboxUrls = urls; // Store current URLs globally
+            lightboxCurrentIndex = imageIndex;
+            
+            lightboxImage.src = urls[lightboxCurrentIndex];
+            currentImageIndex.textContent = lightboxCurrentIndex + 1;
+            totalImagesSpan.textContent = urls.length;
+            
+            lightboxModal.classList.remove('hidden');
+            lightboxModal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            
+            // Show navigation if multiple images
+            if (urls.length > 1) {
+                lightboxPrev.classList.remove('hidden');
+                lightboxNext.classList.remove('hidden');
+                imageCounter.classList.remove('hidden');
+            } else {
+                lightboxPrev.classList.add('hidden');
+                lightboxNext.classList.add('hidden');
+                imageCounter.classList.remove('hidden');
+            }
+        }
+
+        function closeLightboxModal() {
+            console.log('closeLightboxModal called'); // Debug
+            if (lightboxModal) {
+                lightboxModal.classList.add('hidden');
+                lightboxModal.classList.remove('flex');
+                document.body.style.overflow = '';
+                window.currentLightboxUrls = null; // Clear stored URLs
+                console.log('Lightbox closed'); // Debug
+            } else {
+                console.log('Lightbox modal not found!'); // Debug
+            }
+        }
+
+        function lightboxNextImage() {
+            const urls = getCurrentImageUrls();
+            lightboxCurrentIndex = (lightboxCurrentIndex + 1) % urls.length;
+            updateLightboxImage(urls);
+        }
+
+        function lightboxPrevImage() {
+            const urls = getCurrentImageUrls();
+            lightboxCurrentIndex = (lightboxCurrentIndex - 1 + urls.length) % urls.length;
+            updateLightboxImage(urls);
+        }
+
+        function getCurrentImageUrls() {
+            return window.currentLightboxUrls || imageUrls;
+        }
+
+        function updateLightboxImage(urls = null) {
+            const currentUrls = urls || getCurrentImageUrls();
+            if (lightboxImage && currentUrls[lightboxCurrentIndex]) {
+                lightboxImage.src = currentUrls[lightboxCurrentIndex];
+                if (currentImageIndex) currentImageIndex.textContent = lightboxCurrentIndex + 1;
+            }
+        }
+
+        // Single image lightbox
+        const singleImage = document.querySelector('[data-lightbox="product-gallery"]:not(.slide img)');
+        if (singleImage) {
+            singleImage.addEventListener('click', () => {
+                const singleImageUrls = [singleImage.getAttribute('data-image-src') || singleImage.src];
+                openLightbox(0, singleImageUrls);
+            });
+        }
+
+        // Lightbox event listeners - always add these
+        if (closeLightbox) {
+            console.log('Adding click listener to close button'); // Debug
+            closeLightbox.addEventListener('click', (e) => {
+                console.log('Close button clicked!'); // Debug
+                e.preventDefault();
+                e.stopPropagation();
+                closeLightboxModal();
+            });
+        } else {
+            console.log('Close lightbox button not found!'); // Debug
+        }
+        
+        if (lightboxNext) {
+            lightboxNext.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                lightboxNextImage();
+            });
+        }
+        
+        if (lightboxPrev) {
+            lightboxPrev.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                lightboxPrevImage();
+            });
+        }
+
+        // Close on click outside image
+        if (lightboxModal) {
+            lightboxModal.addEventListener('click', (e) => {
+                // Close if clicking on the modal background (not on image or buttons)
+                if (e.target === lightboxModal || 
+                    e.target.classList.contains('bg-black') ||
+                    (!e.target.closest('#lightboxImage, #closeLightbox, #lightboxPrev, #lightboxNext, #imageCounter'))) {
+                    closeLightboxModal();
+                }
+            });
+        }
+
+        // Close on click anywhere in document when lightbox is open
+        document.addEventListener('click', (e) => {
+            if (lightboxModal && !lightboxModal.classList.contains('hidden')) {
+                // Don't close if clicking on lightbox controls or image
+                if (!e.target.closest('#lightboxModal img, #closeLightbox, #lightboxPrev, #lightboxNext, #imageCounter')) {
+                    // But do close if clicking anywhere else
+                    closeLightboxModal();
+                }
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (lightboxModal && !lightboxModal.classList.contains('hidden')) {
+                const urls = getCurrentImageUrls();
+                switch(e.key) {
+                    case 'Escape':
+                        closeLightboxModal();
+                        break;
+                    case 'ArrowLeft':
+                        if (urls.length > 1) lightboxPrevImage();
+                        break;
+                    case 'ArrowRight':
+                        if (urls.length > 1) lightboxNextImage();
+                        break;
+                }
+            }
+        });
+
+        // Add to Cart functionality
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        addToCartBtn.addEventListener('click', () => {
+            const imageUrl = '{% if product.image_url %}{{ product.image_url.split(",")[0].strip() }}{% endif %}';
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const productId = parseInt({{ product.id }});
+            const existingItem = cart.find(item => parseInt(item.id) === productId);
+            
+            if (existingItem) {
+                removeFromCartById(productId);
+            } else {
+                addToCart(productId, '{{ product.title }}', {{ product.price }}, 1, imageUrl);
+                
+                // If discount code is validated, save it to localStorage for cart
+                if (productDiscountInfo && productDiscountInfo.code) {
+                    localStorage.setItem('discountInfo', JSON.stringify(productDiscountInfo));
+                }
+            }
+        });
+
+    });
+
+    // Cart functionality
+    function removeFromCartById(productId) {
+        // Ensure productId is a number for consistent comparison
+        productId = parseInt(productId);
+        
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        cart = cart.filter(item => parseInt(item.id) !== productId);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        updateAddToCartButton();
+        showCartNotification('Removed from cart!');
+    }
+    
+    function addToCart(productId, title, price, quantity, imageUrl) {
+        // Ensure productId is a number for consistent comparison
+        productId = parseInt(productId);
+        
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if product already exists in cart
+        const existingItem = cart.find(item => parseInt(item.id) === productId);
+        
+        if (existingItem) {
+            // Show message that item is already in cart
+            showCartNotification('This item is already in your cart!');
+            return;
+        }
+        
+        cart.push({
+            id: productId,
+            title: title,
+            price: price,
+            quantity: 1,
+            imageUrl: imageUrl || ''
+        });
+        
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        
+        // Update button to show "Added"
+        updateAddToCartButton();
+        
+        // Show success message
+        showCartNotification('Added to cart!');
+    }
+
+    function updateAddToCartButton() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const productId = {{ product.id }};
+        const cartIds = cart.map(item => parseInt(item.id));
+        
+        const button = document.getElementById('addToCartBtn');
+        if (cartIds.includes(productId)) {
+            button.innerHTML = `
+                <span class="flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Added ✓
+                </span>
+            `;
+            button.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+            button.classList.add('bg-green-500', 'hover:bg-green-600', 'text-white');
+        } else {
+            button.innerHTML = `
+                <span class="flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Add to Cart
+                </span>
+            `;
+            button.classList.remove('bg-green-500', 'hover:bg-green-600', 'text-white');
+            button.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
+        }
+    }
+
+    // Call on page load
+    document.addEventListener('DOMContentLoaded', updateAddToCartButton);
+
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+            cartCountElement.textContent = totalItems;
+            cartCountElement.style.display = totalItems > 0 ? 'block' : 'none';
+        }
+    }
+
+    function showCartNotification(message) {
+        // Update cart sidebar
+        if (typeof window.updateCartSidebar === 'function') {
+            window.updateCartSidebar();
+        }
+        
+        // Show simple notification instead of opening cart
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[10000] animate-fade-in flex items-center gap-2';
+        notification.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 2000);
+    }
+
+    // Wait for DOM to be ready before attaching modal handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        // Preview Button Handler
+        const previewBtn = document.getElementById('previewBtn');
+        const pdfModal = document.getElementById('pdfPreviewModal');
+        const pdfIframe = document.getElementById('pdfIframe');
+        const pdfLoading = document.getElementById('pdfLoadingScreen');
+        const closePdfModal = document.getElementById('closePdfModal');
+        
+        if (previewBtn && pdfModal && pdfIframe && pdfLoading) {
+            previewBtn.addEventListener('click', function() {
+                const pdfUrl = "{{ product.pdf_url or '' }}";
+                const productId = "{{ product.id }}";
+                if (pdfUrl && productId) {
+                    // Show modal with loading screen
+                    pdfModal.style.display = 'flex';
+                    pdfLoading.style.display = 'flex';
+                    pdfIframe.style.display = 'none';
+                    
+                    // Reset progress bar
+                    const progressBar = document.getElementById('pdfProgressBar');
+                    const progressPercent = document.getElementById('pdfProgressPercent');
+                    progressBar.style.width = '0%';
+                    progressPercent.textContent = '0%';
+                    
+                    // Animate progress bar from 0% to 100% over 10 seconds
+                    const startTime = Date.now();
+                    const duration = 10000; // 10 seconds
+                    let progressInterval;
+                    let hasLoaded = false;
+                    
+                    progressInterval = setInterval(function() {
+                        if (hasLoaded) {
+                            clearInterval(progressInterval);
+                            return;
+                        }
+                        
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min((elapsed / duration) * 100, 99);
+                        progressBar.style.width = progress + '%';
+                        progressPercent.textContent = Math.floor(progress) + '%';
+                        
+                        if (progress >= 99) {
+                            clearInterval(progressInterval);
+                        }
+                    }, 100);
+                    
+                    // Use product ID instead of URL to hide source
+                    const previewUrl = `/api/preview/cached-pdf?product_id=${productId}&pages=10`;
+                    
+                    // Load PDF in iframe
+                    pdfIframe.src = previewUrl;
+                    
+                    // When PDF loads, complete progress and show iframe
+                    pdfIframe.onload = function() {
+                        hasLoaded = true;
+                        clearInterval(progressInterval);
+                        
+                        // Complete progress bar
+                        progressBar.style.width = '100%';
+                        progressPercent.textContent = '100%';
+                        
+                        // Wait a bit to show 100%, then show PDF
+                        setTimeout(function() {
+                            pdfLoading.style.display = 'none';
+                            pdfIframe.style.display = 'block';
+                            
+                            // Show disclaimer note
+                            const disclaimer = document.getElementById('pdfDisclaimer');
+                            if (disclaimer) {
+                                disclaimer.style.display = 'flex';
+                            }
+                        }, 300);
+                    };
+                }
+            });
+        }
+        
+        // Close modal handler
+        if (closePdfModal && pdfModal && pdfIframe) {
+            closePdfModal.addEventListener('click', function() {
+                pdfModal.style.display = 'none';
+                pdfIframe.src = ''; // Clear iframe
+                
+                // Hide disclaimer
+                const disclaimer = document.getElementById('pdfDisclaimer');
+                if (disclaimer) {
+                    disclaimer.style.display = 'none';
+                }
+            });
+        }
+        
+        // Close modal when clicking outside
+        if (pdfModal && pdfIframe) {
+            pdfModal.addEventListener('click', function(e) {
+                if (e.target === pdfModal) {
+                    pdfModal.style.display = 'none';
+                    pdfIframe.src = '';
+                    
+                    // Hide disclaimer
+                    const disclaimer = document.getElementById('pdfDisclaimer');
+                    if (disclaimer) {
+                        disclaimer.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Update cart count on page load
+        updateCartCount();
+    });
+</script>
+
+<style>
+    /* PDF Preview Modal Styles */
+    .pdf-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .pdf-modal-content {
+        position: relative;
+        width: 90%;
+        height: 90%;
+        max-width: 1200px;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .pdf-close-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 10000;
+        background: rgba(0, 0, 0, 0.7);
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s;
+    }
+    
+    .pdf-close-btn:hover {
+        background: rgba(0, 0, 0, 0.9);
+    }
+    
+    .pdf-close-btn svg {
+        width: 24px;
+        height: 24px;
+        stroke: white;
+    }
+    
+    .pdf-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .pdf-spinner {
+        border: 8px solid rgba(255, 255, 255, 0.3);
+        border-top: 8px solid white;
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .pdf-loading-text {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+    
+    .pdf-loading-subtext {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 16px;
+    }
+    
+    .pdf-disclaimer-text {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 13px;
+        margin-top: 20px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        max-width: 400px;
+    }
+    
+    .pdf-disclaimer-note {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 90%;
+        z-index: 10;
+    }
+    
+    .pdf-disclaimer-note svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        stroke: rgba(255, 200, 0, 1);
+    }
+    
+    .pdf-progress-percent {
+        color: white;
+        font-size: 48px;
+        font-weight: bold;
+        margin: 20px 0 15px 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .pdf-progress-bar-container {
+        width: 80%;
+        max-width: 400px;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+    }
+    
+    .pdf-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #fff, #f0f0f0);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .pdf-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    
+    @media (max-width: 768px) {
+        .pdf-modal-content {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            border-radius: 0;
+        }
+    }
+    .slide.active {
+        opacity: 1 !important;
+    }
+    
+    .dot.active {
+        background-color: white !important;
+    }
+    
+    .slider-prev, .slider-next {
+        transition: all 0.3s ease;
+    }
+    
+    .slider-prev:hover, .slider-next:hover {
+        transform: translateY(-50%) scale(1.1);
+    }
+    
+    #closeLightbox, #lightboxPrev, #lightboxNext {
+        pointer-events: auto !important;
+        user-select: none;
+        z-index: 9999 !important;
+    }
+    
+    #closeLightbox:hover, #lightboxPrev:hover, #lightboxNext:hover {
+        background-color: rgba(0, 0, 0, 0.8) !important;
+        transform: scale(1.1);
+    }
+</style>
+
+<!-- PDF Preview Modal -->
+<div id="pdfPreviewModal" class="pdf-modal" style="display: none;">
+    <div class="pdf-modal-content">
+        <button id="closePdfModal" class="pdf-close-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        
+        <div id="pdfLoadingScreen" class="pdf-loading">
+            <div class="pdf-spinner"></div>
+            <p class="pdf-loading-text">Generating PDF Preview...</p>
+            <p id="pdfProgressPercent" class="pdf-progress-percent">0%</p>
+            <div class="pdf-progress-bar-container">
+                <div id="pdfProgressBar" class="pdf-progress-bar"></div>
+            </div>
+            <p class="pdf-loading-subtext">Please wait...</p>
+            <p class="pdf-disclaimer-text">⚠️ Preview only - Some pages may appear cropped. Full document is complete.</p>
+        </div>
+        
+        <iframe id="pdfIframe" class="pdf-iframe" style="display: none;"></iframe>
+        <div id="pdfDisclaimer" class="pdf-disclaimer-note" style="display: none;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Preview only - Pages may appear cropped. The full purchased document is complete and uncut.</span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

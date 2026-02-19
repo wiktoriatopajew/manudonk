@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border border-gray-700">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                        📧 Newsletter & Email Marketing
+                    </h1>
+                    <p class="text-gray-400 mt-2">Manage subscribers and campaigns</p>
+                </div>
+                <a href="/admin" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-cyan-600 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
+                <div>
+                    <p class="text-cyan-100 text-sm">Total Subscribers</p>
+                    <p class="text-4xl font-bold mt-2" id="totalSubscribers">0</p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
+                <div>
+                    <p class="text-green-100 text-sm">Purchased</p>
+                    <p class="text-4xl font-bold mt-2" id="purchasedCount">0</p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl shadow-xl p-6 text-white">
+                <div>
+                    <p class="text-purple-100 text-sm">Campaigns Sent</p>
+                    <p class="text-4xl font-bold mt-2" id="campaignsSent">0</p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl shadow-xl p-6 text-white">
+                <div>
+                    <p class="text-orange-100 text-sm">Avg Open Rate</p>
+                    <p class="text-4xl font-bold mt-2" id="avgOpenRate">0%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700">
+            <div class="border-b border-gray-700">
+                <nav class="flex">
+                    <button onclick="showTab('subscribers')" id="tab-subscribers" class="tab-button px-6 py-4 font-semibold text-cyan-400 border-b-2 border-cyan-400">
+                        Subscribers
+                    </button>
+                    <button onclick="showTab('campaigns')" id="tab-campaigns" class="tab-button px-6 py-4 font-semibold text-gray-400 hover:text-gray-300">
+                        Campaigns
+                    </button>
+                    <button onclick="showTab('create')" id="tab-create" class="tab-button px-6 py-4 font-semibold text-gray-400 hover:text-gray-300">
+                        Create Campaign
+                    </button>
+                    <button onclick="showTab('discounts')" id="tab-discounts" class="tab-button px-6 py-4 font-semibold text-gray-400 hover:text-gray-300">
+                        💰 Discount Codes
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Subscribers Tab -->
+            <div id="content-subscribers" class="p-6">
+                <div class="mb-4 flex gap-2">
+                    <button onclick="filterSubscribers('all')" class="filter-btn bg-cyan-600 text-white px-4 py-2 rounded-lg">All</button>
+                    <button onclick="filterSubscribers('active')" class="filter-btn bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600">Active</button>
+                    <button onclick="filterSubscribers('purchased')" class="filter-btn bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600">Purchased</button>
+                    <button onclick="filterSubscribers('not_purchased')" class="filter-btn bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600">Not Purchased</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Discount Code</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Subscribed</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Purchased</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscribersTable" class="bg-gray-800 divide-y divide-gray-700 text-gray-300">
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Campaigns Tab -->
+            <div id="content-campaigns" class="p-6 hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Campaign Name</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Subject</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Segment</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sent</th>
+                                <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="campaignsTable" class="bg-gray-800 divide-y divide-gray-700 text-gray-300">
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Create Campaign Tab -->
+            <div id="content-create" class="p-6 hidden">
+                <form id="campaignForm" class="space-y-6 max-w-4xl">
+                    <div>
+                        <label class="block text-gray-300 font-semibold mb-2">Campaign Name</label>
+                        <input type="text" id="campaignName" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent" placeholder="e.g., Spring Sale 2026">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-300 font-semibold mb-2">Email Subject</label>
+                        <input type="text" id="campaignSubject" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent" placeholder="e.g., 20% OFF All Manuals This Weekend!">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-300 font-semibold mb-2">Target Segment</label>
+                        <select id="campaignSegment" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                            <option value="all">All Subscribers</option>
+                            <option value="purchased">Only Purchased</option>
+                            <option value="not_purchased">Not Purchased Yet</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-300 font-semibold mb-2">Email Content (HTML)</label>
+                        <textarea id="campaignContent" required rows="12" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent font-mono text-sm" placeholder="Paste your HTML email template here..."></textarea>
+                        <p class="text-gray-500 text-sm mt-2">💡 Tip: Use a dark theme matching your brand. Include call-to-action buttons.</p>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="submit" class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-cyan-700 hover:to-blue-700 transition">
+                            Create Campaign
+                        </button>
+                        <button type="button" onclick="previewEmail()" class="bg-gray-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition">
+                            Preview
+                        </button>
+                    </div>
+                </form>
+
+                <div id="previewContainer" class="mt-8 hidden">
+                    <h3 class="text-xl font-bold text-white mb-4">Email Preview:</h3>
+                    <div id="emailPreview" class="bg-white rounded-lg p-4 shadow-lg"></div>
+                </div>
+            </div>
+
+            <!-- Discount Codes Tab -->
+            <div id="content-discounts" class="p-6 hidden">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-4">Create New Discount Code</h3>
+                    <form id="discountForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-900 p-6 rounded-lg">
+                        <div>
+                            <label class="block text-gray-300 font-semibold mb-2">Code</label>
+                            <input type="text" id="discountCode" required class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white uppercase" placeholder="SUMMER2026">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 font-semibold mb-2">Type</label>
+                            <select id="discountType" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount (zł)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 font-semibold mb-2">Value</label>
+                            <input type="number" id="discountValue" required step="0.01" min="0" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" placeholder="10">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 font-semibold mb-2">Max Uses (optional)</label>
+                            <input type="number" id="discountMaxUses" min="1" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" placeholder="Leave empty for unlimited">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 font-semibold mb-2">Expires At (optional)</label>
+                            <input type="datetime-local" id="discountExpires" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 font-semibold mb-2">Description (optional)</label>
+                            <input type="text" id="discountDescription" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" placeholder="Internal note">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <button type="submit" class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition">
+                                Create Discount Code
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4">Active Discount Codes</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase">Code</th>
+                                    <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
+                                    <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase">Value</th>
+                                    <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase">Usage</th>
+                                    <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase">Expires</th>
+                                    <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                                    <th class="px-6 py-3 bg-gray-900 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="discountsTable" class="bg-gray-800 divide-y divide-gray-700 text-gray-300">
+                                <tr>
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaign Stats Modal -->
+        <div id="statsModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-2xl p-8 max-w-2xl w-full mx-4 border border-gray-700">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">Campaign Statistics</h2>
+                    <button onclick="closeStatsModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div id="statsContent" class="space-y-4 text-gray-300">
+                    <!-- Stats will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('access_token');
+let currentSegment = 'all';
+
+// Check if user is logged in
+if (!token) {
+    alert('Nie jesteś zalogowany! Przekierowuję do logowania...');
+    window.location.href = '/login';
+}
+
+async function loadSubscribers(segment = 'all') {
+    try {
+        const response = await fetch(`/api/email-marketing/subscribers?segment=${segment}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            alert('Twój token wygasł lub nie masz uprawnień administratora.\n\nMusisz się wylogować i zalogować ponownie!\n\nPrzekierowuję do strony głównej...');
+            localStorage.removeItem('token');
+            window.location.href = '/';
+            return;
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to load subscribers: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        const table = document.getElementById('subscribersTable');
+        
+        if (data.subscribers && data.subscribers.length > 0) {
+            table.innerHTML = data.subscribers.map(sub => `
+                <tr>
+                    <td class="px-6 py-4">${sub.email}</td>
+                    <td class="px-6 py-4"><code class="bg-gray-700 px-2 py-1 rounded">${sub.discount_code}</code></td>
+                    <td class="px-6 py-4">${new Date(sub.subscribed_at).toLocaleDateString()}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded ${sub.is_active ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}">
+                            ${sub.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded ${sub.has_purchased ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}">
+                            ${sub.has_purchased ? 'Yes' : 'No'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            table.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No subscribers found</td></tr>';
+        }
+
+        // Update stats
+        document.getElementById('totalSubscribers').textContent = data.count || 0;
+        const purchased = data.subscribers.filter(s => s.has_purchased).length;
+        document.getElementById('purchasedCount').textContent = purchased;
+
+    } catch (error) {
+        console.error('Error loading subscribers:', error);
+        alert('Failed to load subscribers');
+    }
+}
+
+async function loadCampaigns() {
+    try {
+        const response = await fetch('/api/email-marketing/campaigns', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+        const table = document.getElementById('campaignsTable');
+        
+        if (data.campaigns && data.campaigns.length > 0) {
+            table.innerHTML = data.campaigns.map(camp => `
+                <tr>
+                    <td class="px-6 py-4">${camp.name}</td>
+                    <td class="px-6 py-4">${camp.subject}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded bg-gray-700">${camp.segment}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded ${camp.status === 'sent' ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'}">
+                            ${camp.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">${camp.sent_count || 0}</td>
+                    <td class="px-6 py-4">
+                        ${camp.status === 'draft' ? 
+                            `<button onclick="sendCampaign(${camp.id})" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded text-sm">Send Now</button>` : 
+                            `<button onclick="viewStats(${camp.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">View Stats</button>`
+                        }
+                    </td>
+                </tr>
+            `).join('');
+
+            // Update stats
+            const sentCampaigns = data.campaigns.filter(c => c.status === 'sent').length;
+            document.getElementById('campaignsSent').textContent = sentCampaigns;
+        } else {
+            table.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No campaigns yet</td></tr>';
+        }
+
+    } catch (error) {
+        console.error('Error loading campaigns:', error);
+    }
+}
+
+async function viewStats(campaignId) {
+    try {
+        const response = await fetch(`/api/email-marketing/campaigns/${campaignId}/stats`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+        
+        document.getElementById('statsContent').innerHTML = `
+            <div class="bg-gray-900 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-cyan-400 mb-4">${data.campaign_name}</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-800 p-4 rounded">
+                        <p class="text-gray-400 text-sm">Total Sent</p>
+                        <p class="text-3xl font-bold text-white">${data.stats.total_sent}</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded">
+                        <p class="text-gray-400 text-sm">Opened</p>
+                        <p class="text-3xl font-bold text-white">${data.stats.opened}</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded">
+                        <p class="text-gray-400 text-sm">Open Rate</p>
+                        <p class="text-3xl font-bold text-cyan-400">${data.stats.open_rate}%</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded">
+                        <p class="text-gray-400 text-sm">Click Rate</p>
+                        <p class="text-3xl font-bold text-blue-400">${data.stats.click_rate}%</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('statsModal').classList.remove('hidden');
+        document.getElementById('statsModal').classList.add('flex');
+        
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        alert('Failed to load statistics');
+    }
+}
+
+function closeStatsModal() {
+    document.getElementById('statsModal').classList.add('hidden');
+    document.getElementById('statsModal').classList.remove('flex');
+}
+
+async function sendCampaign(campaignId) {
+    if (!confirm('Are you sure you want to send this campaign? This cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/email-marketing/campaigns/${campaignId}/send`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`Campaign sent to ${data.sent_count} subscribers!`);
+            loadCampaigns();
+        } else {
+            alert('Failed to send campaign');
+        }
+
+    } catch (error) {
+        console.error('Error sending campaign:', error);
+        alert('Failed to send campaign');
+    }
+}
+
+function filterSubscribers(segment) {
+    currentSegment = segment;
+    
+    // Update button styles
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-cyan-600', 'text-white');
+        btn.classList.add('bg-gray-700', 'text-gray-300');
+    });
+    event.target.classList.remove('bg-gray-700', 'text-gray-300');
+    event.target.classList.add('bg-cyan-600', 'text-white');
+    
+    loadSubscribers(segment);
+}
+
+function showTab(tabName) {
+    // Hide all content
+    document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
+    
+    // Remove active class from all tabs
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('text-cyan-400', 'border-cyan-400', 'border-b-2');
+        btn.classList.add('text-gray-400');
+    });
+    
+    // Show selected content
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+    
+    // Mark tab as active
+    const tab = document.getElementById(`tab-${tabName}`);
+    tab.classList.remove('text-gray-400');
+    tab.classList.add('text-cyan-400', 'border-b-2', 'border-cyan-400');
+    
+    // Load data based on tab
+    if (tabName === 'subscribers') {
+        loadSubscribers(currentSegment);
+    } else if (tabName === 'campaigns') {
+        loadCampaigns();
+    } else if (tabName === 'discounts') {
+        loadDiscountCodes();
+    }
+}
+
+document.getElementById('campaignForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        name: document.getElementById('campaignName').value,
+        subject: document.getElementById('campaignSubject').value,
+        html_content: document.getElementById('campaignContent').value,
+        segment: document.getElementById('campaignSegment').value
+    };
+
+    try {
+        const response = await fetch('/api/email-marketing/campaigns', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Campaign created successfully!');
+            document.getElementById('campaignForm').reset();
+            showTab('campaigns');
+        } else {
+            alert('Failed to create campaign');
+        }
+
+    } catch (error) {
+        console.error('Error creating campaign:', error);
+        alert('Failed to create campaign');
+    }
+});
+
+function previewEmail() {
+    const content = document.getElementById('campaignContent').value;
+    document.getElementById('emailPreview').innerHTML = content;
+    document.getElementById('previewContainer').classList.remove('hidden');
+}
+
+// Discount Codes Functions
+async function loadDiscountCodes() {
+    try {
+        const response = await fetch('/api/discount-codes/', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load discount codes');
+
+        const codes = await response.json();
+        const table = document.getElementById('discountsTable');
+        
+        if (codes && codes.length > 0) {
+            table.innerHTML = codes.map(code => {
+                const expiresText = code.expires_at 
+                    ? new Date(code.expires_at).toLocaleDateString() 
+                    : 'Never';
+                
+                const usageText = code.max_uses 
+                    ? `${code.used_count} / ${code.max_uses}` 
+                    : code.used_count;
+                
+                const statusBadge = code.is_valid 
+                    ? '<span class="px-2 py-1 bg-green-600 text-white text-xs rounded">Active</span>' 
+                    : '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded">Inactive</span>';
+                
+                const typeText = code.type === 'percentage' ? `${code.value}%` : `${code.value} zł`;
+                
+                return `
+                    <tr>
+                        <td class="px-6 py-4 font-mono font-bold">
+                            ${code.code}
+                            <button onclick="copyCode('${code.code}')" class="ml-2 text-cyan-400 hover:text-cyan-300">📋</button>
+                        </td>
+                        <td class="px-6 py-4">${code.type}</td>
+                        <td class="px-6 py-4 font-semibold text-green-400">${typeText}</td>
+                        <td class="px-6 py-4">${usageText}</td>
+                        <td class="px-6 py-4">${expiresText}</td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4">
+                            <button onclick="toggleDiscountCode(${code.id})" class="text-yellow-400 hover:text-yellow-300 mr-2">
+                                ${code.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onclick="deleteDiscountCode(${code.id})" class="text-red-400 hover:text-red-300">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            table.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No discount codes yet</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading discount codes:', error);
+        alert('Failed to load discount codes');
+    }
+}
+
+function copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        alert(`Code "${code}" copied to clipboard!`);
+    });
+}
+
+async function toggleDiscountCode(id) {
+    try {
+        const response = await fetch(`/api/discount-codes/${id}/toggle`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to toggle discount code');
+
+        loadDiscountCodes();
+    } catch (error) {
+        alert('Error toggling discount code');
+    }
+}
+
+async function deleteDiscountCode(id) {
+    if (!confirm('Are you sure you want to delete this discount code?')) return;
+
+    try {
+        const response = await fetch(`/api/discount-codes/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete discount code');
+
+        loadDiscountCodes();
+    } catch (error) {
+        alert('Error deleting discount code');
+    }
+}
+
+document.getElementById('discountForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const code = document.getElementById('discountCode').value.toUpperCase();
+    const type = document.getElementById('discountType').value;
+    const value = parseFloat(document.getElementById('discountValue').value);
+    const max_uses = document.getElementById('discountMaxUses').value;
+    const expires_at = document.getElementById('discountExpires').value;
+    const description = document.getElementById('discountDescription').value;
+
+    try {
+        const response = await fetch('/api/discount-codes/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                code,
+                type,
+                value,
+                max_uses: max_uses ? parseInt(max_uses) : null,
+                expires_at: expires_at || null,
+                description: description || null
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to create discount code');
+        }
+
+        alert(`Discount code "${code}" created successfully!`);
+        document.getElementById('discountForm').reset();
+        loadDiscountCodes();
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+// Load data on page load
+loadSubscribers('all');
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Bear Head -->
+  <circle cx="100" cy="100" r="60" fill="#8B4513" stroke="#654321" stroke-width="3"/>
+  
+  <!-- Left Ear -->
+  <circle cx="70" cy="60" r="20" fill="#8B4513" stroke="#654321" stroke-width="2"/>
+  <circle cx="70" cy="60" r="12" fill="#D2691E"/>
+  
+  <!-- Right Ear -->
+  <circle cx="130" cy="60" r="20" fill="#8B4513" stroke="#654321" stroke-width="2"/>
+  <circle cx="130" cy="60" r="12" fill="#D2691E"/>
+  
+  <!-- Snout -->
+  <ellipse cx="100" cy="110" rx="35" ry="30" fill="#D2691E"/>
+  
+  <!-- Nose -->
+  <ellipse cx="100" cy="105" rx="12" ry="10" fill="#333"/>
+  
+  <!-- Mouth -->
+  <path d="M 100 105 Q 95 115 90 112 M 100 105 Q 105 115 110 112" 
+        stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Left Eye -->
+  <circle cx="85" cy="90" r="8" fill="#333"/>
+  <circle cx="87" cy="88" r="3" fill="#FFF"/>
+  
+  <!-- Right Eye -->
+  <circle cx="115" cy="90" r="8" fill="#333"/>
+  <circle cx="117" cy="88" r="3" fill="#FFF"/>
+  
+  <!-- Book/Manual in paw (bottom left) -->
+  <g transform="translate(40, 140)">
+    <rect x="0" y="0" width="30" height="40" fill="#4A90E2" stroke="#2C5AA0" stroke-width="2" rx="2"/>
+    <line x1="5" y1="10" x2="25" y2="10" stroke="#FFF" stroke-width="1.5"/>
+    <line x1="5" y1="17" x2="25" y2="17" stroke="#FFF" stroke-width="1.5"/>
+    <line x1="5" y1="24" x2="20" y2="24" stroke="#FFF" stroke-width="1.5"/>
+  </g>
+</svg>

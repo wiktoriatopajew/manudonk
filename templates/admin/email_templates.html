@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border border-gray-700">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
+                        📨 Email Campaign Templates
+                    </h1>
+                    <p class="text-gray-400 mt-2">Gotowe szablony do kampanii emailowych</p>
+                </div>
+                <a href="/admin" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-8 text-white">
+            <h2 class="text-xl font-bold mb-2">💡 Jak używać szablonów?</h2>
+            <ol class="list-decimal list-inside space-y-2 text-sm opacity-90">
+                <li>Kliknij przycisk "Kopiuj Kod" pod wybranym szablonem</li>
+                <li>Przejdź do <a href="/admin/newsletter" class="underline font-semibold">Newsletter & Email Marketing</a></li>
+                <li>Zakładka "Create Campaign"</li>
+                <li>Wklej kod do pola "Email Content (HTML)"</li>
+                <li>Edytuj teksty, daty, kody rabatowe według potrzeb</li>
+                <li>Kliknij "Preview" aby zobaczyć efekt</li>
+                <li>Wyślij kampanię!</li>
+            </ol>
+        </div>
+
+        <!-- Templates Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Template 1: Promocja -->
+            <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700">
+                <div class="bg-gradient-to-r from-cyan-600 to-blue-600 p-4">
+                    <h3 class="text-xl font-bold text-white">🎉 Promocja z Kodem Rabatowym</h3>
+                    <p class="text-cyan-100 text-sm">Idealny do wysyłki kodów zniżkowych</p>
+                </div>
+                <div class="p-6">
+                    <div class="bg-white rounded-lg p-4 mb-4" style="max-height: 400px; overflow-y: auto;">
+                        <iframe id="template1" style="width: 100%; height: 400px; border: none; transform: scale(0.5); transform-origin: 0 0; width: 200%; height: 800px;"></iframe>
+                    </div>
+                    <button onclick="copyTemplate(1)" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-lg font-semibold transition">
+                        📋 Kopiuj Kod
+                    </button>
+                </div>
+            </div>
+
+            <!-- Template 2: Nowości -->
+            <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700">
+                <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-4">
+                    <h3 class="text-xl font-bold text-white">✨ Nowości i Aktualizacje</h3>
+                    <p class="text-purple-100 text-sm">Lista nowości z gradientem purple/pink</p>
+                </div>
+                <div class="p-6">
+                    <div class="bg-white rounded-lg p-4 mb-4" style="max-height: 400px; overflow-y: auto;">
+                        <iframe id="template2" style="width: 100%; height: 400px; border: none; transform: scale(0.5); transform-origin: 0 0; width: 200%; height: 800px;"></iframe>
+                    </div>
+                    <button onclick="copyTemplate(2)" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-lg font-semibold transition">
+                        📋 Kopiuj Kod
+                    </button>
+                </div>
+            </div>
+
+            <!-- Template 3: Urgency -->
+            <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700">
+                <div class="bg-gradient-to-r from-orange-600 to-red-600 p-4">
+                    <h3 class="text-xl font-bold text-white">⏰ Przypomnienie - Ostatni Dzwonek</h3>
+                    <p class="text-orange-100 text-sm">Styl urgencji z gradientem orange/red</p>
+                </div>
+                <div class="p-6">
+                    <div class="bg-white rounded-lg p-4 mb-4" style="max-height: 400px; overflow-y: auto;">
+                        <iframe id="template3" style="width: 100%; height: 400px; border: none; transform: scale(0.5); transform-origin: 0 0; width: 200%; height: 800px;"></iframe>
+                    </div>
+                    <button onclick="copyTemplate(3)" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-lg font-semibold transition">
+                        📋 Kopiuj Kod
+                    </button>
+                </div>
+            </div>
+
+            <!-- Template 4: Simple -->
+            <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700">
+                <div class="bg-gradient-to-r from-cyan-600 to-cyan-700 p-4">
+                    <h3 class="text-xl font-bold text-white">📧 Prosty - Ogłoszenie</h3>
+                    <p class="text-cyan-100 text-sm">Minimalistyczny i uniwersalny</p>
+                </div>
+                <div class="p-6">
+                    <div class="bg-white rounded-lg p-4 mb-4" style="max-height: 400px; overflow-y: auto;">
+                        <iframe id="template4" style="width: 100%; height: 400px; border: none; transform: scale(0.5); transform-origin: 0 0; width: 200%; height: 800px;"></iframe>
+                    </div>
+                    <button onclick="copyTemplate(4)" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-lg font-semibold transition">
+                        📋 Kopiuj Kod
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Success Toast -->
+        <div id="toast" class="fixed bottom-8 right-8 bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl transform translate-y-32 transition-transform duration-300">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="font-semibold">Kod skopiowany do schowka!</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// Template HTML content
+const templates = {
+    1: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background: #1f2937; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); padding: 40px; text-align: center;">
+                            <h1 style="margin: 0; color: white; font-size: 32px; font-weight: bold;">🎉 Ekskluzywna Promocja!</h1>
+                            <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 18px;">Tylko dla naszych subskrybentów</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px; color: #e5e7eb;">
+                            <h2 style="color: #06b6d4; margin-top: 0;">Witaj!</h2>
+                            <p style="font-size: 16px; line-height: 1.6; margin: 20px 0;">Mamy dla Ciebie coś specjalnego! Użyj kodu rabatowego poniżej i odbierz <strong style="color: #10b981;">20% zniżki</strong> na wszystkie instrukcje obsługi.</p>
+                            <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0;">
+                                <p style="margin: 0 0 10px 0; color: rgba(255,255,255,0.9); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Twój kod rabatowy</p>
+                                <p style="margin: 0; color: white; font-size: 36px; font-weight: bold; letter-spacing: 4px; font-family: 'Courier New', monospace;">WELCOME20</p>
+                                <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.8); font-size: 12px;">Ważny do 31 marca 2026</p>
+                            </div>
+                            <p style="font-size: 16px; line-height: 1.6; margin: 20px 0;">Posiadamy największą bazę instrukcji obsługi w Polsce - ponad 100 000 produktów!</p>
+                            <div style="text-align: center; margin: 35px 0;">
+                                <a href="{{domain}}/search" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);">🔍 Przeglądaj Instrukcje</a>
+                            </div>
+                            <p style="font-size: 14px; line-height: 1.6; margin: 30px 0 0 0; color: #9ca3af;">Nie przegap tej okazji! Kod rabatowy działa na wszystkie produkty w naszym sklepie.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: #111827; padding: 30px; text-align: center; color: #6b7280; font-size: 12px;">
+                            <p style="margin: 0 0 10px 0;">© 2026 Manual Bear. Wszystkie prawa zastrzeżone.</p>
+                            <p style="margin: 0;">Otrzymujesz ten email, ponieważ zapisałeś się do naszego newslettera.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`,
+    2: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%); font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%); padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background: #1f2937; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); padding: 40px; text-align: center;">
+                            <h1 style="margin: 0; color: white; font-size: 32px; font-weight: bold;">✨ Nowości w Katalogu</h1>
+                            <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 18px;">Dodaliśmy nowe instrukcje!</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px; color: #e5e7eb;">
+                            <h2 style="color: #a78bfa; margin-top: 0;">Cześć!</h2>
+                            <p style="font-size: 16px; line-height: 1.6; margin: 20px 0;">Właśnie zaktualizowaliśmy naszą bazę danych o setki nowych instrukcji obsługi. Sprawdź, co nowego!</p>
+                            <div style="background: #374151; border-left: 4px solid #8b5cf6; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                                <p style="margin: 0 0 15px 0; color: #06b6d4; font-weight: bold; font-size: 16px;">🎯 Co nowego:</p>
+                                <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                                    <li>📱 Nowe instrukcje do smartfonów Samsung i iPhone</li>
+                                    <li>🏠 Instrukcje AGD - pralki, zmywarki, lodówki</li>
+                                    <li>🔧 Narzędzia budowlane i przemysłowe</li>
+                                    <li>🎮 Konsole i sprzęt gamingowy</li>
+                                </ul>
+                            </div>
+                            <p style="font-size: 16px; line-height: 1.6; margin: 20px 0;">Wszystkie instrukcje dostępne w formacie PDF, gotowe do pobrania natychmiast po zakupie.</p>
+                            <div style="text-align: center; margin: 35px 0;">
+                                <a href="{{domain}}/search" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);">🚀 Zobacz Nowości</a>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 12px; padding: 20px; margin: 30px 0;">
+                                <p style="margin: 0; color: white; font-size: 14px; line-height: 1.6;"><strong>💡 Wskazówka:</strong> Nie możesz znaleźć instrukcji? Skontaktuj się z nami - być może ją mamy lub możemy ją dla Ciebie zdobyć!</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: #111827; padding: 30px; text-align: center; color: #6b7280; font-size: 12px;">
+                            <p style="margin: 0 0 10px 0;">© 2026 Manual Bear. Wszystkie prawa zastrzeżone.</p>
+                            <p style="margin: 0;">Otrzymujesz ten email, ponieważ zapisałeś się do naszego newslettera.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`,
+    3: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background: #1f2937; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); padding: 40px; text-align: center;">
+                            <h1 style="margin: 0; color: white; font-size: 32px; font-weight: bold;">⏰ Ostatni Dzwonek!</h1>
+                            <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 18px;">Twój kod rabatowy wkrótce wygaśnie</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px; color: #e5e7eb;">
+                            <h2 style="color: #fbbf24; margin-top: 0;">Cześć!</h2>
+                            <p style="font-size: 16px; line-height: 1.6; margin: 20px 0;">Przypominamy, że Twój <strong style="color: #10b981;">kod rabatowy 10%</strong> wygasa już <strong style="color: #ef4444;">za 3 dni</strong>!</p>
+                            <div style="background: linear-gradient(135deg, #dc2626 0%, #f59e0b 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0; border: 3px solid #fbbf24;">
+                                <p style="margin: 0 0 15px 0; color: white; font-size: 16px; font-weight: bold;">⚡ UŻYJ PRZED WYGAŚNIĘCIEM</p>
+                                <p style="margin: 0; color: white; font-size: 40px; font-weight: bold; letter-spacing: 4px; font-family: 'Courier New', monospace;">WELCOME10</p>
+                                <p style="margin: 15px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Wygasa: 15 stycznia 2026</p>
+                            </div>
+                            <div style="text-align: center; margin: 35px 0;">
+                                <a href="{{domain}}/search" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); color: white; text-decoration: none; padding: 18px 50px; border-radius: 10px; font-size: 20px; font-weight: bold; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5); text-transform: uppercase; letter-spacing: 1px;">🛒 Wykorzystaj Kod Teraz!</a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: #111827; padding: 30px; text-align: center; color: #6b7280; font-size: 12px;">
+                            <p style="margin: 0 0 10px 0;">© 2026 Manual Bear. Wszystkie prawa zastrzeżone.</p>
+                            <p style="margin: 0;">Otrzymujesz ten email, ponieważ zapisałeś się do naszego newslettera.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`,
+    4: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background: #0f172a; font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: #0f172a; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background: #1f2937; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid #374151;">
+                    <tr>
+                        <td style="padding: 40px 30px 30px 30px; border-bottom: 3px solid #06b6d4;">
+                            <h1 style="margin: 0; color: #06b6d4; font-size: 28px; font-weight: bold;">Manual Bear</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px; color: #e5e7eb;">
+                            <h2 style="color: #10b981; margin-top: 0; font-size: 24px;">Witaj!</h2>
+                            <p style="font-size: 16px; line-height: 1.8; margin: 20px 0;">Mamy dla Ciebie świetną wiadomość! Nasza baza instrukcji obsługi została właśnie rozszerzona o kolejne tysiące dokumentów.</p>
+                            <p style="font-size: 16px; line-height: 1.8; margin: 20px 0;">Niezależnie od tego, czego szukasz - od prostych urządzeń AGD po skomplikowane maszyny przemysłowe - znajdziesz to u nas.</p>
+                            <div style="margin: 40px 0; text-align: center;">
+                                <a href="{{domain}}/search" style="display: inline-block; background: #06b6d4; color: white; text-decoration: none; padding: 15px 35px; border-radius: 8px; font-size: 16px; font-weight: bold;">Przeglądaj Katalog →</a>
+                            </div>
+                            <p style="font-size: 14px; line-height: 1.6; margin: 20px 0; color: #9ca3af;">Dziękujemy za zaufanie i do zobaczenia w sklepie!</p>
+                            <p style="font-size: 16px; margin: 30px 0 0 0; color: #e5e7eb;">Pozdrawiamy,<br><strong style="color: #06b6d4;">Zespół Manual Bear</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: #111827; padding: 25px; text-align: center; color: #6b7280; font-size: 11px;">
+                            <p style="margin: 0 0 8px 0;">© 2026 Manual Bear. Wszystkie prawa zastrzeżone.</p>
+                            <p style="margin: 0;">Ten email został wysłany do subskrybentów newslettera.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+};
+
+// Load templates into iframes
+window.addEventListener('DOMContentLoaded', function() {
+    for (let i = 1; i <= 4; i++) {
+        const iframe = document.getElementById('template' + i);
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(templates[i]);
+        iframe.contentDocument.close();
+    }
+});
+
+// Copy template code
+function copyTemplate(num) {
+    const code = templates[num];
+    navigator.clipboard.writeText(code).then(() => {
+        showToast();
+    });
+}
+
+// Show success toast
+function showToast() {
+    const toast = document.getElementById('toast');
+    toast.style.transform = 'translateY(0)';
+    setTimeout(() => {
+        toast.style.transform = 'translateY(8rem)';
+    }, 3000);
+}
+</script>
+{% endblock %}
+

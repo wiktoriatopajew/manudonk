@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<meta name="description"
+    content="Frequently Asked Questions about ManualBear - find answers about orders, delivery, refunds, product formats, and more.">
+<meta name="robots" content="index, follow">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-6">Frequently Asked Questions (FAQ)</h1>
+        <p class="text-xl text-gray-600 mb-12">Find quick answers to the most common questions about our products and
+            services.</p>
+
+        <!-- Search Tip -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-8">
+            <p class="text-gray-700"><strong>💡 Tip:</strong> Use Ctrl+F (or Cmd+F on Mac) to quickly search this page
+                for your question.</p>
+        </div>
+
+        <!-- FAQ Categories -->
+        <div class="space-y-12">
+            <!-- ORDERING & PAYMENT -->
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-yellow-500">💳 Ordering &
+                    Payment</h2>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">How do I place an order?</h3>
+                        <p class="text-gray-700">Simply search for your manual, add it to your cart, and proceed to
+                            checkout. No account is required to purchase! After payment, you'll immediately receive an
+                            email with your download link. You can optionally create a password after purchase to access
+                            your order history.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">What payment methods do you accept?</h3>
+                        <p class="text-gray-700">We accept all major credit cards (Visa, Mastercard, American Express,
+                            Discover) and debit cards through our secure payment processor, Stripe. All transactions are
+                            encrypted and PCI-DSS compliant.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Is my payment information secure?</h3>
+                        <p class="text-gray-700">Absolutely! We use Stripe, a PCI-DSS Level 1 certified payment
+                            processor trusted by millions of businesses worldwide. We never store your credit card
+                            information on our servers. All payment data is encrypted and handled securely.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Will I receive an order confirmation?</h3>
+                        <p class="text-gray-700">Yes! You'll receive an email confirmation immediately after your
+                            payment is processed. This email will contain your order number, order details, and download
+                            link (for digital products).</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Can I purchase multiple manuals at once?</h3>
+                        <p class="text-gray-700">Yes! You can add multiple manuals to your cart and checkout once.
+                            You'll receive download links for all purchased manuals in your confirmation email.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIGITAL PRODUCTS -->
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-blue-500">📄 Digital Products
+                    (PDF Manuals)</h2>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">How quickly will I receive my digital manual?
+                        </h3>
+                        <p class="text-gray-700">Digital manuals are delivered instantly! You'll receive your download
+                            link via email within 1-5 minutes of payment confirmation. In rare cases, delivery may take
+                            up to 24 hours.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">What format are the manuals in?</h3>
+                        <p class="text-gray-700">All digital manuals are provided as PDF files. PDFs can be opened on
+                            any device (Windows, Mac, iPhone, iPad, Android) using free PDF reader software like Adobe
+                            Acrobat Reader, Preview (Mac), or any browser.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">How long is the download link valid?</h3>
+                        <p class="text-gray-700">Download links remain active for 30 days from the date of purchase. You
+                            can download the file as many times as you need during this period. After 30 days, contact
+                            us if you need the link reactivated.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Can I print the PDF manual?</h3>
+                        <p class="text-gray-700">Yes! Once you download the PDF, you can print it for personal use.
+                            However, you may not redistribute, resell, or share the file with others.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">What if the PDF file won't open or is
+                            corrupted?</h3>
+                        <p class="text-gray-700">Contact us immediately at <a href="mailto:support@manualbear.com"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">support@manualbear.com</a> with
+                            your order number. We'll provide a replacement file within 24 hours. If a replacement is not
+                            possible, we will process a refund according to our <a href="/refund-policy"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">Refund Policy</a>.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">I didn't receive my download link. What should
+                            I do?</h3>
+                        <p class="text-gray-700">First, check your spam/junk folder. If you still can't find it, contact
+                            us at <a href="mailto:support@manualbear.com"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">support@manualbear.com</a> with
+                            your order number, and we'll resend it immediately.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Can I download the manual on multiple devices?
+                        </h3>
+                        <p class="text-gray-700">Yes! The license is for personal use, so you can download and use the
+                            manual on all your personal devices (computer, tablet, phone).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REFUNDS & RETURNS -->
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-red-500">💰 Refunds & Returns
+                </h2>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Can I get a refund for a digital product?</h3>
+                        <p class="text-gray-700">Refunds for digital products are only available in specific
+                            circumstances: corrupted files, delivery failure, wrong product sent, or significant
+                            description mismatch. Once downloaded, digital products cannot be returned due to their
+                            nature. See our <a href="/refund-policy"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">Refund Policy</a>.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">How do I request a refund?</h3>
+                        <p class="text-gray-700">Email <a href="mailto:support@manualbear.com"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">support@manualbear.com</a> with
+                            your order number and reason for refund. We'll review and respond within 2 business days.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">How long does a refund take?</h3>
+                        <p class="text-gray-700">Once approved, refunds are processed within 3-5 business days. The
+                            refund will appear in your original payment method within 5-10 business days depending on
+                            your bank.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">I accidentally bought the same manual twice.
+                            Can I get a refund?</h3>
+                        <p class="text-gray-700">Yes! Contact us within 2 business days with your order numbers, and
+                            we'll refund the duplicate purchase immediately.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCT INFORMATION -->
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-purple-500">🔍 Product
+                    Information</h2>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">How do I know if you have the manual I need?
+                        </h3>
+                        <p class="text-gray-700">Use our search bar to search by product name, model number, or brand.
+                            We have over 1,000 manuals in our database. If you can't find it, contact us - we may be
+                            able to source it for you.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Are these original manufacturer manuals?</h3>
+                        <p class="text-gray-700">Yes! All our manuals are sourced from original manufacturers or
+                            authorized distributors. We provide legitimate, legal copies of user manuals and service
+                            guides.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">What languages are the manuals available in?
+                        </h3>
+                        <p class="text-gray-700">Most manuals are in English, but many are also available in other
+                            languages depending on the manufacturer. The product description will specify the language.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">How do I know how many pages a manual has?</h3>
+                        <p class="text-gray-700">The page count is displayed on each product page when available. This
+                            helps you understand the depth and detail of the manual before purchasing.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCOUNT & SECURITY -->
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-indigo-500">🔒 Account &
+                    Security</h2>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Do I need to create an account to purchase?
+                        </h3>
+                        <p class="text-gray-700">Yes, an account is required to track your orders, access download
+                            links, and receive customer support. Creating an account takes less than a minute.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Is my personal information safe?</h3>
+                        <p class="text-gray-700">Absolutely! We comply with GDPR and EU data protection regulations.
+                            Your information is encrypted, never sold to third parties, and only used to process orders
+                            and provide support. See our <a href="/privacy-policy"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">Privacy Policy</a>.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">I forgot my password. How do I reset it?</h3>
+                        <p class="text-gray-700">Click "Forgot Password" on the login page, enter your email, and we'll
+                            send you a password reset link.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Can I delete my account?</h3>
+                        <p class="text-gray-700">Yes. Contact us at <a href="mailto:support@manualbear.com"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">support@manualbear.com</a> and
+                            we'll delete your account and personal data within 7 days, in compliance with GDPR.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMPANY & LEGAL -->
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-500">🏢 Company & Legal
+                </h2>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Who operates ManualBear?</h3>
+                        <p class="text-gray-700">ManualBear is operated by Sebastian Kłosiński, a registered business in
+                            Płock, Poland (NIP: 7743302274, VAT: PL7743302274). We comply with all Polish and EU
+                            business regulations.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Are you GDPR compliant?</h3>
+                        <p class="text-gray-700">Yes! We fully comply with the General Data Protection Regulation (GDPR)
+                            and respect your privacy rights. See our <a href="/privacy-policy"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">Privacy Policy</a>.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Where can I read your Terms of Service?</h3>
+                        <p class="text-gray-700">Our complete Terms of Service are available at <a
+                                href="/terms-of-service"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">/terms-of-service</a>. We
+                            recommend reading them before making a purchase.</p>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Do you have a physical office?</h3>
+                        <p class="text-gray-700">Our registered business address is: Ul.Gen. Władysława Sikorskiego
+                            18/100, Płock Mazowieckie 09-410, Poland. For inquiries, please contact us via email at <a
+                                href="mailto:support@manualbear.com"
+                                class="text-blue-600 hover:text-blue-700 font-semibold">support@manualbear.com</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Still Have Questions -->
+        <div class="mt-12 p-8 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl">
+            <h2 class="text-2xl font-bold mb-4">Still Have Questions?</h2>
+            <p class="text-lg mb-6">Can't find the answer you're looking for? Our customer support team is here to help!
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <a href="mailto:support@manualbear.com"
+                    class="inline-block bg-white hover:bg-gray-100 text-gray-900 font-bold py-3 px-8 rounded-lg transition transform hover:scale-105">
+                    📧 Email Us
+                </a>
+                <a href="/contact"
+                    class="inline-block bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-lg transition transform hover:scale-105">
+                    📞 Contact Page
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

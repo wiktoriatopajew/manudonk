@@ -1,0 +1,156 @@
+==============================================
+MANUALBEAR - BUSINESS INFORMATION FOR POLICIES
+==============================================
+Last updated: January 15, 2026
+
+COMPANY DETAILS:
+-----------------
+Legal Name: Sebastian Kłosiński
+Business Name: ManualBear
+Address: Ul.Gen. Władysława Sikorskiego 18/100
+         Płock Mazowieckie 09-410
+         Poland
+NIP (Tax ID): 7743302274
+Contact Email: support@manualbear.com
+Phone: +48 516 531 395
+
+PAYMENT PROCESSING:
+-------------------
+Provider: Stripe
+Accepts: Major credit cards, debit cards
+
+PRODUCT TYPES:
+--------------
+1. DIGITAL PRODUCTS (Primary)
+   - Format: PDF manuals
+   - Delivery: Email with download link
+   - Delivery Time: Maximum 24 hours (typically 1-5 minutes)
+   - Download Link Validity: 30 days
+   - Storage: Google Drive
+
+2. PHYSICAL PRODUCTS (Limited Selection)
+   - Type: Printed manuals shipped by post
+   - Packaging: Protective packaging
+   
+   SHIPPING TIMES:
+   - Poland: 1-3 business days
+   - Europe: 3-10 business days
+   - Worldwide: 5-21 business days
+
+REFUND POLICY SUMMARY:
+----------------------
+DIGITAL PRODUCTS:
+- General: No refunds after download (digital nature)
+- Exceptions: Corrupted files, delivery failures, wrong product
+- Timeframe: Within 24 hours of reporting issue
+
+PHYSICAL PRODUCTS:
+- EU Consumer Law: 14-day return period from delivery
+- Condition: Unopened, unused, original packaging
+- Return Shipping: Buyer pays (unless defective/our error)
+- Refund Processing: 3-5 business days after receiving return
+
+PRIVACY & DATA:
+---------------
+- GDPR Compliant (Poland/EU)
+- Data Controller: Sebastian Kłosiński / ManualBear
+- Data Storage: PostgreSQL (Railway), Redis cache
+- File Storage: Google Drive
+- Email Service: Transactional emails for orders
+- Password Security: bcrypt hashing
+- SSL/TLS: All connections encrypted (HTTPS)
+
+LEGAL COMPLIANCE:
+-----------------
+- Governing Law: Polish law
+- Jurisdiction: Courts in Płock, Poland
+- EU Consumer Rights: Fully compliant
+- GDPR: Full compliance with data protection
+- Google Ads Policy: Compliant (clear refund policy, contact info, business address)
+
+CUSTOMER RIGHTS (GDPR):
+-----------------------
+- Right to Access (data export)
+- Right to Rectification (correct data)
+- Right to Erasure ("right to be forgotten")
+- Right to Restriction
+- Right to Data Portability
+- Right to Object
+- Right to Withdraw Consent
+- Right to Lodge Complaint (UODO - Polish DPA)
+
+TECHNICAL INFRASTRUCTURE:
+-------------------------
+- Hosting: Railway (cloud)
+- Database: PostgreSQL
+- Cache: Redis
+- Framework: FastAPI (Python)
+- Payment: Stripe
+- File Delivery: Google Drive links
+
+MARKETING:
+----------
+- Newsletter: Opt-in only (with discount code)
+- Unsubscribe: Available in every email
+- Tracking: Basic analytics, essential cookies only
+- No selling of personal data
+
+KEY POLICIES TO DISPLAY:
+------------------------
+✓ Terms of Service (footer link)
+✓ Privacy Policy (footer link)
+✓ Refund Policy (footer link)
+✓ Contact Information (footer and dedicated page)
+✓ Business Address (footer)
+✓ Email: support@manualbear.com
+
+ADDITIONAL RECOMMENDATIONS:
+---------------------------
+1. Add "Contact Us" page with:
+   - Email: support@manualbear.com
+   - Response time: Within 24 hours
+   - Business hours
+   - Physical address
+
+2. Add "About Us" page (optional but good for trust):
+   - Company mission
+   - What we do
+   - Why choose us
+
+3. Cookie Consent Banner (GDPR requirement):
+   - Essential cookies (session, cart)
+   - Analytics cookies (optional)
+   - Clear opt-out
+
+4. Footer must include:
+   - Business name and address
+   - NIP number
+   - Email contact
+   - Links to all policies
+
+GOOGLE ADS COMPLIANCE CHECKLIST:
+---------------------------------
+✓ Clear business name and address
+✓ Valid contact email (support@manualbear.com)
+✓ Comprehensive Terms of Service
+✓ Privacy Policy with data usage explanation
+✓ Clear Refund/Return Policy
+✓ Accurate product descriptions
+✓ No misleading claims
+✓ Secure payment processing (Stripe)
+✓ SSL certificate (HTTPS)
+✓ Physical address visible on website
+
+NOTES:
+------
+- All policies in English (website language)
+- Update dates on all policy pages
+- Keep policies accessible (footer links)
+- Email confirmations for all orders
+- Clear product descriptions (no misrepresentation)
+- Honest delivery timeframes
+- Professional customer support
+
+==============================================
+COPY THIS INFORMATION TO YOUR RECORDS
+==============================================

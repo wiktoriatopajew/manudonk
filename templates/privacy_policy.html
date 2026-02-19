@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<!-- Prevent indexing in search results (privacy), but allow Google to read for verification -->
+<meta name="robots" content="noindex, follow">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-6">Privacy Policy</h1>
+        <p class="text-gray-600 mb-8">Last updated: January 24, 2026</p>
+
+        <div class="prose prose-lg max-w-none">
+            <p class="text-gray-700 mb-8">
+                ManualBear ("we," "us," "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you use our website and services, in compliance with the General Data Protection Regulation (GDPR) and other applicable data protection laws.
+            </p>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">1. Data Controller</h2>
+            <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                <p class="text-gray-700 mb-2"><strong>Sebastian Kłosiński (ManualBear)</strong></p>
+                <p class="text-gray-700 mb-2">Ul.Gen. Władysława Sikorskiego 18/100</p>
+                <p class="text-gray-700 mb-2">Płock Mazowieckie 09-410</p>
+                <p class="text-gray-700 mb-2">Poland</p>
+                <p class="text-gray-700 mb-2">NIP: 7743302274 | VAT: PL7743302274</p>
+                <p class="text-gray-700">Email: <a href="mailto:support@manualbear.com" class="text-yellow-600 hover:text-yellow-700 font-semibold">support@manualbear.com</a></p>
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">2. Information We Collect</h2>
+            
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">2.1 Information You Provide</h3>
+            <p class="text-gray-700 mb-4">When you use our digital services, we collect:</p>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li><strong>Account Information:</strong> Email address, password (encrypted).</li>
+                <li><strong>Purchase Information:</strong> Billing details and payment information (processed securely via Stripe).</li>
+                <li><strong>Communications:</strong> Messages, inquiries, and support requests sent to us via email.</li>
+                <li><strong>Newsletter Subscription:</strong> Email address (only if you explicitly opt-in).</li>
+            </ul>
+            <p class="text-gray-700 mb-6">
+                <strong>Note:</strong> We do not collect physical shipping addresses or phone numbers for delivery purposes, as we provide digital products only.
+            </p>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">2.2 Automatically Collected Information</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li><strong>Device Information:</strong> IP address, browser type, operating system.</li>
+                <li><strong>Usage Data:</strong> Pages viewed, time spent on pages, and download history.</li>
+                <li><strong>Cookies:</strong> See Section 7 for details.</li>
+            </ul>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">3. How We Use Your Information</h2>
+            <p class="text-gray-700 mb-4">We process your personal data for the following purposes:</p>
+            
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">3.1 Legal Basis: Contract Performance</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li>Delivering purchased digital manuals via email/download links.</li>
+                <li>Providing customer support and responding to inquiries.</li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">3.2 Legal Basis: Legitimate Interest</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li>Improving our website, products, and enhancing server security.</li>
+                <li>Preventing fraud.</li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">3.3 Legal Basis: Consent</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li>Sending marketing communications (if opted-in).</li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">3.4 Legal Basis: Legal Obligation</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li>Complying with Polish and EU tax/accounting requirements.</li>
+            </ul>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">4. How We Share Your Information</h2>
+            <p class="text-gray-700 mb-4">
+                We do not sell, rent, or trade your personal information. We share data only with trusted service providers:
+            </p>
+            
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">4.1 Service Providers</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li><strong>Stripe:</strong> Payment processing (PCI-DSS compliant).</li>
+                <li><strong>Railway/PostgreSQL:</strong> Secure cloud infrastructure and database hosting.</li>
+                <li><strong>Transactional Email Providers:</strong> To deliver your download links and order confirmations.</li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">4.2 Legal Requirements</h3>
+            <p class="text-gray-700 mb-6">
+                Only when required by law or to protect our legal rights.
+            </p>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">5. Data Security</h2>
+            <p class="text-gray-700 mb-4">We implement industry-standard security measures:</p>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li><strong>Encryption:</strong> Data transmission uses SSL/TLS (HTTPS). All passwords are hashed.</li>
+                <li><strong>Secure Payments:</strong> We do not store credit card information on our servers; all transactions are handled by Stripe.</li>
+                <li><strong>Access Controls:</strong> Access to personal data is restricted to authorized personnel only.</li>
+            </ul>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">6. Data Retention</h2>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+                <li><strong>Account & Order Data:</strong> Retained for up to 7 years to comply with tax and legal requirements.</li>
+                <li><strong>Marketing Data:</strong> Retained until you unsubscribe or request deletion.</li>
+            </ul>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">7. Cookies</h2>
+            <p class="text-gray-700 mb-6">
+                We use essential cookies for session management, authentication, and shopping cart functionality. You can manage cookie preferences through your browser settings.
+            </p>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">8. Your Rights (GDPR)</h2>
+            <p class="text-gray-700 mb-6">
+                Under GDPR, you have the right to access, rectify, or erase your data ("Right to be Forgotten"), restrict processing, and the right to data portability. To exercise these rights, contact us at <a href="mailto:support@manualbear.com" class="text-yellow-600 hover:text-yellow-700 font-semibold">support@manualbear.com</a>.
+            </p>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">9. International Data Transfers</h2>
+            <p class="text-gray-700 mb-6">
+                Data may be processed outside the EEA (e.g., Stripe, Cloud Hosting). We ensure appropriate safeguards (Standard Contractual Clauses) are in place to protect your information.
+            </p>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">10. Contact Us</h2>
+            <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                <p class="text-gray-700 mb-2"><strong>Sebastian Kłosiński</strong></p>
+                <p class="text-gray-700 mb-2">Ul.Gen. Władysława Sikorskiego 18/100</p>
+                <p class="text-gray-700 mb-2">Płock Mazowieckie 09-410</p>
+                <p class="text-gray-700 mb-2">Poland</p>
+                <p class="text-gray-700 mb-2">Phone: <a href="tel:+48516531395" class="text-yellow-600 hover:text-yellow-700 font-semibold">+48 516 531 395</a></p>
+                <p class="text-gray-700">Email: <a href="mailto:support@manualbear.com" class="text-yellow-600 hover:text-yellow-700 font-semibold">support@manualbear.com</a></p>
+            </div>
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <a href="/" class="text-yellow-600 hover:text-yellow-700 font-semibold">← Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
