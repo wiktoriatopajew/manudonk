@@ -15,6 +15,7 @@
 
 ✅ **1,303 produkty** zaimportowane do bazy Railway  
 ✅ **1,159 produktów z "Workshop Repair Service Manual"**  
+✅ **1,270 produktów z wieloma obrazami** (2-18 zdjęć każdy)  
 ✅ System 6 kategorii:
 - **cars**: 802 produkty
 - **motorcycles**: 438 produktów
@@ -22,6 +23,13 @@
 - **construction**: 16 produktów
 - **other**: 13 produktów
 - **engines**: 4 produkty
+
+## Funkcje obrazów
+
+- **Image slider** - produkty z wieloma zdjęciami mają slider z nawigacją
+- **Lightbox gallery** - kliknięcie na zdjęcie otwiera galerię  
+- **Smooth transitions** - płynne przejścia między zdjęciami
+- **Responsive design** - działa na wszystkich urządzeniach
 
 ## Jak zobaczyć produkty na stronie
 
