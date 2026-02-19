@@ -304,8 +304,8 @@ async def home(request: Request):
         if DATABASE_URL.startswith("sqlite"):
             # SQLite: use substr and instr to extract first part before '/'
             main_cat_expr = case(
-                [(func.instr(Product.category, '/') > 0, 
-                  func.substr(Product.category, 1, func.instr(Product.category, '/') - 1))],
+                (func.instr(Product.category, '/') > 0, 
+                 func.substr(Product.category, 1, func.instr(Product.category, '/') - 1)),
                 else_=Product.category
             )
         else:
