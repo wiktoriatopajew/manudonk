@@ -969,10 +969,29 @@ async def create_multi_checkout_session(request: CreateMultiCheckoutSessionReque
     try:
         print(f"📦 Multi-checkout request: {len(request.product_ids)} products, discount: '{request.discount_code}'")
         
+        # Validate Stripe is configured
+        if not stripe.api_key or stripe.api_key == "sk_test_placeholder":
+            raise HTTPException(
+                status_code=500, 
+                detail="Payment system not configured. Please contact support."
+            )
+        
+        # Validate we have product IDs
+        if not request.product_ids or len(request.product_ids) == 0:
+            raise HTTPException(status_code=400, detail="No products in cart")
+        
         # Get all products
         products = session.query(Product).filter(Product.id.in_(request.product_ids)).all()
         if not products:
             raise HTTPException(status_code=404, detail="Products not found")
+        
+        # Validate all products have valid prices
+        for product in products:
+            if not product.price or product.price <= 0:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Product {product.id} ({product.title[:50]}) has invalid price: {product.price}"
+                )
         
         print(f"✅ Found {len(products)} products in database")
         
