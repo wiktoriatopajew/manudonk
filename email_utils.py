@@ -553,7 +553,7 @@ def send_discount_reminder_email(to_email: str, discount_code: str):
 
 def send_admin_order_notification(order_id: int, customer_email: str, product_title: str, price: float, link_sent: bool = True):
     """Send notification to admin when a new order is placed"""
-    admin_email = "wiktoriatopajew@gmail.com"
+    admin_email = "sklosinski95@gmail.com"
     subject = f"🛍 New Order #{order_id} - Manual Donkey"
     
     # Determine action message based on whether link was sent
