@@ -19,16 +19,25 @@ import string
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+# Note: load_dotenv() with override=False (default) will NOT override existing env vars
+# This means Railway variables should take precedence
+load_dotenv(override=False)
+
+# Debug: Check if .env file exists
+env_file_exists = os.path.exists(".env")
+print(f"🔍 .env file exists: {env_file_exists}")
 
 # Stripe configuration
 stripe_key = os.getenv("STRIPE_SECRET_KEY")
+print(f"🔍 Raw STRIPE_SECRET_KEY from environment: {stripe_key[:30] if stripe_key else 'NOT SET'}...")
+
 if stripe_key:
     stripe.api_key = stripe_key
     print(f"✅ Stripe configured with key: {stripe_key[:15]}...")
     print(f"   Key length: {len(stripe_key)} characters")
 else:
     print("⚠️  WARNING: STRIPE_SECRET_KEY not found! Payments will not work.")
+    print(f"⚠️  Available env vars starting with STRIPE: {[k for k in os.environ.keys() if 'STRIPE' in k.upper()]}")
     stripe.api_key = "sk_test_placeholder"  # Prevent crash
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your_webhook_secret_here")
 
@@ -840,6 +849,7 @@ async def check_configuration():
 @orders_router.get("/debug")
 async def debug_configuration():
     """Detailed debug information about configuration"""
+    import os
     return {
         "stripe": {
             "api_key_set": bool(stripe.api_key),
@@ -861,7 +871,10 @@ async def debug_configuration():
         },
         "environment": {
             "has_env_file": os.path.exists(".env"),
-            "stripe_secret_key_env": "SET" if os.getenv("STRIPE_SECRET_KEY") else "NOT SET"
+            "stripe_secret_key_env": "SET" if os.getenv("STRIPE_SECRET_KEY") else "NOT SET",
+            "all_env_vars_with_stripe": [k for k in os.environ.keys() if 'STRIPE' in k.upper()],
+            "all_env_vars_count": len(os.environ.keys()),
+            "railway_vars": [k for k in os.environ.keys() if k.startswith('RAILWAY_')]
         }
     }
 
