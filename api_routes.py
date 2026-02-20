@@ -28,10 +28,26 @@ env_file_exists = os.path.exists(".env")
 print(f"🔍 .env file exists: {env_file_exists}")
 
 # Stripe configuration
-stripe_key = os.getenv("STRIPE_SECRET_KEY")
+# Try multiple variations in case Railway added newlines or spaces
+stripe_key = None
+for key_name in ["STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY\n", "STRIPE_SECRET_KEY "]:
+    stripe_key = os.getenv(key_name)
+    if stripe_key:
+        stripe_key = stripe_key.strip()  # Remove any whitespace/newlines
+        print(f"🔍 Found Stripe key with name: '{key_name}'")
+        break
+
+# If not found, try searching all env vars
+if not stripe_key:
+    for key, value in os.environ.items():
+        if 'STRIPE_SECRET_KEY' in key:
+            stripe_key = value.strip()
+            print(f"🔍 Found Stripe key in env var: '{key}' (cleaned)")
+            break
+
 print(f"🔍 Raw STRIPE_SECRET_KEY from environment: {stripe_key[:30] if stripe_key else 'NOT SET'}...")
 
-if stripe_key:
+if stripe_key and stripe_key != "sk_test_placeholder":
     stripe.api_key = stripe_key
     print(f"✅ Stripe configured with key: {stripe_key[:15]}...")
     print(f"   Key length: {len(stripe_key)} characters")
