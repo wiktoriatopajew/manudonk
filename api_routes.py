@@ -26,6 +26,7 @@ stripe_key = os.getenv("STRIPE_SECRET_KEY")
 if stripe_key:
     stripe.api_key = stripe_key
     print(f"✅ Stripe configured with key: {stripe_key[:15]}...")
+    print(f"   Key length: {len(stripe_key)} characters")
 else:
     print("⚠️  WARNING: STRIPE_SECRET_KEY not found! Payments will not work.")
     stripe.api_key = "sk_test_placeholder"  # Prevent crash
@@ -33,10 +34,16 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your_webhook_s
 
 # Domain configuration - auto-detect Railway or use .env
 railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+railway_static_url = os.getenv("RAILWAY_STATIC_URL")
 if railway_domain:
     DOMAIN = f"https://{railway_domain}"
+    print(f"✅ Using Railway domain: {DOMAIN}")
+elif railway_static_url:
+    DOMAIN = railway_static_url
+    print(f"✅ Using Railway static URL: {DOMAIN}")
 else:
     DOMAIN = os.getenv("DOMAIN", "http://localhost:8000")
+    print(f"⚠️  Using fallback domain: {DOMAIN}")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 orders_router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -824,8 +831,38 @@ async def check_configuration():
     return {
         "stripe_configured": bool(stripe.api_key and stripe.api_key != "sk_test_placeholder"),
         "stripe_key_prefix": stripe.api_key[:15] if stripe.api_key else "NOT SET",
+        "stripe_key_length": len(stripe.api_key) if stripe.api_key else 0,
         "domain": DOMAIN,
         "webhook_secret_set": bool(STRIPE_WEBHOOK_SECRET and STRIPE_WEBHOOK_SECRET != "whsec_your_webhook_secret_here")
+    }
+
+
+@orders_router.get("/debug")
+async def debug_configuration():
+    """Detailed debug information about configuration"""
+    return {
+        "stripe": {
+            "api_key_set": bool(stripe.api_key),
+            "api_key_prefix": stripe.api_key[:20] if stripe.api_key else "NOT SET",
+            "api_key_length": len(stripe.api_key) if stripe.api_key else 0,
+            "is_test_key": stripe.api_key.startswith("sk_test_") if stripe.api_key else False,
+            "is_live_key": stripe.api_key.startswith("sk_live_") if stripe.api_key else False,
+            "is_placeholder": stripe.api_key == "sk_test_placeholder" if stripe.api_key else True
+        },
+        "domain": {
+            "current": DOMAIN,
+            "railway_public_domain": os.getenv("RAILWAY_PUBLIC_DOMAIN"),
+            "railway_static_url": os.getenv("RAILWAY_STATIC_URL"),
+            "env_domain": os.getenv("DOMAIN")
+        },
+        "webhook": {
+            "secret_set": bool(STRIPE_WEBHOOK_SECRET),
+            "is_placeholder": STRIPE_WEBHOOK_SECRET == "whsec_your_webhook_secret_here"
+        },
+        "environment": {
+            "has_env_file": os.path.exists(".env"),
+            "stripe_secret_key_env": "SET" if os.getenv("STRIPE_SECRET_KEY") else "NOT SET"
+        }
     }
 
 
@@ -834,11 +871,18 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
     """Create Stripe checkout session"""
     session = get_session()
     try:
+        print(f"💳 Single checkout request: product_id={request.product_id}, discount='{request.discount_code}'")
+        print(f"🔑 Stripe API Key status: {'SET' if stripe.api_key else 'NOT SET'}")
+        print(f"🔑 Stripe API Key prefix: {stripe.api_key[:20] if stripe.api_key else 'N/A'}")
+        print(f"🔑 Is placeholder: {stripe.api_key == 'sk_test_placeholder'}")
+        
         # Validate Stripe is configured
         if not stripe.api_key or stripe.api_key == "sk_test_placeholder":
+            error_msg = f"Payment system not configured. Stripe key: {stripe.api_key[:30] if stripe.api_key else 'NOT SET'}"
+            print(f"❌ {error_msg}")
             raise HTTPException(
                 status_code=500, 
-                detail="Payment system not configured. Please contact support."
+                detail=error_msg
             )
         
         # Get product
@@ -968,12 +1012,18 @@ async def create_multi_checkout_session(request: CreateMultiCheckoutSessionReque
     session = get_session()
     try:
         print(f"📦 Multi-checkout request: {len(request.product_ids)} products, discount: '{request.discount_code}'")
+        print(f"🔑 Stripe API Key status: {'SET' if stripe.api_key else 'NOT SET'}")
+        print(f"🔑 Stripe API Key prefix: {stripe.api_key[:20] if stripe.api_key else 'N/A'}")
+        print(f"🔑 Is placeholder: {stripe.api_key == 'sk_test_placeholder'}")
+        print(f"🌐 DOMAIN: {DOMAIN}")
         
         # Validate Stripe is configured
         if not stripe.api_key or stripe.api_key == "sk_test_placeholder":
+            error_msg = f"Payment system not configured. Stripe key: {stripe.api_key[:30] if stripe.api_key else 'NOT SET'}"
+            print(f"❌ {error_msg}")
             raise HTTPException(
                 status_code=500, 
-                detail="Payment system not configured. Please contact support."
+                detail=error_msg
             )
         
         # Validate we have product IDs
@@ -1154,11 +1204,20 @@ async def create_multi_checkout_session(request: CreateMultiCheckoutSessionReque
     except HTTPException:
         raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
+        error_details = {
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'stripe_configured': stripe.api_key != "sk_test_placeholder" if stripe.api_key else False,
+            'stripe_key_prefix': stripe.api_key[:20] if stripe.api_key else None,
+            'domain': DOMAIN,
+            'product_count': len(request.product_ids) if request.product_ids else 0
+        }
         print(f"❌ Multi-checkout error: {e}")
         print(f"   Request: product_ids={request.product_ids}, discount_code='{request.discount_code}'")
+        print(f"   Error details: {error_details}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)} | Config: {error_details}")
     finally:
         session.close()
 
