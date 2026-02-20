@@ -20,7 +20,7 @@ SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp-relay.brevo.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "your-email@gmail.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-brevo-api-key")
-FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@manuals.com")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@manualdonkey.com")
 FROM_NAME = os.getenv("FROM_NAME", "Manual Donkey")
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")  # xkeysib-... key
 
