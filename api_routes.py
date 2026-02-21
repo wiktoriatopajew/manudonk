@@ -55,19 +55,37 @@ else:
     print("⚠️  WARNING: STRIPE_SECRET_KEY not found! Payments will not work.")
     print(f"⚠️  Available env vars starting with STRIPE: {[k for k in os.environ.keys() if 'STRIPE' in k.upper()]}")
     stripe.api_key = "sk_test_placeholder"  # Prevent crash
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_your_webhook_secret_here")
+
+# Webhook secret - try multiple variations (Railway may add newlines to env var names)
+webhook_secret = None
+for key_name in ["STRIPE_WEBHOOK_SECRET", "STRIPE_WEBHOOK_SECRET\n", "STRIPE_WEBHOOK_SECRET "]:
+    webhook_secret = os.getenv(key_name)
+    if webhook_secret:
+        webhook_secret = webhook_secret.strip()
+        print(f"🔍 Found webhook secret with name: '{key_name}'")
+        break
+
+if not webhook_secret:
+    for key, value in os.environ.items():
+        if 'STRIPE_WEBHOOK_SECRET' in key:
+            webhook_secret = value.strip()
+            print(f"🔍 Found webhook secret in env var: '{key}' (cleaned)")
+            break
+
+STRIPE_WEBHOOK_SECRET = webhook_secret if webhook_secret else "whsec_your_webhook_secret_here"
+print(f"🔐 Webhook secret configured: {STRIPE_WEBHOOK_SECRET[:20] if STRIPE_WEBHOOK_SECRET != 'whsec_your_webhook_secret_here' else 'PLACEHOLDER'}...")
 
 # Domain configuration - auto-detect Railway or use .env
 railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
 railway_static_url = os.getenv("RAILWAY_STATIC_URL")
 if railway_domain:
-    DOMAIN = f"https://{railway_domain}"
+    DOMAIN = f"https://{railway_domain}".rstrip('/')
     print(f"✅ Using Railway domain: {DOMAIN}")
 elif railway_static_url:
-    DOMAIN = railway_static_url
+    DOMAIN = railway_static_url.rstrip('/')
     print(f"✅ Using Railway static URL: {DOMAIN}")
 else:
-    DOMAIN = os.getenv("DOMAIN", "http://localhost:8000")
+    DOMAIN = os.getenv("DOMAIN", "http://localhost:8000").rstrip('/')
     print(f"⚠️  Using fallback domain: {DOMAIN}")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
