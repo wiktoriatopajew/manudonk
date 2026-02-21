@@ -902,11 +902,16 @@ async def debug_configuration():
         "webhook": {
             "secret_set": bool(STRIPE_WEBHOOK_SECRET),
             "is_placeholder": STRIPE_WEBHOOK_SECRET == "whsec_your_webhook_secret_here",
-            "endpoint_url": f"{DOMAIN}/api/orders/webhook" if DOMAIN else "NOT SET"
+            "secret_prefix": STRIPE_WEBHOOK_SECRET[:20] if STRIPE_WEBHOOK_SECRET else "NOT SET",
+            "secret_length": len(STRIPE_WEBHOOK_SECRET) if STRIPE_WEBHOOK_SECRET else 0,
+            "endpoint_url": f"{DOMAIN}/api/orders/webhook" if DOMAIN else "NOT SET",
+            "raw_env_check": os.getenv("STRIPE_WEBHOOK_SECRET"),
+            "newline_env_check": os.getenv("STRIPE_WEBHOOK_SECRET\n")
         },
         "email": {
             "brevo_api_key_set": bool(os.getenv("BREVO_API_KEY")),
             "brevo_api_key_prefix": os.getenv("BREVO_API_KEY")[:20] if os.getenv("BREVO_API_KEY") else "NOT SET",
+            "brevo_api_key_length": len(os.getenv("BREVO_API_KEY")) if os.getenv("BREVO_API_KEY") else 0,
             "use_brevo_api": bool(os.getenv("BREVO_API_KEY")),
             "from_email": os.getenv("FROM_EMAIL", "NOT SET"),
             "from_name": os.getenv("FROM_NAME", "NOT SET"),
