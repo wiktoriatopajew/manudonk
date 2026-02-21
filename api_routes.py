@@ -883,7 +883,16 @@ async def debug_configuration():
         },
         "webhook": {
             "secret_set": bool(STRIPE_WEBHOOK_SECRET),
-            "is_placeholder": STRIPE_WEBHOOK_SECRET == "whsec_your_webhook_secret_here"
+            "is_placeholder": STRIPE_WEBHOOK_SECRET == "whsec_your_webhook_secret_here",
+            "endpoint_url": f"{DOMAIN}/api/orders/webhook" if DOMAIN else "NOT SET"
+        },
+        "email": {
+            "brevo_api_key_set": bool(os.getenv("BREVO_API_KEY")),
+            "brevo_api_key_prefix": os.getenv("BREVO_API_KEY")[:20] if os.getenv("BREVO_API_KEY") else "NOT SET",
+            "use_brevo_api": bool(os.getenv("BREVO_API_KEY")),
+            "from_email": os.getenv("FROM_EMAIL", "NOT SET"),
+            "from_name": os.getenv("FROM_NAME", "NOT SET"),
+            "admin_email": "sklosinski95@gmail.com"
         },
         "environment": {
             "has_env_file": os.path.exists(".env"),
