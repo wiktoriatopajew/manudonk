@@ -130,7 +130,19 @@ def send_verification_email(to_email: str, code: str):
             <p>This code will expire in 15 minutes.</p>
             <p>If you didn't request this code, please ignore this email.</p>
             <div class="footer">
-                <p>&copy; 2026 Manuals Store. All rights reserved.</p>
+                <p><strong>Manual Donkey</strong><br>
+Operated by Sebastian Kłosiński<br>
+Ul. gen. Władysława Sikorskiego 18/100<br>
+09-410 Płock, Poland<br>
+NIP: 7743302274<br>
+Phone: +48 516 531 395<br>
+Email: support@manualbear.com<br>
+Order Cut-Off Time: 14:00 (GMT+01:00 – Central European Time, Warsaw)<br>
+Orders placed before 14:00 are processed the same business day.<br>
+Orders placed after 14:00 are processed the next business day.<br>
+Business Hours:<br>
+Monday – Friday: 09:00 – 17:00 (CET)<br>
+Saturday – Sunday: Closed</p>
             </div>
         </div>
     </body>
@@ -183,7 +195,19 @@ def send_order_confirmation_email(to_email: str, order_id: int, product_title: s
             <p>Your manual will be delivered to your email within 1-5 minutes.</p>
             <p>Please check your inbox and spam folder.</p>
             <div style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">
-                <p>&copy; 2026 Manual Donkey. All rights reserved.</p>
+                <p><strong>Manual Donkey</strong><br>
+Operated by Sebastian Kłosiński<br>
+Ul. gen. Władysława Sikorskiego 18/100<br>
+09-410 Płock, Poland<br>
+NIP: 7743302274<br>
+Phone: +48 516 531 395<br>
+Email: support@manualbear.com<br>
+Order Cut-Off Time: 14:00 (GMT+01:00 – Central European Time, Warsaw)<br>
+Orders placed before 14:00 are processed the same business day.<br>
+Orders placed after 14:00 are processed the next business day.<br>
+Business Hours:<br>
+Monday – Friday: 09:00 – 17:00 (CET)<br>
+Saturday – Sunday: Closed</p>
             </div>
         </div>
     </body>
@@ -248,7 +272,19 @@ def send_manual_ready_email(to_email: str, order_id: int, product_title: str, do
                 <p>Thank you for your purchase!</p>
             </div>
             <div class="footer">
-                <p>This is an automated message from your Manual Store</p>
+                <p><strong>Manual Donkey</strong><br>
+Operated by Sebastian Kłosiński<br>
+Ul. gen. Władysława Sikorskiego 18/100<br>
+09-410 Płock, Poland<br>
+NIP: 7743302274<br>
+Phone: +48 516 531 395<br>
+Email: support@manualbear.com<br>
+Order Cut-Off Time: 14:00 (GMT+01:00 – Central European Time, Warsaw)<br>
+Orders placed before 14:00 are processed the same business day.<br>
+Orders placed after 14:00 are processed the next business day.<br>
+Business Hours:<br>
+Monday – Friday: 09:00 – 17:00 (CET)<br>
+Saturday – Sunday: Closed</p>
             </div>
         </div>
     </body>
@@ -310,7 +346,19 @@ def send_password_reset_email(to_email: str, reset_token: str, domain: str):
                 <p>If you have any questions, please don't hesitate to contact us.</p>
             </div>
             <div class="footer">
-                <p>This is an automated message from your Manual Store</p>
+                <p><strong>Manual Donkey</strong><br>
+Operated by Sebastian Kłosiński<br>
+Ul. gen. Władysława Sikorskiego 18/100<br>
+09-410 Płock, Poland<br>
+NIP: 7743302274<br>
+Phone: +48 516 531 395<br>
+Email: support@manualbear.com<br>
+Order Cut-Off Time: 14:00 (GMT+01:00 – Central European Time, Warsaw)<br>
+Orders placed before 14:00 are processed the same business day.<br>
+Orders placed after 14:00 are processed the next business day.<br>
+Business Hours:<br>
+Monday – Friday: 09:00 – 17:00 (CET)<br>
+Saturday – Sunday: Closed</p>
             </div>
         </div>
     </body>
@@ -373,11 +421,19 @@ def send_welcome_newsletter_email(to_email: str, discount_code: str):
             </div>
             
             <div class="footer">
-                <p>💡 This code is valid for your next purchase</p>
-                <p style="margin-top: 10px;">&copy; 2026 Manual Donkey. All rights reserved.</p>
-                <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
-                    You received this email because you subscribed to our newsletter.
-                </p>
+                <p><strong>Manual Donkey</strong><br>
+Operated by Sebastian Kłosiński<br>
+Ul. gen. Władysława Sikorskiego 18/100<br>
+09-410 Płock, Poland<br>
+NIP: 7743302274<br>
+Phone: +48 516 531 395<br>
+Email: support@manualbear.com<br>
+Order Cut-Off Time: 14:00 (GMT+01:00 – Central European Time, Warsaw)<br>
+Orders placed before 14:00 are processed the same business day.<br>
+Orders placed after 14:00 are processed the next business day.<br>
+Business Hours:<br>
+Monday – Friday: 09:00 – 17:00 (CET)<br>
+Saturday – Sunday: Closed</p>
             </div>
         </div>
     </body>
@@ -464,8 +520,19 @@ def send_abandoned_cart_email(to_email: str, products: list, total_value: float)
             </div>
             
             <div class="footer">
-                <p>&copy; 2026 Manual Donkey. All rights reserved.</p>
-                <p style="margin-top: 10px;">You received this email because you added items to your cart.</p>
+                <p><strong>Manual Donkey</strong><br>
+Operated by Sebastian Kłosiński<br>
+Ul. gen. Władysława Sikorskiego 18/100<br>
+09-410 Płock, Poland<br>
+NIP: 7743302274<br>
+Phone: +48 516 531 395<br>
+Email: support@manualbear.com<br>
+Order Cut-Off Time: 14:00 (GMT+01:00 – Central European Time, Warsaw)<br>
+Orders placed before 14:00 are processed the same business day.<br>
+Orders placed after 14:00 are processed the next business day.<br>
+Business Hours:<br>
+Monday – Friday: 09:00 – 17:00 (CET)<br>
+Saturday – Sunday: Closed</p>
             </div>
         </div>
     </body>
@@ -535,8 +602,19 @@ def send_discount_reminder_email(to_email: str, discount_code: str):
             </div>
             
             <div class="footer">
-                <p>&copy; 2026 Manual Donkey. All rights reserved.</p>
-                <p style="margin-top: 10px;">You received this email because you subscribed to our newsletter.</p>
+                <p><strong>Manual Donkey</strong><br>
+Operated by Sebastian Kłosiński<br>
+Ul. gen. Władysława Sikorskiego 18/100<br>
+09-410 Płock, Poland<br>
+NIP: 7743302274<br>
+Phone: +48 516 531 395<br>
+Email: support@manualbear.com<br>
+Order Cut-Off Time: 14:00 (GMT+01:00 – Central European Time, Warsaw)<br>
+Orders placed before 14:00 are processed the same business day.<br>
+Orders placed after 14:00 are processed the next business day.<br>
+Business Hours:<br>
+Monday – Friday: 09:00 – 17:00 (CET)<br>
+Saturday – Sunday: Closed</p>
             </div>
         </div>
     </body>

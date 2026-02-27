@@ -330,9 +330,11 @@ class Product(Base):
 
 
 # Database setup
-# Railway automatically sets DATABASE_URL for PostgreSQL
-# Falls back to SQLite for local development
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database/products.db")
+# Priority: DATABASE_PUBLIC_URL (reliable) > DATABASE_URL (internal) > SQLite
+# Use public URL for better stability on Railway
+DATABASE_URL = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL", "sqlite:///./database/products.db")
+
+print(f"🔗 Database: {DATABASE_URL[:60]}...")  # Log connection string (first 60 chars)
 
 # PostgreSQL URLs from Railway use postgres:// but SQLAlchemy needs postgresql://
 if DATABASE_URL.startswith("postgres://"):
@@ -360,7 +362,7 @@ def get_engine():
                 pool_recycle=300,  # Recycle connections after 5 minutes (faster)
                 echo=False,
                 connect_args={
-                    "connect_timeout": 5,  # 5 second connection timeout
+                    "connect_timeout": 30,  # 30 second connection timeout for Railway
                 }
             )
     return _engine

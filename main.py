@@ -108,117 +108,144 @@ async def add_performance_headers(request: Request, call_next):
         print(f"⚠️  SLOW REQUEST: {request.method} {request.url.path} took {process_time:.2f}s")
     return response
 
-# CRITICAL: Initialize database immediately on import (not in startup event)
-# This ensures tables exist before any request
-print("=" * 50)
-print("🚀 Initializing application...")
-print("=" * 50)
-try:
-    print("📊 Creating database tables...")
-    init_db()
-    print("✅ Database tables ready!")
-    
-    # Create performance indexes if they don't exist
-    print("📈 Checking performance indexes...")
-    from sqlalchemy import text
-    session = get_session()
-    try:
-        # Check and create category index for related products
-        result = session.execute(text("""
-            SELECT COUNT(*) 
-            FROM pg_indexes 
-            WHERE tablename = 'products' AND indexname = 'idx_products_category';
-        """))
-        if result.scalar() == 0:
-            print("  📊 Creating index on products.category...")
-            session.execute(text("CREATE INDEX idx_products_category ON products(category);"))
-            session.commit()
-            print("  ✅ Index idx_products_category created")
-        else:
-            print("  ✓ Index idx_products_category exists")
-    except Exception as idx_error:
-        print(f"  ⚠️  Index creation skipped: {idx_error}")
-        session.rollback()
-    finally:
-        session.close()
-            
-except Exception as e:
-    print(f"❌ ERROR: {e}")
-    import traceback
-    traceback.print_exc()
-
-# Create default admin if needed
-try:
-    session = get_session()
-    user_count = session.query(User).count()
-    if user_count == 0:
-        print("📝 Creating default admin...")
-        admin = User(
-            email=os.getenv("ADMIN_EMAIL", "admin@example.com"),
-            is_admin=True,
-            is_verified=True
-        )
-        admin.set_password(os.getenv("ADMIN_PASSWORD", "admin123"))
-        session.add(admin)
-        session.commit()
-        print(f"✅ Admin created: {admin.email}")
-    session.close()
-except Exception as e:
-    print(f"⚠️  Admin creation: {e}")
-
-# Auto-migrate database schema
-try:
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database with retry logic for Railway deployment"""
+    import time
     from sqlalchemy import text, inspect
-    engine = get_engine()
-    inspector = inspect(engine)
     
-    # Get existing columns in products table
-    existing_columns = [col['name'] for col in inspector.get_columns('products')]
+    max_retries = 10
+    retry_delay = 2
     
-    # List of all expected columns with their definitions
-    migrations_needed = []
+    print("=" * 50)
+    print("🚀 Initializing application...")
+    print("=" * 50)
     
-    if 'page_count' not in existing_columns:
-        migrations_needed.append(("page_count", "ALTER TABLE products ADD COLUMN page_count INTEGER DEFAULT NULL"))
+    # Retry database connection
+    for attempt in range(1, max_retries + 1):
+        try:
+            print(f"📊 Connecting to database (attempt {attempt}/{max_retries})...")
+            engine = get_engine()
+            
+            # Test connection
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            
+            print("✅ Database connection established!")
+            break
+            
+        except Exception as e:
+            if attempt == max_retries:
+                print(f"❌ Failed to connect after {max_retries} attempts: {e}")
+                raise
+            print(f"⚠️  Connection failed (attempt {attempt}/{max_retries}): {e}")
+            print(f"⏳ Retrying in {retry_delay} seconds...")
+            time.sleep(retry_delay)
     
-    if 'preview_images' not in existing_columns:
-        migrations_needed.append(("preview_images", "ALTER TABLE products ADD COLUMN preview_images TEXT DEFAULT NULL"))
-    
-    if 'pdf_processed' not in existing_columns:
-        migrations_needed.append(("pdf_processed", "ALTER TABLE products ADD COLUMN pdf_processed BOOLEAN DEFAULT FALSE"))
-    
-    if 'is_featured' not in existing_columns:
-        migrations_needed.append(("is_featured", "ALTER TABLE products ADD COLUMN is_featured BOOLEAN DEFAULT FALSE"))
-    
-    # Execute all migrations
-    if migrations_needed:
-        print(f"🔄 Running {len(migrations_needed)} migration(s)...")
-        with engine.connect() as conn:
-            for column_name, sql in migrations_needed:
-                try:
-                    conn.execute(text(sql))
-                    print(f"  ✅ Added column: {column_name}")
-                except Exception as e:
-                    print(f"  ⚠️  Column {column_name}: {e}")
-            conn.commit()
-        print("✅ All migrations complete!")
-    else:
-        print("✅ Database schema up to date")
-    
-    # Check if pdf_cache table exists
-    if 'pdf_cache' not in inspector.get_table_names():
-        print("🔄 Creating pdf_cache table...")
-        Base.metadata.create_all(bind=engine)
-        print("✅ pdf_cache table created")
+    # Initialize database tables
+    try:
+        print("📊 Creating database tables...")
+        init_db()
+        print("✅ Database tables ready!")
         
-except Exception as e:
-    print(f"⚠️  Migration error: {e}")
-    import traceback
-    traceback.print_exc()
-
-print("=" * 50)
-print("✅ Application ready!")
-print("=" * 50)
+        # Create performance indexes if they don't exist
+        print("📈 Checking performance indexes...")
+        session = get_session()
+        try:
+            # Check and create category index for related products
+            result = session.execute(text("""
+                SELECT COUNT(*) 
+                FROM pg_indexes 
+                WHERE tablename = 'products' AND indexname = 'idx_products_category';
+            """))
+            if result.scalar() == 0:
+                print("  📊 Creating index on products.category...")
+                session.execute(text("CREATE INDEX idx_products_category ON products(category);"))
+                session.commit()
+                print("  ✅ Index idx_products_category created")
+            else:
+                print("  ✓ Index idx_products_category exists")
+        except Exception as idx_error:
+            print(f"  ⚠️  Index creation skipped: {idx_error}")
+            session.rollback()
+        finally:
+            session.close()
+                
+    except Exception as e:
+        print(f"❌ Table initialization error: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # Create default admin if needed
+    try:
+        session = get_session()
+        user_count = session.query(User).count()
+        if user_count == 0:
+            print("📝 Creating default admin...")
+            admin = User(
+                email=os.getenv("ADMIN_EMAIL", "admin@example.com"),
+                is_admin=True,
+                is_verified=True
+            )
+            admin.set_password(os.getenv("ADMIN_PASSWORD", "admin123"))
+            session.add(admin)
+            session.commit()
+            print(f"✅ Admin created: {admin.email}")
+        session.close()
+    except Exception as e:
+        print(f"⚠️  Admin creation: {e}")
+    
+    # Auto-migrate database schema
+    try:
+        inspector = inspect(engine)
+        
+        # Get existing columns in products table
+        existing_columns = [col['name'] for col in inspector.get_columns('products')]
+        
+        # List of all expected columns with their definitions
+        migrations_needed = []
+        
+        if 'page_count' not in existing_columns:
+            migrations_needed.append(("page_count", "ALTER TABLE products ADD COLUMN page_count INTEGER DEFAULT NULL"))
+        
+        if 'preview_images' not in existing_columns:
+            migrations_needed.append(("preview_images", "ALTER TABLE products ADD COLUMN preview_images TEXT DEFAULT NULL"))
+        
+        if 'pdf_processed' not in existing_columns:
+            migrations_needed.append(("pdf_processed", "ALTER TABLE products ADD COLUMN pdf_processed BOOLEAN DEFAULT FALSE"))
+        
+        if 'is_featured' not in existing_columns:
+            migrations_needed.append(("is_featured", "ALTER TABLE products ADD COLUMN is_featured BOOLEAN DEFAULT FALSE"))
+        
+        # Execute all migrations
+        if migrations_needed:
+            print(f"🔄 Running {len(migrations_needed)} migration(s)...")
+            with engine.connect() as conn:
+                for column_name, sql in migrations_needed:
+                    try:
+                        conn.execute(text(sql))
+                        print(f"  ✅ Added column: {column_name}")
+                    except Exception as e:
+                        print(f"  ⚠️  Column {column_name}: {e}")
+                conn.commit()
+            print("✅ All migrations complete!")
+        else:
+            print("✅ Database schema up to date")
+        
+        # Check if pdf_cache table exists
+        if 'pdf_cache' not in inspector.get_table_names():
+            print("🔄 Creating pdf_cache table...")
+            Base.metadata.create_all(bind=engine)
+            print("✅ pdf_cache table created")
+            
+    except Exception as e:
+        print(f"⚠️  Migration error: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    print("=" * 50)
+    print("✅ Application ready!")
+    print("=" * 50)
 
 
 # Include authentication routes

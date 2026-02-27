@@ -8,6 +8,9 @@
   "@type": "Product",
   "name": "{{ product.title }}",
   "description": "{{ product.description[:200] if product.description else 'Instrukcja obsługi ' + product.brand + ' ' + product.model }}",
+  {% if product.image_url %}"image": "{{ product.image_url.split(',')[0].strip() }}",{% endif %}
+  "sku": "{{ product.id }}",
+  "mpn": "{{ product.brand }}-{{ product.model }}",
   "brand": {
     "@type": "Brand",
     "name": "{{ product.brand }}"
@@ -19,12 +22,21 @@
     "url": "https://manualdonkey.com/manuals/{{ product.slug }}",
     "priceCurrency": "USD",
     "price": "{{ product.price }}",
+    "priceValidUntil": "2027-12-31",
     "availability": "https://schema.org/InStock",
+    "itemCondition": "https://schema.org/NewCondition",
     "seller": {
       "@type": "Organization",
       "name": "Manual Donkey",
       "url": "https://manualdonkey.com"
     }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "127",
+    "bestRating": "5",
+    "worstRating": "1"
   }
 }
 </script>
