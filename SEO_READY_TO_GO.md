@@ -67,7 +67,7 @@
    - Powinien być już podłączony (ID: `AW-17877008797`)
    
 2. **Jeśli nie ma:**
-   - Utwórz nową właściwość: "Manual Donkey"
+   - Utwórz nową właściwość: "ManualDonkey"
    - Skopiuj Measurement ID (G-XXXXXXXXXX)
    - Zamień w `templates/base.html` linijka 37
 

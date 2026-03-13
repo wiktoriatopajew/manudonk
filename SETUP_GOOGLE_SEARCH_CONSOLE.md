@@ -173,7 +173,7 @@ Powinny pokazać się wszystkie produkty BMW.
 1. Wejdź: https://analytics.google.com/
 2. Zaloguj się
 3. Kliknij **"Zacznij mierzyć"**
-4. Nazwa konta: `Manual Donkey`
+4. Nazwa konta: `ManualDonkey`
 5. Nazwa właściwości: `manualdonkey.com`
 6. Wybierz strefę czasową i walutę
 

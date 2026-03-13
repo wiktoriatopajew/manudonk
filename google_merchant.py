@@ -25,7 +25,7 @@ async def generate_google_merchant_feed():
         })
         
         channel = ET.SubElement(rss, 'channel')
-        ET.SubElement(channel, 'title').text = 'Manual Donkey - User Manuals'
+        ET.SubElement(channel, 'title').text = 'ManualDonkey - User Manuals'
         ET.SubElement(channel, 'link').text = 'https://manualdonkey.com'
         ET.SubElement(channel, 'description').text = 'Comprehensive database of user manuals for cars, motorcycles, and equipment'
         
@@ -36,21 +36,45 @@ async def generate_google_merchant_feed():
         
         for product in products:
             item = ET.SubElement(channel, 'item')
-            
+
+            # Slug fallback
+            product_url = f"https://manualdonkey.com/manuals/{product.slug}" if product.slug else f"https://manualdonkey.com/product/{product.id}"
+
             # Required fields
             ET.SubElement(item, 'g:id').text = str(product.id)
             ET.SubElement(item, 'g:title').text = product.title or f"{product.brand} {product.model} User Manual"
-            ET.SubElement(item, 'g:description').text = product.description or f"Complete user manual for {product.brand} {product.model}. Digital download PDF format."
-            ET.SubElement(item, 'g:link').text = f"https://manualdonkey.com/manuals/{product.slug}"
-            ET.SubElement(item, 'g:image_link').text = product.image_url or "https://manualdonkey.com/static/images/logo.png"
+            
+            desc = product.description or f"Complete user manual for {product.brand} {product.model}."
+            desc = f"{desc} PDF digital download – instant delivery to your email."
+            ET.SubElement(item, 'g:description').text = desc[:5000]
+
+            ET.SubElement(item, 'g:link').text = product_url
+
+            # Image — take the first URL from comma-separated list
+            if product.image_url:
+                first_img = product.image_url.split(',')[0].strip()
+                ET.SubElement(item, 'g:image_link').text = first_img
+            else:
+                ET.SubElement(item, 'g:image_link').text = "https://manualdonkey.com/static/images/logo.png"
+
             ET.SubElement(item, 'g:condition').text = 'new'
             ET.SubElement(item, 'g:availability').text = 'in stock'
             ET.SubElement(item, 'g:price').text = f"{product.price:.2f} USD"
-            
+
+            # Mark as digital download — no physical shipping
+            ET.SubElement(item, 'g:identifier_exists').text = 'no'
+
+            # Shipping is configured at account level in GMC (Download $0, Standard, Expedited etc.)
+            # Do NOT include per-product shipping to avoid conflicts with account-level settings
+
+            # Custom label to distinguish PDF from physical in GMC reporting
+            ET.SubElement(item, 'g:custom_label_0').text = 'PDF-Download'
+            ET.SubElement(item, 'g:custom_label_1').text = 'Digital'
+
             # Category mapping
             if product.category:
                 category_name = product.category
-                if 'Cars' in category_name:
+                if 'Cars' in category_name or 'Automotive' in category_name:
                     ET.SubElement(item, 'g:google_product_category').text = 'Vehicles & Parts > Vehicle Parts & Accessories'
                 elif 'Motorcycle' in category_name:
                     ET.SubElement(item, 'g:google_product_category').text = 'Vehicles & Parts > Vehicle Parts & Accessories > Motorcycle Parts'
@@ -60,16 +84,12 @@ async def generate_google_merchant_feed():
                     ET.SubElement(item, 'g:google_product_category').text = 'Business & Industrial > Construction'
                 else:
                     ET.SubElement(item, 'g:google_product_category').text = 'Media > Books > Non-Fiction > Reference'
-                
+
                 ET.SubElement(item, 'g:product_type').text = category_name
-            
+
             # Brand and model
             ET.SubElement(item, 'g:brand').text = product.brand or 'Generic'
-            ET.SubElement(item, 'g:mpn').text = product.model or str(product.id)
-            
-            # Additional attributes
-            ET.SubElement(item, 'g:identifier_exists').text = 'no'
-            ET.SubElement(item, 'g:shipping').text = '0.00 USD'  # Digital product - no shipping
+            ET.SubElement(item, 'g:mpn').text = f"{product.brand}-{product.model}-manual" if product.brand and product.model else str(product.id)
             
         # Convert to string
         xml_string = ET.tostring(rss, encoding='unicode', method='xml')

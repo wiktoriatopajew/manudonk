@@ -2,77 +2,36 @@
 
 {% block extra_head %}
 <!-- Prevent indexing in search results (privacy), but allow Google to read for verification -->
-<meta name="robots" content="noindex, follow">
-<title>Payment Policy - Manual Donkey</title>
+<meta name="robots" content="index, follow">
+<title>Payment Policy - ManualDonkey</title>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
     <div class="bg-white rounded-2xl shadow-xl p-8">
         <h1 class="text-4xl font-bold text-gray-900 mb-6">Payment Policy</h1>
-        <p class="text-gray-600 mb-8">Last updated: January 24, 2026</p>
+        <p class="text-gray-600 mb-8">Last updated: March 12, 2026</p>
 
         <div class="prose prose-lg max-w-none">
-            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">1. Accepted Payment Methods</h2>
-            <p class="text-gray-700 mb-6">
-                Manual Donkey accepts payments primarily through <strong>Stripe</strong>, a global leader in secure online
-                payment processing. We support the following payment methods:
+
+            <p class="text-gray-700 mb-8">
+                We accept the following secure payment methods through <strong>Stripe</strong>:
             </p>
+
             <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
                 <li><strong>Credit/Debit Cards:</strong> Visa, Mastercard, American Express, Discover.</li>
-                <li><strong>Digital Wallets:</strong> Apple Pay, Google Pay.</li>
-                <li><strong>Local Methods:</strong> BLIK (for customers in Poland).</li>
+                <li><strong>Digital Wallets:</strong> Google Pay, Apple Pay.</li>
+                <li><strong>Local Payments:</strong> BLIK (Poland).</li>
             </ul>
 
-            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">2. Secure Transactions</h2>
             <p class="text-gray-700 mb-6">
-                Security is our top priority. All transactions are securely processed by Stripe.
-            </p>
-            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
-                <li><strong>SSL Encryption:</strong> Our entire website is secured with industry-standard SSL (Secure
-                    Sockets Layer) encryption to protect your data.</li>
-                <li><strong>PCI-DSS Compliance:</strong> We do not store your credit card details on our servers. All
-                    payment data is handled directly by Stripe's PCI-DSS Service Provider Level 1 certified systems.
-                </li>
-            </ul>
-
-            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">3. Payment Terms</h2>
-            <p class="text-gray-700 mb-4">
-                <strong>Immediate Billing:</strong> Your payment method will be charged at the time of purchase. Access
-                to your digital download is granted immediately upon successful payment confirmation.
-            </p>
-            <p class="text-gray-700 mb-6">
-                <strong>Currency:</strong> All prices are displayed and charged in <strong>United States Dollars
-                    (USD)</strong> unless otherwise noted by your local payment provider.
+                All transactions are encrypted with SSL. Your payment data is never stored on our servers.
             </p>
 
-            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">4. Billing Descriptor</h2>
-            <p class="text-gray-700 mb-6">
-                Charges on your bank statement will appear as <strong>MANUALDONKEY</strong> or
-                <strong>MANUALDONKEY.COM</strong>.
-            </p>
-
-            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">5. Tax Information</h2>
-            <p class="text-gray-700 mb-6">
-                For customers within the European Union, VAT (Value Added Tax) is included in the price where
-                applicable, in accordance with EU regulations for digital goods.
-            </p>
-
-            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">6. Contact Information</h2>
-            <div class="bg-gray-50 p-6 rounded-lg mb-6">
-                <p class="text-gray-700 mb-2"><strong>Sebastian Kłosiński</strong></p>
-                <p class="text-gray-700 mb-2">Ul.Gen. Władysława Sikorskiego 18/100</p>
-                <p class="text-gray-700 mb-2">Płock Mazowieckie 09-410</p>
-                <p class="text-gray-700 mb-2">Poland</p>
-                <p class="text-gray-700 mb-2">NIP: 7743302274</p>
-                <p class="text-gray-700 mb-2">Phone: <a href="tel:+48516531395" class="text-yellow-600 hover:text-yellow-700 font-semibold">+48 516 531 395</a></p>
-                <p class="text-gray-700 mb-2">Email: <a href="mailto:support@manualdonkey.com"
-                        class="text-yellow-600 hover:text-yellow-700 font-semibold">support@manualdonkey.com</a></p>
-            </div>
         </div>
 
         <div class="mt-12 pt-8 border-t border-gray-200">
-            <a href="/" class="text-yellow-600 hover:text-yellow-700 font-semibold">← Back to Home</a>
+            <a href="/" class="text-yellow-600 hover:text-yellow-700 font-semibold">&larr; Back to Home</a>
         </div>
     </div>
 </div>

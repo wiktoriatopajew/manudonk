@@ -795,10 +795,18 @@ async def search_autocomplete(q: str):
         session.close()
 
 
+# Shipping prices for USB/DVD physical orders (USD)
+SHIPPING_PRICES = {
+    "poland":  {"standard":  4.00},
+    "europe":  {"standard":  7.95, "expedited": 16.95, "courier": 39.99},
+    "world":   {"standard":  8.95, "expedited": 19.50, "courier": 39.99},
+}
+
 # Orders API
 class CreateCheckoutSessionRequest(BaseModel):
     product_id: int
     discount_code: Optional[str] = None
+    format_type: str = "pdf"           # "pdf" or "usb"
 
 class CreateMultiCheckoutSessionRequest(BaseModel):
     product_ids: List[int]
@@ -1041,20 +1049,83 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
             },
             'quantity': 1,
         }]
-        
+
+        metadata['format_type'] = request.format_type
         print(f"💳 Creating Stripe session for product {product.id}: {product_name[:50]}... Price: ${final_price}")
-        
+
+        # Build session params
+        session_params = dict(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=DOMAIN + f'/manuals/{product.slug}',
+            customer_email=None,  # Let Stripe collect email
+            metadata=metadata
+        )
+
+        # For physical USB/DVD orders: Stripe collects address and customer
+        # picks shipping method from a verified list — prevents region spoofing.
+        if request.format_type == "usb":
+            POLAND_COUNTRIES  = ['PL']
+            EUROPE_COUNTRIES  = [
+                'DE', 'FR', 'GB', 'IT', 'ES', 'NL', 'BE', 'AT', 'SE', 'NO', 'DK',
+                'FI', 'PT', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI', 'EE', 'LV',
+                'LT', 'GR', 'IE', 'LU', 'MT', 'CY', 'CH', 'UA', 'RS', 'BA', 'MK',
+                'AL', 'ME', 'MD', 'BY', 'GE', 'AM', 'AZ', 'IS', 'LI',
+            ]
+            ALL_COUNTRIES = POLAND_COUNTRIES + EUROPE_COUNTRIES + [
+                'US', 'CA', 'AU', 'NZ', 'JP', 'KR', 'SG', 'IN', 'BR', 'MX',
+                'ZA', 'NG', 'KE', 'GH', 'AE', 'SA', 'IL', 'TR', 'TH', 'PH',
+                'ID', 'MY', 'VN', 'PK', 'BD', 'EG', 'MA', 'TN', 'DZ',
+            ]
+            session_params['shipping_address_collection'] = {'allowed_countries': ALL_COUNTRIES}
+            session_params['shipping_options'] = [
+                # Poland
+                {'shipping_rate_data': {
+                    'type': 'fixed_amount',
+                    'fixed_amount': {'amount': 400, 'currency': 'usd'},
+                    'display_name': 'Poland — Standard (2–3 working days)',
+                    'metadata': {'region': 'poland', 'allowed_countries': 'PL'},
+                }},
+                # Europe
+                {'shipping_rate_data': {
+                    'type': 'fixed_amount',
+                    'fixed_amount': {'amount': 795, 'currency': 'usd'},
+                    'display_name': 'Europe — Standard Air Mail (5–7 days)',
+                    'metadata': {'region': 'europe'},
+                }},
+                {'shipping_rate_data': {
+                    'type': 'fixed_amount',
+                    'fixed_amount': {'amount': 1695, 'currency': 'usd'},
+                    'display_name': 'Europe — Expedited Tracked (3–5 days)',
+                    'metadata': {'region': 'europe'},
+                }},
+                # Rest of World
+                {'shipping_rate_data': {
+                    'type': 'fixed_amount',
+                    'fixed_amount': {'amount': 895, 'currency': 'usd'},
+                    'display_name': 'Rest of World — Standard Air Mail (5–10 days)',
+                    'metadata': {'region': 'world'},
+                }},
+                {'shipping_rate_data': {
+                    'type': 'fixed_amount',
+                    'fixed_amount': {'amount': 1950, 'currency': 'usd'},
+                    'display_name': 'Rest of World — Expedited Tracked (3–7 days)',
+                    'metadata': {'region': 'world'},
+                }},
+                {'shipping_rate_data': {
+                    'type': 'fixed_amount',
+                    'fixed_amount': {'amount': 3999, 'currency': 'usd'},
+                    'display_name': 'Urgent Courier — Worldwide (1–3 days)',
+                    'metadata': {'region': 'world'},
+                }},
+            ]
+            print(f"📦 USB order — shipping options added to Stripe session")
+
         # Create Stripe checkout session
         try:
-            checkout_session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=line_items,
-                mode='payment',
-                success_url=DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=DOMAIN + f'/manuals/{product.slug}',
-                customer_email=None,  # Let Stripe collect email
-                metadata=metadata
-            )
+            checkout_session = stripe.checkout.Session.create(**session_params)
             
             print(f"✅ Stripe session created: {checkout_session.id}")
             return {"url": checkout_session.url}
@@ -1408,16 +1479,57 @@ async def stripe_webhook(request: Request):
         if event['type'] == 'checkout.session.completed':
             print(f"💳 Processing payment completion...")
             session_data = event['data']['object']
-            
+
             # Get session details from database
             db_session = get_session()
             try:
                 customer_email = session_data['customer_details']['email']
                 payment_intent = session_data['payment_intent']
-                
+
                 # Check if this is multi-product order
                 metadata = session_data.get('metadata', {})
                 is_multi = metadata.get('is_multi_product') == 'true'
+
+                # ── Shipping region fraud check for USB orders ────────────────
+                if metadata.get('format_type') == 'usb':
+                    shipping_details = session_data.get('shipping_details') or {}
+                    address = shipping_details.get('address') or {}
+                    country_code = address.get('country', '').upper()
+                    shipping_rate_id = session_data.get('shipping_rate') or session_data.get('shipping_cost', {}).get('shipping_rate', '')
+                    # Retrieve rate metadata to get declared region
+                    declared_region = 'unknown'
+                    try:
+                        if shipping_rate_id and isinstance(shipping_rate_id, str) and shipping_rate_id.startswith('shr_'):
+                            rate = stripe.ShippingRate.retrieve(shipping_rate_id)
+                            declared_region = rate.get('metadata', {}).get('region', 'unknown')
+                    except Exception:
+                        pass
+                    POLAND_CODES = {'PL'}
+                    EUROPE_CODES = {
+                        'DE','FR','GB','IT','ES','NL','BE','AT','SE','NO','DK','FI','PT',
+                        'CZ','SK','HU','RO','BG','HR','SI','EE','LV','LT','GR','IE','LU',
+                        'MT','CY','CH','UA','RS','BA','MK','AL','ME','MD','BY','GE','AM',
+                        'AZ','IS','LI',
+                    }
+                    actual_region = 'poland' if country_code in POLAND_CODES else \
+                                    'europe'  if country_code in EUROPE_CODES  else \
+                                    'world'
+                    if declared_region != 'unknown' and declared_region != actual_region:
+                        print(f"⚠️  SHIPPING MISMATCH: customer is in {country_code} ({actual_region}) "
+                              f"but chose {declared_region} shipping rate! payment_intent={payment_intent}")
+                        try:
+                            send_admin_order_notification(
+                                order_id=f'FRAUD-ALERT-{payment_intent[:8]}',
+                                customer_email=customer_email,
+                                product_title='[SHIPPING REGION MISMATCH]',
+                                price=0,
+                                link_sent=False
+                            )
+                        except Exception:
+                            pass
+                    else:
+                        print(f"✅ Shipping region check OK: {country_code} → {actual_region}")
+                # ─────────────────────────────────────────────────────────────
                 
                 if is_multi:
                     # Multi-product order

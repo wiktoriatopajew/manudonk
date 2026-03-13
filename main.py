@@ -15,7 +15,7 @@ from datetime import datetime
 import os
 import stripe
 from dotenv import load_dotenv
-from email_utils import send_order_confirmation_email
+from email_utils import send_order_confirmation_email, send_contact_form_email
 from cache_manager import cache
 import time
 
@@ -327,7 +327,7 @@ async def home(request: Request):
                 "request": request,
                 "products": cached_data['products'],
                 "categories": cached_data['categories'],
-                "page_title": "Manual Donkey - User Manuals & Service Guides",
+                "page_title": "ManualDonkey - User Manuals & Service Guides",
                 "page_description": "Download PDF user manuals and service guides. Over 1,000+ manuals for vehicles, electronics, and appliances. Instant digital delivery worldwide."
             }
         )
@@ -395,7 +395,7 @@ async def home(request: Request):
                 "request": request,
                 "products": latest_products,
                 "categories": categories,
-                "page_title": "Manual Donkey - Product Catalog",
+                "page_title": "ManualDonkey - Product Catalog",
                 "page_description": "Find user manuals for your products. Over 1,000 manuals available online."
             }
         )
@@ -923,6 +923,35 @@ async def about_us(request: Request):
 async def contact(request: Request):
     """Contact page"""
     return templates.TemplateResponse("contact.html", {"request": request})
+
+
+@app.post("/contact/send")
+async def contact_send(request: Request):
+    """Handle contact form submission"""
+    from fastapi.responses import JSONResponse
+    try:
+        data = await request.json()
+        name = str(data.get("name", "")).strip()
+        email = str(data.get("email", "")).strip()
+        subject = str(data.get("subject", "General Enquiry")).strip()
+        message = str(data.get("message", "")).strip()
+
+        # Basic validation
+        if not name or not email or not message:
+            return JSONResponse({"success": False, "error": "Please fill in all required fields."}, status_code=400)
+        if len(message) > 5000:
+            return JSONResponse({"success": False, "error": "Message is too long."}, status_code=400)
+        if "@" not in email or "." not in email:
+            return JSONResponse({"success": False, "error": "Please enter a valid email address."}, status_code=400)
+
+        result = send_contact_form_email(name, email, subject or "General Enquiry", message)
+        if result:
+            return JSONResponse({"success": True})
+        else:
+            return JSONResponse({"success": False, "error": "Failed to send message. Please email us directly."}, status_code=500)
+    except Exception as e:
+        print(f"Contact form error: {e}")
+        return JSONResponse({"success": False, "error": "An unexpected error occurred."}, status_code=500)
 
 
 @app.get("/faq", response_class=HTMLResponse)
