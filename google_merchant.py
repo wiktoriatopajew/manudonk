@@ -45,9 +45,8 @@ async def generate_google_merchant_feed():
             ET.SubElement(item, 'g:title').text = product.title or f"{product.brand} {product.model} Service & Repair Documentation"
             
             desc = product.description or f"Complete technical documentation and service information for {product.brand} {product.model}."
-            # Keep description clean - no "instant download" or "PDF" language
             if len(desc) < 100:
-                desc = f"{desc} Comprehensive service and repair information. Available in PDF format or on physical media (USB/DVD)."
+                desc = f"{desc} Comprehensive service and repair information for {product.brand} {product.model}. Delivered as an instant PDF download."
             ET.SubElement(item, 'g:description').text = desc[:5000]
 
             ET.SubElement(item, 'g:link').text = product_url
