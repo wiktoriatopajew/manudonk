@@ -976,7 +976,7 @@ async def refund_policy(request: Request):
     return templates.TemplateResponse("refund_policy.html", {
         "request": request,
         "page_title": "Return & Refund Policy - ManualBear",
-        "page_description": "ManualBear return and refund policy for digital downloads and physical media (USB/DVD)."
+        "page_description": "ManualBear return and refund policy for digital PDF downloads. No physical goods. Full refund for corrupted or undelivered files."
     })
 
 
@@ -1044,8 +1044,8 @@ async def shipping_policy(request: Request):
     """Shipping policy page"""
     return templates.TemplateResponse("shipping_policy.html", {
         "request": request,
-        "page_title": "Shipping & Delivery Policy - ManualBear",
-        "page_description": "ManualBear delivery options, costs and processing times for digital and physical orders."
+        "page_title": "Delivery Policy - ManualBear",
+        "page_description": "ManualBear delivery policy: instant PDF email delivery worldwide, $0 shipping cost, no physical goods."
     })
 
 
