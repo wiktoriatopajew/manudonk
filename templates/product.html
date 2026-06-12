@@ -189,7 +189,7 @@
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <span class="font-medium">PDF &amp; Physical Media</span>
+                            <span class="font-medium">Instant PDF Download</span>
                         </div>
                     </div>
                     
@@ -325,7 +325,7 @@
                             <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-gray-700">Fast delivery via email or physical media</span>
+                            <span class="text-gray-700">Instant delivery to your email</span>
                         </li>
                         <li class="flex items-start">
                             <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -376,44 +376,13 @@
                     </div>
                 </div>
 
-                <!-- Format Selector -->
-                <div class="mb-4">
-                    <div class="text-sm font-semibold text-gray-700 mb-2">Choose Format:</div>
-                    <div class="space-y-2">
-                        <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all format-label" id="pdfLabel">
-                            <input type="radio" name="productFormat" value="pdf" checked class="mt-0.5 mr-3 accent-yellow-500">
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900 text-sm">📄 PDF Format</div>
-                                <div class="text-xs text-gray-500 mt-0.5">Delivered via email · No shipping cost</div>
-                                <div class="text-base font-bold text-green-600 mt-1">${{ "%.2f"|format(product.price) }}</div>
-                            </div>
-                        </label>
-                        <label class="flex items-start p-3 rounded-lg border-2 border-gray-200 bg-white cursor-pointer transition-all format-label" id="usbLabel">
-                            <input type="radio" name="productFormat" value="usb" class="mt-0.5 mr-3 accent-yellow-500">
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900 text-sm">💿 USB / DVD Physical</div>
-                                <div class="text-xs text-gray-500 mt-0.5">Physical media shipped to your address</div>
-                                <div class="text-base font-bold text-green-600 mt-1">${{ "%.2f"|format(product.price) }} + shipping</div>
-                            </div>
-                        </label>
+                <!-- Digital delivery (PDF only) -->
+                <div class="mb-4 flex items-center gap-3 p-3 rounded-lg border-2 border-yellow-400 bg-yellow-50">
+                    <span class="text-2xl">📄</span>
+                    <div class="flex-1">
+                        <div class="font-semibold text-gray-900 text-sm">Instant PDF Download</div>
+                        <div class="text-xs text-gray-600 mt-0.5">Delivered to your email immediately after payment — no shipping, no waiting.</div>
                     </div>
-                </div>
-
-                <!-- Shipping Region Selector (USB only) -->
-                <div id="shippingOptions" class="hidden mb-4">
-                    <div class="text-sm font-semibold text-gray-700 mb-2">Select Your Shipping Region:</div>
-                    <select id="shippingRegion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm bg-white">
-                        <option value="" disabled selected>— Choose your region —</option>
-                        <option value="poland">🇵🇱 Poland</option>
-                        <option value="europe">🇪🇺 Europe</option>
-                        <option value="world">🌍 Rest of World</option>
-                    </select>
-
-                    <!-- Shipping options table (rendered by JS based on region) -->
-                    <div id="shippingRegionInfo" class="mt-3 hidden">
-                        <div id="shippingRegionContent"></div>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">You'll choose the exact shipping speed at checkout. Only addresses in your selected region will be accepted. <a href="/shipping-policy" class="text-yellow-600 underline hover:text-yellow-700">Full shipping policy</a></p>
                 </div>
 
                 <!-- Buy Now Button -->
@@ -522,7 +491,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-emerald-900">Fast Delivery</p>
-                                <p class="text-xs text-emerald-700">PDF delivered via email, physical media shipped within 24h</p>
+                                <p class="text-xs text-emerald-700">PDF delivered instantly to your email after payment</p>
                             </div>
                         </div>
                         <div class="flex items-start space-x-3">
@@ -880,21 +849,8 @@
                 product_id: {{ product.id }}
             };
 
-            // Add format type
-            const selectedFormat = document.querySelector('input[name="productFormat"]:checked')?.value || 'pdf';
-            requestBody.format_type = selectedFormat;
-
-            // Add shipping region for USB orders
-            if (selectedFormat === 'usb') {
-                const regionSelect = document.getElementById('shippingRegion');
-                if (!regionSelect || !regionSelect.value) {
-                    alert('Please select your shipping region before proceeding.');
-                    this.disabled = false;
-                    this.innerHTML = '<span class="flex items-center justify-center space-x-3"><span>Buy Now</span></span>';
-                    return;
-                }
-                requestBody.shipping_region = regionSelect.value;
-            }
+            // Digital-only store — always PDF, no shipping
+            requestBody.format_type = 'pdf';
 
             // Add discount code if validated
             if (productDiscountInfo && productDiscountInfo.code) {
@@ -928,108 +884,6 @@
         }
     });
 
-    // ── Format selector (PDF vs USB/DVD) ──────────────────────────────────────
-    function applyFormatSelection() {
-        const selectedFormat = document.querySelector('input[name="productFormat"]:checked')?.value || 'pdf';
-        const pdfLabel = document.getElementById('pdfLabel');
-        const usbLabel = document.getElementById('usbLabel');
-        const shippingOptions = document.getElementById('shippingOptions');
-        if (selectedFormat === 'usb') {
-            pdfLabel.classList.remove('border-yellow-400', 'bg-yellow-50');
-            pdfLabel.classList.add('border-gray-200', 'bg-white');
-            usbLabel.classList.remove('border-gray-200', 'bg-white');
-            usbLabel.classList.add('border-yellow-400', 'bg-yellow-50');
-            shippingOptions.classList.remove('hidden');
-        } else {
-            pdfLabel.classList.remove('border-gray-200', 'bg-white');
-            pdfLabel.classList.add('border-yellow-400', 'bg-yellow-50');
-            usbLabel.classList.remove('border-yellow-400', 'bg-yellow-50');
-            usbLabel.classList.add('border-gray-200', 'bg-white');
-            shippingOptions.classList.add('hidden');
-        }
-    }
-
-    document.querySelectorAll('input[name="productFormat"]').forEach(radio => {
-        radio.addEventListener('change', applyFormatSelection);
-    });
-    applyFormatSelection(); // set initial highlighted state
-
-    // ── Shipping region selector ─────────────────────────────────────────────
-    const shippingRegionSelect = document.getElementById('shippingRegion');
-    const shippingRegionInfo = document.getElementById('shippingRegionInfo');
-    const shippingRegionContent = document.getElementById('shippingRegionContent');
-
-    const shippingData = {
-        'poland': {
-            flag: '🇵🇱',
-            title: 'Poland',
-            options: [
-                { method: 'Standard', transit: '2–4 working days', price: '$4.00' }
-            ]
-        },
-        'europe': {
-            flag: '🇪🇺',
-            title: 'Europe',
-            options: [
-                { method: 'Standard Air Mail', transit: '5–8 working days', price: '$7.95' },
-                { method: 'Expedited Tracked Air Mail', transit: '3–6 working days', price: '$16.95' },
-                { method: 'Urgent Courier (UPS/DHL)', transit: '1–4 days', price: '$39.99' }
-            ]
-        },
-        'world': {
-            flag: '🌍',
-            title: 'Rest of World',
-            options: [
-                { method: 'Standard Air Mail', transit: '5–11 working days', price: '$8.95' },
-                { method: 'Expedited Tracked Air Mail', transit: '3–8 working days', price: '$19.50' },
-                { method: 'Urgent Courier (UPS/DHL)', transit: '1–4 days', price: '$39.99' }
-            ]
-        }
-    };
-
-    function renderShippingTable(region) {
-        const data = shippingData[region];
-        if (!data) return '';
-        let rows = data.options.map((opt, i) =>
-            `<tr class="${i % 2 ? 'bg-gray-50' : ''}">
-                <td class="px-3 py-2 text-xs text-gray-700">${opt.method}</td>
-                <td class="px-3 py-2 text-xs text-gray-600">${opt.transit}</td>
-                <td class="px-3 py-2 text-xs font-semibold text-gray-900">${opt.price}</td>
-            </tr>`
-        ).join('');
-        return `
-            <div class="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
-                <div class="px-3 py-2 bg-blue-100 border-b border-blue-200">
-                    <span class="text-sm font-semibold text-blue-800">${data.flag} Shipping to ${data.title}</span>
-                </div>
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="border-b border-blue-200">
-                            <th class="px-3 py-2 text-xs font-semibold text-gray-600">Method</th>
-                            <th class="px-3 py-2 text-xs font-semibold text-gray-600">Transit Time</th>
-                            <th class="px-3 py-2 text-xs font-semibold text-gray-600">Cost</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-                <div class="px-3 py-2 bg-blue-50 border-t border-blue-200">
-                    <p class="text-xs text-blue-600">🔒 At checkout you'll pick your preferred speed. Stripe will only accept addresses within ${data.title}.</p>
-                </div>
-            </div>`;
-    }
-
-    if (shippingRegionSelect) {
-        shippingRegionSelect.addEventListener('change', function() {
-            const region = this.value;
-            if (region && shippingData[region]) {
-                shippingRegionContent.innerHTML = renderShippingTable(region);
-                shippingRegionInfo.classList.remove('hidden');
-            } else {
-                shippingRegionInfo.classList.add('hidden');
-            }
-        });
-    }
-    // ─────────────────────────────────────────────────────────────────────────
 
     // Image slider functionality
     document.addEventListener('DOMContentLoaded', function() {

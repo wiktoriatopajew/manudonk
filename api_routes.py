@@ -1053,7 +1053,10 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
             'quantity': 1,
         }]
 
-        metadata['format_type'] = request.format_type
+        # Digital-only store: ignore any physical/USB request — always PDF, never ship.
+        request.format_type = "pdf"
+        request.shipping_region = None
+        metadata['format_type'] = 'pdf'
         print(f"💳 Creating Stripe session for product {product.id}: {product_name[:50]}... Price: ${final_price}")
 
         # Build session params
@@ -1353,12 +1356,8 @@ async def create_multi_checkout_session(request: CreateMultiCheckoutSessionReque
                 }
             }
 
-            # Check if any product is USB format → add shipping
+            # Digital-only store: never add shipping, all items are PDF downloads.
             has_usb = False
-            if request.format_types:
-                has_usb = any(
-                    v == 'usb' for v in request.format_types.values()
-                )
 
             if has_usb:
                 region = (request.shipping_region or 'world').lower()
