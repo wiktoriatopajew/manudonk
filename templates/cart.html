@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Shopping Cart - ManualDonkey{% endblock %}
+{% block title %}Shopping Cart - ManualBear{% endblock %}
 
 {% block content %}
 <!-- Cart Section with matching homepage theme -->
@@ -41,7 +41,7 @@
                 <input 
                     type="text" 
                     id="discountCode" 
-                    placeholder="Enter code (e.g., WELCOME123)" 
+                    placeholder="Enter discount code" 
                     class="flex-1 min-w-0 px-3 sm:px-4 py-3 rounded-lg bg-gray-900 border border-yellow-500/30 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                 >
                 <button 
@@ -70,6 +70,21 @@
         <div class="flex justify-between items-center text-xl font-bold mb-6">
             <span class="text-white">Total:</span>
             <span id="total" class="text-yellow-400">$0.00</span>
+        </div>
+        
+        <!-- Shipping Region Selector (shown when USB items in cart) -->
+        <div id="cartShippingRegion" class="hidden mb-6">
+            <div class="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border border-purple-500/30 rounded-lg p-4">
+                <label class="block text-sm font-semibold text-purple-300 mb-2">📦 Shipping Region (required for USB/DVD items):</label>
+                <select id="cartRegionSelect" class="w-full px-3 py-2 rounded-lg bg-gray-900 border border-yellow-500/30 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm">
+                    <option value="" disabled selected>— Choose your shipping region —</option>
+                    <option value="poland">🇵🇱 Poland</option>
+                    <option value="europe">🇪🇺 Europe</option>
+                    <option value="world">🌍 Rest of World</option>
+                </select>
+                <div id="cartShippingTable" class="mt-3 hidden"></div>
+                <p class="text-xs text-gray-400 mt-2">You'll pick the exact shipping speed at Stripe checkout. Only addresses within your region will be accepted.</p>
+            </div>
         </div>
         
         <button id="checkoutBtn" class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-4 px-6 rounded-lg text-lg shadow-lg transition transform hover:scale-105 mb-2">
@@ -109,9 +124,10 @@ document.addEventListener('DOMContentLoaded', function() {
         cartItemsContainer.innerHTML = '';
         
         cart.forEach((item, index) => {
+            const isPdf = (item.formatType || 'pdf') === 'pdf';
             const cartItemHtml = `
                 <div class="bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-yellow-500/30 rounded-lg shadow-lg p-6" data-index="${index}">
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-start space-x-4">
                         <div class="flex-shrink-0">
                             ${item.imageUrl ? 
                                 `<img src="${item.imageUrl}" alt="${item.title}" class="w-20 h-20 object-cover rounded-lg">` 
@@ -124,16 +140,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         </div>
                         
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-white">${item.title}</h3>
-                            <p class="text-yellow-400">$${item.price.toFixed(2)}</p>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-base font-semibold text-white truncate">${item.title}</h3>
+                            <p class="text-yellow-400 text-sm">$${item.price.toFixed(2)}</p>
+                            
+                            <!-- Format Toggle -->
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs text-gray-400">Format:</span>
+                                <button onclick="setCartItemFormat(${index}, 'pdf')" 
+                                    class="text-xs font-semibold px-3 py-1 rounded-full border transition ${isPdf ? 'bg-blue-500/20 text-blue-300 border-blue-500/50' : 'bg-transparent text-gray-500 border-gray-700 hover:border-gray-500'}">
+                                    📄 PDF
+                                </button>
+                                <button onclick="setCartItemFormat(${index}, 'usb')" 
+                                    class="text-xs font-semibold px-3 py-1 rounded-full border transition ${!isPdf ? 'bg-purple-500/20 text-purple-300 border-purple-500/50' : 'bg-transparent text-gray-500 border-gray-700 hover:border-gray-500'}">
+                                    💿 USB/DVD
+                                </button>
+                            </div>
+                            <p class="text-xs mt-1 ${isPdf ? 'text-green-400' : 'text-gray-400'}">
+                                ${isPdf ? 'Instant digital delivery · No shipping cost' : 'Physical media · Shipping cost added at checkout'}
+                            </p>
                         </div>
                         
-                        <div class="text-lg font-bold text-yellow-400">
+                        <div class="text-lg font-bold text-yellow-400 flex-shrink-0">
                             $${(item.price * item.quantity).toFixed(2)}
                         </div>
                         
-                        <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-400 ml-4 transition">
+                        <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-400 ml-2 transition flex-shrink-0">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                             </svg>
@@ -143,6 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             cartItemsContainer.insertAdjacentHTML('beforeend', cartItemHtml);
         });
+        
+        // Show/hide shipping region selector based on cart contents
+        updateShippingVisibility();
         
         updateCartSummary();
     }
@@ -247,6 +282,88 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCartCount();
         loadCart();
     }
+
+    // Toggle format for a cart item (PDF ↔ USB/DVD)
+    window.setCartItemFormat = function(index, format) {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        if (cart[index]) {
+            cart[index].formatType = format;
+            localStorage.setItem('cart', JSON.stringify(cart));
+            loadCart(); // Re-render cart with updated format
+        }
+    }
+
+    // ── Shipping region handling for USB items ──────────────────────────────
+    const cartShippingData = {
+        'poland': {
+            flag: '🇵🇱', title: 'Poland',
+            options: [
+                { method: 'Standard', transit: '2–4 working days', price: '$4.00' }
+            ]
+        },
+        'europe': {
+            flag: '🇪🇺', title: 'Europe',
+            options: [
+                { method: 'Standard Air Mail', transit: '5–8 working days', price: '$7.95' },
+                { method: 'Expedited Tracked Air Mail', transit: '3–6 working days', price: '$16.95' },
+                { method: 'Urgent Courier (UPS/DHL)', transit: '1–4 days', price: '$39.99' }
+            ]
+        },
+        'world': {
+            flag: '🌍', title: 'Rest of World',
+            options: [
+                { method: 'Standard Air Mail', transit: '5–11 working days', price: '$8.95' },
+                { method: 'Expedited Tracked Air Mail', transit: '3–8 working days', price: '$19.50' },
+                { method: 'Urgent Courier (UPS/DHL)', transit: '1–4 days', price: '$39.99' }
+            ]
+        }
+    };
+
+    function renderCartShippingTable(region) {
+        const d = cartShippingData[region];
+        if (!d) return '';
+        const rows = d.options.map((o, i) =>
+            `<tr class="${i % 2 ? 'bg-white/5' : ''}">
+                <td class="px-3 py-2 text-xs text-gray-300">${o.method}</td>
+                <td class="px-3 py-2 text-xs text-gray-400">${o.transit}</td>
+                <td class="px-3 py-2 text-xs font-semibold text-yellow-400">${o.price}</td>
+            </tr>`
+        ).join('');
+        return `
+            <table class="w-full text-left border border-purple-500/20 rounded-lg overflow-hidden">
+                <thead><tr class="bg-purple-900/30 border-b border-purple-500/20">
+                    <th class="px-3 py-2 text-xs font-semibold text-purple-300">Method</th>
+                    <th class="px-3 py-2 text-xs font-semibold text-purple-300">Transit Time</th>
+                    <th class="px-3 py-2 text-xs font-semibold text-purple-300">Cost</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    }
+
+    function updateShippingVisibility() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const hasUsb = cart.some(item => item.formatType === 'usb');
+        const shippingDiv = document.getElementById('cartShippingRegion');
+        if (shippingDiv) {
+            shippingDiv.classList.toggle('hidden', !hasUsb);
+        }
+    }
+
+    // Region selector change handler
+    const cartRegionSelect = document.getElementById('cartRegionSelect');
+    const cartShippingTable = document.getElementById('cartShippingTable');
+    if (cartRegionSelect) {
+        cartRegionSelect.addEventListener('change', function() {
+            const region = this.value;
+            if (region && cartShippingData[region]) {
+                cartShippingTable.innerHTML = renderCartShippingTable(region);
+                cartShippingTable.classList.remove('hidden');
+            } else {
+                cartShippingTable.classList.add('hidden');
+            }
+        });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
     
     // Checkout functionality
     document.getElementById('checkoutBtn').addEventListener('click', async function() {
@@ -254,6 +371,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (cart.length === 0) {
             alert('Your cart is empty!');
+            return;
+        }
+
+        // Check if USB items exist and region is selected
+        const hasUsb = cart.some(item => item.formatType === 'usb');
+        const regionSelect = document.getElementById('cartRegionSelect');
+        if (hasUsb && (!regionSelect || !regionSelect.value)) {
+            alert('Please select your shipping region for USB/DVD items before proceeding.');
             return;
         }
         
@@ -264,9 +389,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get all product IDs from cart
             const productIds = cart.map(item => parseInt(item.id));
+
+            // Build format_types map: { "product_id": "pdf"|"usb" }
+            const formatTypes = {};
+            cart.forEach(item => {
+                formatTypes[String(item.id)] = item.formatType || 'pdf';
+            });
             
             // Get discount info
             const discountInfo = JSON.parse(localStorage.getItem('discountInfo') || 'null');
+
+            // Build request body
+            const requestBody = {
+                product_ids: productIds,
+                discount_code: discountInfo && discountInfo.valid ? discountInfo.code : null,
+                format_types: formatTypes
+            };
+            if (hasUsb && regionSelect && regionSelect.value) {
+                requestBody.shipping_region = regionSelect.value;
+            }
             
             // Create Stripe checkout session for all products
             const response = await fetch('/api/orders/create-multi-checkout-session', {
@@ -274,10 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    product_ids: productIds,
-                    discount_code: discountInfo && discountInfo.valid ? discountInfo.code : null
-                })
+                body: JSON.stringify(requestBody)
             });
             
             const data = await response.json();

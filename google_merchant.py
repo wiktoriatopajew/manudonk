@@ -25,9 +25,9 @@ async def generate_google_merchant_feed():
         })
         
         channel = ET.SubElement(rss, 'channel')
-        ET.SubElement(channel, 'title').text = 'ManualDonkey - User Manuals'
-        ET.SubElement(channel, 'link').text = 'https://manualdonkey.com'
-        ET.SubElement(channel, 'description').text = 'Comprehensive database of user manuals for cars, motorcycles, and equipment'
+        ET.SubElement(channel, 'title').text = 'ManualBear - Technical Documentation & Service Information'
+        ET.SubElement(channel, 'link').text = 'https://manualbear.com'
+        ET.SubElement(channel, 'description').text = 'Comprehensive library of technical documentation and service information for vehicles, motorcycles, and equipment'
         
         # Get all active products
         products = db_session.query(Product).filter(
@@ -38,14 +38,16 @@ async def generate_google_merchant_feed():
             item = ET.SubElement(channel, 'item')
 
             # Slug fallback
-            product_url = f"https://manualdonkey.com/manuals/{product.slug}" if product.slug else f"https://manualdonkey.com/product/{product.id}"
+            product_url = f"https://manualbear.com/manuals/{product.slug}" if product.slug else f"https://manualbear.com/product/{product.id}"
 
             # Required fields
             ET.SubElement(item, 'g:id').text = str(product.id)
-            ET.SubElement(item, 'g:title').text = product.title or f"{product.brand} {product.model} User Manual"
+            ET.SubElement(item, 'g:title').text = product.title or f"{product.brand} {product.model} Service & Repair Documentation"
             
-            desc = product.description or f"Complete user manual for {product.brand} {product.model}."
-            desc = f"{desc} PDF digital download – instant delivery to your email."
+            desc = product.description or f"Complete technical documentation and service information for {product.brand} {product.model}."
+            # Keep description clean - no "instant download" or "PDF" language
+            if len(desc) < 100:
+                desc = f"{desc} Comprehensive service and repair information. Available in PDF format or on physical media (USB/DVD)."
             ET.SubElement(item, 'g:description').text = desc[:5000]
 
             ET.SubElement(item, 'g:link').text = product_url
@@ -55,35 +57,32 @@ async def generate_google_merchant_feed():
                 first_img = product.image_url.split(',')[0].strip()
                 ET.SubElement(item, 'g:image_link').text = first_img
             else:
-                ET.SubElement(item, 'g:image_link').text = "https://manualdonkey.com/static/images/logo.png"
+                ET.SubElement(item, 'g:image_link').text = "https://manualbear.com/static/images/logo.png"
 
             ET.SubElement(item, 'g:condition').text = 'new'
             ET.SubElement(item, 'g:availability').text = 'in stock'
             ET.SubElement(item, 'g:price').text = f"{product.price:.2f} USD"
 
-            # Mark as digital download — no physical shipping
+            # Mark identifier_exists as false (no EAN/GTIN codes)
             ET.SubElement(item, 'g:identifier_exists').text = 'no'
 
-            # Shipping is configured at account level in GMC (Download $0, Standard, Expedited etc.)
-            # Do NOT include per-product shipping to avoid conflicts with account-level settings
+            # Custom label — document type for internal GMC reporting
+            ET.SubElement(item, 'g:custom_label_0').text = 'Technical-Documentation'
+            ET.SubElement(item, 'g:custom_label_1').text = 'Service-Manual'
 
-            # Custom label to distinguish PDF from physical in GMC reporting
-            ET.SubElement(item, 'g:custom_label_0').text = 'PDF-Download'
-            ET.SubElement(item, 'g:custom_label_1').text = 'Digital'
-
-            # Category mapping
+            # Category mapping - use Media > Books categories for technical documentation
             if product.category:
                 category_name = product.category
                 if 'Cars' in category_name or 'Automotive' in category_name:
-                    ET.SubElement(item, 'g:google_product_category').text = 'Vehicles & Parts > Vehicle Parts & Accessories'
+                    ET.SubElement(item, 'g:google_product_category').text = 'Media > Books > Non-Fiction > Reference Books'
                 elif 'Motorcycle' in category_name:
-                    ET.SubElement(item, 'g:google_product_category').text = 'Vehicles & Parts > Vehicle Parts & Accessories > Motorcycle Parts'
+                    ET.SubElement(item, 'g:google_product_category').text = 'Media > Books > Non-Fiction > Reference Books'
                 elif 'Truck' in category_name:
-                    ET.SubElement(item, 'g:google_product_category').text = 'Vehicles & Parts > Vehicle Parts & Accessories > Motor Vehicle Parts'
+                    ET.SubElement(item, 'g:google_product_category').text = 'Media > Books > Non-Fiction > Reference Books'
                 elif 'Construction' in category_name:
-                    ET.SubElement(item, 'g:google_product_category').text = 'Business & Industrial > Construction'
+                    ET.SubElement(item, 'g:google_product_category').text = 'Media > Books > Non-Fiction > Reference Books'
                 else:
-                    ET.SubElement(item, 'g:google_product_category').text = 'Media > Books > Non-Fiction > Reference'
+                    ET.SubElement(item, 'g:google_product_category').text = 'Media > Books > Non-Fiction > Reference Books'
 
                 ET.SubElement(item, 'g:product_type').text = category_name
 
@@ -123,7 +122,7 @@ async def get_feed_stats():
         
         return {
             "total_products": total_products,
-            "feed_url": "https://manualdonkey.com/feed/google-merchant.xml",
+            "feed_url": "https://manualbear.com/feed/google-merchant.xml",
             "categories": categories,
             "last_generated": datetime.now().isoformat()
         }

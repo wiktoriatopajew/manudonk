@@ -7,7 +7,7 @@
   "@context": "https://schema.org/",
   "@type": "Product",
   "name": "{{ product.title }}",
-  "description": "{{ product.description[:200] if product.description else 'Instrukcja obsługi ' + product.brand + ' ' + product.model }}",
+  "description": "{{ product.description[:200] if product.description else 'Technical documentation and service information for ' + product.brand + ' ' + product.model }}",
   {% if product.image_url %}"image": "{{ product.image_url.split(',')[0].strip() }}",{% endif %}
   "sku": "{{ product.id }}",
   "mpn": "{{ product.brand }}-{{ product.model }}",
@@ -19,7 +19,7 @@
   "category": "{{ product.category.split('/')[0] if product.category and '/' in product.category else product.category }}",
   "offers": {
     "@type": "Offer",
-    "url": "https://manualdonkey.com/manuals/{{ product.slug }}",
+    "url": "https://manualbear.com/manuals/{{ product.slug }}",
     "priceCurrency": "USD",
     "price": "{{ product.price }}",
     "priceValidUntil": "2027-12-31",
@@ -27,17 +27,17 @@
     "itemCondition": "https://schema.org/NewCondition",
     "seller": {
       "@type": "Organization",
-      "name": "ManualDonkey",
-      "url": "https://manualdonkey.com"
+      "name": "ManualBear",
+      "url": "https://manualbear.com"
     }
-  },
+  }{% if review_count is defined and review_count > 0 %},
   "aggregateRating": {
     "@type": "AggregateRating",
-    "ratingValue": "4.8",
-    "reviewCount": "127",
+    "ratingValue": "{{ avg_rating }}",
+    "reviewCount": "{{ review_count }}",
     "bestRating": "5",
     "worstRating": "1"
-  }
+  }{% endif %}
 }
 </script>
 
@@ -145,7 +145,7 @@
                     
                     <!-- Product Subtitle -->
                     <p class="text-xl text-gray-600 mb-4 font-medium">
-                        Professional {{ product.brand }} {{ product.model }} Manual & Documentation
+                        Technical Documentation & Service Information for {{ product.brand }} {{ product.model }}
                     </p>
                     
                     <!-- Product Meta -->
@@ -189,7 +189,7 @@
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <span class="font-medium">Instant Delivery</span>
+                            <span class="font-medium">PDF &amp; Physical Media</span>
                         </div>
                     </div>
                     
@@ -200,7 +200,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         <span class="text-purple-900 font-semibold text-base">
-                            Digital Manual - Instant Download
+                            Professional Technical Documentation
                         </span>
                     </div>
                     {% endif %}
@@ -325,7 +325,7 @@
                             <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-gray-700">Email delivery within 1-5 minutes</span>
+                            <span class="text-gray-700">Fast delivery via email or physical media</span>
                         </li>
                         <li class="flex items-start">
                             <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,7 +337,7 @@
                             <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-gray-700">100% legal and original document</span>
+                            <span class="text-gray-700">Professionally compiled technical documentation</span>
                         </li>
                     </ul>
                 </div>
@@ -383,36 +383,37 @@
                         <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all format-label" id="pdfLabel">
                             <input type="radio" name="productFormat" value="pdf" checked class="mt-0.5 mr-3 accent-yellow-500">
                             <div class="flex-1">
-                                <div class="font-semibold text-gray-900 text-sm">📄 PDF Download</div>
-                                <div class="text-xs text-gray-500 mt-0.5">Instant delivery via email · No shipping</div>
+                                <div class="font-semibold text-gray-900 text-sm">📄 PDF Format</div>
+                                <div class="text-xs text-gray-500 mt-0.5">Delivered via email · No shipping cost</div>
                                 <div class="text-base font-bold text-green-600 mt-1">${{ "%.2f"|format(product.price) }}</div>
                             </div>
                         </label>
-                        <div class="flex items-start p-3 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed relative overflow-hidden" id="usbLabel">
-                            <input type="radio" name="productFormat" value="usb" disabled class="mt-0.5 mr-3" style="display:none">
+                        <label class="flex items-start p-3 rounded-lg border-2 border-gray-200 bg-white cursor-pointer transition-all format-label" id="usbLabel">
+                            <input type="radio" name="productFormat" value="usb" class="mt-0.5 mr-3 accent-yellow-500">
                             <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-500 text-sm">💿 USB / DVD Physical</span>
-                                    <span class="text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300 rounded-full px-2 py-0.5 whitespace-nowrap">Coming Soon</span>
-                                </div>
-                                <div class="text-xs text-gray-400 mt-0.5">We're preparing our physical media fulfillment center — available soon!</div>
-                                <div class="text-xs text-gray-400 mt-1">Physical USB · Shipped worldwide · + shipping cost</div>
+                                <div class="font-semibold text-gray-900 text-sm">💿 USB / DVD Physical</div>
+                                <div class="text-xs text-gray-500 mt-0.5">Physical media shipped to your address</div>
+                                <div class="text-base font-bold text-green-600 mt-1">${{ "%.2f"|format(product.price) }} + shipping</div>
                             </div>
-                        </div>
+                        </label>
                     </div>
                 </div>
 
-                <!-- Shipping info (USB only — hidden while USB disabled) -->
-                <div id="shippingOptions" class="hidden mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div class="flex items-start space-x-2">
-                        <svg class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"></path>
-                        </svg>
-                        <p class="text-xs text-blue-700">
-                            Shipping method and cost will be selected at checkout based on your delivery address.
-                            <strong>Poland from $4.00 · Europe from $7.95 · Worldwide from $8.95.</strong>
-                        </p>
+                <!-- Shipping Region Selector (USB only) -->
+                <div id="shippingOptions" class="hidden mb-4">
+                    <div class="text-sm font-semibold text-gray-700 mb-2">Select Your Shipping Region:</div>
+                    <select id="shippingRegion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm bg-white">
+                        <option value="" disabled selected>— Choose your region —</option>
+                        <option value="poland">🇵🇱 Poland</option>
+                        <option value="europe">🇪🇺 Europe</option>
+                        <option value="world">🌍 Rest of World</option>
+                    </select>
+
+                    <!-- Shipping options table (rendered by JS based on region) -->
+                    <div id="shippingRegionInfo" class="mt-3 hidden">
+                        <div id="shippingRegionContent"></div>
                     </div>
+                    <p class="text-xs text-gray-400 mt-2">You'll choose the exact shipping speed at checkout. Only addresses in your selected region will be accepted. <a href="/shipping-policy" class="text-yellow-600 underline hover:text-yellow-700">Full shipping policy</a></p>
                 </div>
 
                 <!-- Buy Now Button -->
@@ -431,9 +432,10 @@
                 <!-- Terms Agreement Notice -->
                 <p class="text-xs text-gray-400 text-center mb-6">
                     By purchasing, you agree to our 
-                    <a href="/terms-of-service" target="_blank" class="text-yellow-500 hover:text-yellow-400 underline">Terms of Service</a> 
-                    and 
-                    <a href="/privacy-policy" target="_blank" class="text-yellow-500 hover:text-yellow-400 underline">Privacy Policy</a>
+                    <a href="/terms-of-service" target="_blank" class="text-yellow-500 hover:text-yellow-400 underline">Terms of Service</a>, 
+                    <a href="/privacy-policy" target="_blank" class="text-yellow-500 hover:text-yellow-400 underline">Privacy Policy</a>, and 
+                    <a href="/refund-policy" target="_blank" class="text-yellow-500 hover:text-yellow-400 underline">Refund Policy</a>.
+                    For digital products, you consent to immediate delivery and acknowledge that the right of withdrawal is lost once download begins.
                 </p>
                 
                 <!-- Preview Button (ALWAYS SHOW FOR TESTING) -->
@@ -519,8 +521,8 @@
                                 </div>
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-emerald-900">Instant Delivery</p>
-                                <p class="text-xs text-emerald-700">Manual sent to your email within 1-5 minutes</p>
+                                <p class="text-sm font-semibold text-emerald-900">Fast Delivery</p>
+                                <p class="text-xs text-emerald-700">PDF delivered via email, physical media shipped within 24h</p>
                             </div>
                         </div>
                         <div class="flex items-start space-x-3">
@@ -577,6 +579,111 @@
         </div>
     </div>
     
+    <!-- Customer Reviews Section -->
+    <section class="mt-16" id="reviews">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+                <svg class="w-7 h-7 text-yellow-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                </svg>
+                Customer Reviews
+            </h2>
+
+            {% if review_count > 0 %}
+            <!-- Aggregate Rating -->
+            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-gray-200">
+                <div class="text-5xl font-bold text-gray-900">{{ avg_rating }}</div>
+                <div>
+                    <div class="flex items-center mb-1">
+                        {% for i in range(5) %}
+                        <svg class="w-5 h-5 {% if i < avg_rating|round(0, 'floor')|int %}text-yellow-400{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        {% endfor %}
+                    </div>
+                    <p class="text-sm text-gray-600">Based on {{ review_count }} review{{ 's' if review_count != 1 }}</p>
+                </div>
+            </div>
+
+            <!-- Individual Reviews -->
+            <div class="space-y-6 mb-8">
+                {% for review in reviews %}
+                <div class="border-b border-gray-100 pb-6 last:border-0">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="flex">
+                                {% for i in range(5) %}
+                                <svg class="w-4 h-4 {% if i < review.rating %}text-yellow-400{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                </svg>
+                                {% endfor %}
+                            </div>
+                            <span class="font-semibold text-gray-900 text-sm">{{ review.name }}</span>
+                            {% if review.verified_purchase %}
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Verified Purchase</span>
+                            {% endif %}
+                        </div>
+                        <span class="text-xs text-gray-400">{{ review.created_at.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    {% if review.title %}
+                    <h4 class="font-semibold text-gray-800 mb-1">{{ review.title }}</h4>
+                    {% endif %}
+                    {% if review.comment %}
+                    <p class="text-gray-600 text-sm leading-relaxed">{{ review.comment }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 mb-8">No reviews yet. Be the first to review this product!</p>
+            {% endif %}
+
+            <!-- Write a Review Form -->
+            <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Write a Review</h3>
+                <form id="reviewForm" class="space-y-4">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Your Name *</label>
+                            <input type="text" name="name" required maxlength="100" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm" placeholder="John D.">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Your Email *</label>
+                            <input type="email" name="email" required maxlength="255" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm" placeholder="john@example.com">
+                            <p class="text-xs text-gray-400 mt-1">Used to verify purchase. Not displayed publicly.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Rating *</label>
+                        <div class="flex gap-1" id="starRating">
+                            {% for i in range(1, 6) %}
+                            <button type="button" class="star-btn text-gray-300 hover:text-yellow-400 transition" data-rating="{{ i }}">
+                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                </svg>
+                            </button>
+                            {% endfor %}
+                            <input type="hidden" name="rating" id="ratingValue" value="0">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Review Title</label>
+                        <input type="text" name="title" maxlength="255" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm" placeholder="Great manual!">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Your Review</label>
+                        <textarea name="comment" rows="3" maxlength="2000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm" placeholder="Tell others about your experience with this manual..."></textarea>
+                    </div>
+                    <div id="reviewFeedback" class="hidden text-sm"></div>
+                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg transition text-sm">
+                        Submit Review
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
     <!-- Related Products -->
     {% if related_products %}
     <section class="mt-16">
@@ -777,6 +884,18 @@
             const selectedFormat = document.querySelector('input[name="productFormat"]:checked')?.value || 'pdf';
             requestBody.format_type = selectedFormat;
 
+            // Add shipping region for USB orders
+            if (selectedFormat === 'usb') {
+                const regionSelect = document.getElementById('shippingRegion');
+                if (!regionSelect || !regionSelect.value) {
+                    alert('Please select your shipping region before proceeding.');
+                    this.disabled = false;
+                    this.innerHTML = '<span class="flex items-center justify-center space-x-3"><span>Buy Now</span></span>';
+                    return;
+                }
+                requestBody.shipping_region = regionSelect.value;
+            }
+
             // Add discount code if validated
             if (productDiscountInfo && productDiscountInfo.code) {
                 requestBody.discount_code = productDiscountInfo.code;
@@ -834,6 +953,82 @@
         radio.addEventListener('change', applyFormatSelection);
     });
     applyFormatSelection(); // set initial highlighted state
+
+    // ── Shipping region selector ─────────────────────────────────────────────
+    const shippingRegionSelect = document.getElementById('shippingRegion');
+    const shippingRegionInfo = document.getElementById('shippingRegionInfo');
+    const shippingRegionContent = document.getElementById('shippingRegionContent');
+
+    const shippingData = {
+        'poland': {
+            flag: '🇵🇱',
+            title: 'Poland',
+            options: [
+                { method: 'Standard', transit: '2–4 working days', price: '$4.00' }
+            ]
+        },
+        'europe': {
+            flag: '🇪🇺',
+            title: 'Europe',
+            options: [
+                { method: 'Standard Air Mail', transit: '5–8 working days', price: '$7.95' },
+                { method: 'Expedited Tracked Air Mail', transit: '3–6 working days', price: '$16.95' },
+                { method: 'Urgent Courier (UPS/DHL)', transit: '1–4 days', price: '$39.99' }
+            ]
+        },
+        'world': {
+            flag: '🌍',
+            title: 'Rest of World',
+            options: [
+                { method: 'Standard Air Mail', transit: '5–11 working days', price: '$8.95' },
+                { method: 'Expedited Tracked Air Mail', transit: '3–8 working days', price: '$19.50' },
+                { method: 'Urgent Courier (UPS/DHL)', transit: '1–4 days', price: '$39.99' }
+            ]
+        }
+    };
+
+    function renderShippingTable(region) {
+        const data = shippingData[region];
+        if (!data) return '';
+        let rows = data.options.map((opt, i) =>
+            `<tr class="${i % 2 ? 'bg-gray-50' : ''}">
+                <td class="px-3 py-2 text-xs text-gray-700">${opt.method}</td>
+                <td class="px-3 py-2 text-xs text-gray-600">${opt.transit}</td>
+                <td class="px-3 py-2 text-xs font-semibold text-gray-900">${opt.price}</td>
+            </tr>`
+        ).join('');
+        return `
+            <div class="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
+                <div class="px-3 py-2 bg-blue-100 border-b border-blue-200">
+                    <span class="text-sm font-semibold text-blue-800">${data.flag} Shipping to ${data.title}</span>
+                </div>
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-blue-200">
+                            <th class="px-3 py-2 text-xs font-semibold text-gray-600">Method</th>
+                            <th class="px-3 py-2 text-xs font-semibold text-gray-600">Transit Time</th>
+                            <th class="px-3 py-2 text-xs font-semibold text-gray-600">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div class="px-3 py-2 bg-blue-50 border-t border-blue-200">
+                    <p class="text-xs text-blue-600">🔒 At checkout you'll pick your preferred speed. Stripe will only accept addresses within ${data.title}.</p>
+                </div>
+            </div>`;
+    }
+
+    if (shippingRegionSelect) {
+        shippingRegionSelect.addEventListener('change', function() {
+            const region = this.value;
+            if (region && shippingData[region]) {
+                shippingRegionContent.innerHTML = renderShippingTable(region);
+                shippingRegionInfo.classList.remove('hidden');
+            } else {
+                shippingRegionInfo.classList.add('hidden');
+            }
+        });
+    }
     // ─────────────────────────────────────────────────────────────────────────
 
     // Image slider functionality
@@ -1106,7 +1301,8 @@
             if (existingItem) {
                 removeFromCartById(productId);
             } else {
-                addToCart(productId, '{{ product.title }}', {{ product.price }}, 1, imageUrl);
+                // Always add as PDF — format can be changed in the cart
+                addToCart(productId, '{{ product.title }}', {{ product.price }}, 1, imageUrl, 'pdf');
                 
                 // If discount code is validated, save it to localStorage for cart
                 if (productDiscountInfo && productDiscountInfo.code) {
@@ -1130,9 +1326,10 @@
         showCartNotification('Removed from cart!');
     }
     
-    function addToCart(productId, title, price, quantity, imageUrl) {
+    function addToCart(productId, title, price, quantity, imageUrl, formatType) {
         // Ensure productId is a number for consistent comparison
         productId = parseInt(productId);
+        formatType = formatType || 'pdf';
         
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
         
@@ -1150,7 +1347,8 @@
             title: title,
             price: price,
             quantity: 1,
-            imageUrl: imageUrl || ''
+            imageUrl: imageUrl || '',
+            formatType: formatType
         });
         
         localStorage.setItem('cart', JSON.stringify(cart));
@@ -1337,6 +1535,93 @@
 
         // Update cart count on page load
         updateCartCount();
+
+        // ── Star rating interaction ──────────────────────────────────────────
+        const starButtons = document.querySelectorAll('.star-btn');
+        const ratingInput = document.getElementById('ratingValue');
+        let selectedRating = 0;
+
+        starButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                selectedRating = parseInt(this.dataset.rating);
+                ratingInput.value = selectedRating;
+                starButtons.forEach((b, i) => {
+                    b.classList.toggle('text-yellow-400', i < selectedRating);
+                    b.classList.toggle('text-gray-300', i >= selectedRating);
+                });
+            });
+            btn.addEventListener('mouseenter', function() {
+                const hoverRating = parseInt(this.dataset.rating);
+                starButtons.forEach((b, i) => {
+                    b.classList.toggle('text-yellow-400', i < hoverRating);
+                    b.classList.toggle('text-gray-300', i >= hoverRating);
+                });
+            });
+        });
+        document.getElementById('starRating')?.addEventListener('mouseleave', function() {
+            starButtons.forEach((b, i) => {
+                b.classList.toggle('text-yellow-400', i < selectedRating);
+                b.classList.toggle('text-gray-300', i >= selectedRating);
+            });
+        });
+
+        // ── Review form submission ───────────────────────────────────────────
+        const reviewForm = document.getElementById('reviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const feedback = document.getElementById('reviewFeedback');
+                const rating = parseInt(ratingInput.value);
+                if (!rating || rating < 1) {
+                    feedback.textContent = '⚠️ Please select a rating';
+                    feedback.className = 'text-sm text-orange-600';
+                    feedback.classList.remove('hidden');
+                    return;
+                }
+                const formData = new FormData(this);
+                const body = {
+                    product_id: parseInt(formData.get('product_id')),
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    rating: rating,
+                    title: formData.get('title') || null,
+                    comment: formData.get('comment') || null
+                };
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+                try {
+                    const resp = await fetch('/api/reviews', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(body)
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        feedback.innerHTML = '✅ Thank you for your review!';
+                        feedback.className = 'text-sm text-green-700 font-semibold';
+                        feedback.classList.remove('hidden');
+                        this.reset();
+                        selectedRating = 0;
+                        ratingInput.value = 0;
+                        starButtons.forEach(b => { b.classList.remove('text-yellow-400'); b.classList.add('text-gray-300'); });
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        feedback.textContent = '❌ ' + (data.detail || 'Error submitting review');
+                        feedback.className = 'text-sm text-red-600';
+                        feedback.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    feedback.textContent = '⚠️ Network error. Please try again.';
+                    feedback.className = 'text-sm text-red-600';
+                    feedback.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Review';
+                }
+            });
+        }
+        // ─────────────────────────────────────────────────────────────────────
     });
 </script>
 

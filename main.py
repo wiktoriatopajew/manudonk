@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy import func, or_
-from database.models import Product, User, Order, get_session, init_db, get_engine, Base
+from database.models import Product, User, Order, Review, get_session, init_db, get_engine, Base
 from typing import Optional
 from datetime import datetime
 import os
@@ -26,7 +26,7 @@ load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 # Import API routes
-from api_routes import router as auth_router, orders_router, search_router, newsletter_router, import_router
+from api_routes import router as auth_router, orders_router, search_router, newsletter_router, import_router, reviews_router
 from email_marketing_routes import email_marketing_router
 from tracking_routes import tracking_router
 from discount_routes import router as discount_router
@@ -232,11 +232,14 @@ async def startup_event():
         else:
             print("✅ Database schema up to date")
         
-        # Check if pdf_cache table exists
-        if 'pdf_cache' not in inspector.get_table_names():
-            print("🔄 Creating pdf_cache table...")
-            Base.metadata.create_all(bind=engine)
-            print("✅ pdf_cache table created")
+        # Create any missing tables (pdf_cache, reviews, etc.)
+        existing_tables = inspector.get_table_names()
+        for table_name in ['pdf_cache', 'reviews']:
+            if table_name not in existing_tables:
+                print(f"🔄 Creating {table_name} table...")
+                Base.metadata.create_all(bind=engine)
+                print(f"✅ {table_name} table created")
+                break  # create_all handles all missing tables at once
             
     except Exception as e:
         print(f"⚠️  Migration error: {e}")
@@ -258,6 +261,7 @@ app.include_router(tracking_router)
 app.include_router(discount_router)
 app.include_router(import_router)
 app.include_router(merchant_router)
+app.include_router(reviews_router)
 
 # Configuration
 # Railway automatically provides RAILWAY_PUBLIC_DOMAIN
@@ -266,7 +270,7 @@ if railway_domain:
     DOMAIN = f"https://{railway_domain}"
 else:
     # Use production domain or localhost
-    DOMAIN = os.getenv("DOMAIN", "https://manualdonkey.com")
+    DOMAIN = os.getenv("DOMAIN", "https://manualbear.com")
 
 # Add custom filter for regex search
 import re
@@ -327,7 +331,7 @@ async def home(request: Request):
                 "request": request,
                 "products": cached_data['products'],
                 "categories": cached_data['categories'],
-                "page_title": "ManualDonkey - User Manuals & Service Guides",
+                "page_title": "ManualBear - User Manuals & Service Guides",
                 "page_description": "Download PDF user manuals and service guides. Over 1,000+ manuals for vehicles, electronics, and appliances. Instant digital delivery worldwide."
             }
         )
@@ -395,7 +399,7 @@ async def home(request: Request):
                 "request": request,
                 "products": latest_products,
                 "categories": categories,
-                "page_title": "ManualDonkey - Product Catalog",
+                "page_title": "ManualBear - Product Catalog",
                 "page_description": "Find user manuals for your products. Over 1,000 manuals available online."
             }
         )
@@ -644,16 +648,33 @@ async def product_detail_by_slug(request: Request, slug: str):
     cached_data = cache.get(cache_key)
     
     if cached_data:
-        # Use cached data
+        # Use cached data but always fetch fresh reviews
         cache_time = time.time() - start_time
         if cache_time > 0.1:
             print(f"⚡ Cache hit for {slug} took {cache_time:.3f}s (slow)")
+        
+        # Reviews always fresh (not cached)
+        review_session = get_session()
+        try:
+            product_id = cached_data['product']['id'] if isinstance(cached_data['product'], dict) else cached_data['product'].id
+            reviews = review_session.query(Review).filter(
+                Review.product_id == product_id,
+                Review.approved == True
+            ).order_by(Review.created_at.desc()).all()
+            review_count = len(reviews)
+            avg_rating = round(sum(r.rating for r in reviews) / review_count, 1) if review_count else 0
+        finally:
+            review_session.close()
+        
         return templates.TemplateResponse(
             "product.html",
             {
                 "request": request,
                 "product": cached_data['product'],
                 "related_products": cached_data['related_products'],
+                "reviews": reviews,
+                "review_count": review_count,
+                "avg_rating": avg_rating,
                 "page_title": cached_data['page_title'],
                 "page_description": cached_data['page_description']
             }
@@ -679,7 +700,7 @@ async def product_detail_by_slug(request: Request, slug: str):
         
         # Generate SEO-optimized title and description
         page_title = f"{product.title} - {product.brand} {product.model} | User Manual"
-        page_description = f"Download {product.brand} {product.model} user manual PDF. {product.description[:150] if product.description else 'Original service guide and user manual. Instant digital delivery.'}"
+        page_description = f"Technical documentation for {product.brand} {product.model}. {product.description[:150] if product.description else 'Professional service guide and technical documentation.'}"
         
         # Get related products (same category, limit 4)
         related_start = time.time()
@@ -731,12 +752,23 @@ async def product_detail_by_slug(request: Request, slug: str):
             'page_description': page_description
         }, ttl=300)
         
+        # Reviews always fresh
+        reviews = session.query(Review).filter(
+            Review.product_id == product.id,
+            Review.approved == True
+        ).order_by(Review.created_at.desc()).all()
+        review_count = len(reviews)
+        avg_rating = round(sum(r.rating for r in reviews) / review_count, 1) if review_count else 0
+        
         return templates.TemplateResponse(
             "product.html",
             {
                 "request": request,
                 "product": product,
                 "related_products": related_products,
+                "reviews": reviews,
+                "review_count": review_count,
+                "avg_rating": avg_rating,
                 "page_title": page_title,
                 "page_description": page_description
             }
@@ -765,7 +797,7 @@ async def product_detail(request: Request, product_id: int):
         
         # Generate SEO-optimized title and description
         page_title = f"{product.title} - {product.brand} {product.model} | User Manual"
-        page_description = f"Download {product.brand} {product.model} user manual. Original PDF manual with instant digital delivery."
+        page_description = f"Technical documentation and service information for {product.brand} {product.model}. Professional quality manual available for purchase."
         
         # Get related products (same category)
         related_products = session.query(Product).filter(
@@ -773,12 +805,23 @@ async def product_detail(request: Request, product_id: int):
             Product.id != product.id
         ).limit(4).all()
         
+        # Reviews
+        reviews = session.query(Review).filter(
+            Review.product_id == product.id,
+            Review.approved == True
+        ).order_by(Review.created_at.desc()).all()
+        review_count = len(reviews)
+        avg_rating = round(sum(r.rating for r in reviews) / review_count, 1) if review_count else 0
+        
         return templates.TemplateResponse(
             "product.html",
             {
                 "request": request,
                 "product": product,
                 "related_products": related_products,
+                "reviews": reviews,
+                "review_count": review_count,
+                "avg_rating": avg_rating,
                 "page_title": page_title,
                 "page_description": page_description
             }

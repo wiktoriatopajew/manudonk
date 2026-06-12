@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, timedelta
 import asyncio
-from database.models import User, VerificationCode, Order, Product, PasswordResetToken, Newsletter, DiscountCode, get_session
+from database.models import User, VerificationCode, Order, Product, PasswordResetToken, Newsletter, DiscountCode, Review, get_session
 from sqlalchemy import func, desc
 from sqlalchemy.orm import joinedload
 from auth import create_access_token, get_current_user, get_current_admin_user
@@ -807,10 +807,13 @@ class CreateCheckoutSessionRequest(BaseModel):
     product_id: int
     discount_code: Optional[str] = None
     format_type: str = "pdf"           # "pdf" or "usb"
+    shipping_region: Optional[str] = None  # "poland", "europe", "world" — required for usb
 
 class CreateMultiCheckoutSessionRequest(BaseModel):
     product_ids: List[int]
     discount_code: Optional[str] = None
+    format_types: Optional[dict] = None  # {product_id: "pdf"|"usb"}
+    shipping_region: Optional[str] = None  # "poland", "europe", "world"
 
 
 @orders_router.get("/session-email")
@@ -1067,6 +1070,8 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
         # For physical USB/DVD orders: Stripe collects address and customer
         # picks shipping method from a verified list — prevents region spoofing.
         if request.format_type == "usb":
+            region = (request.shipping_region or 'world').lower()
+
             POLAND_COUNTRIES  = ['PL']
             EUROPE_COUNTRIES  = [
                 'DE', 'FR', 'GB', 'IT', 'ES', 'NL', 'BE', 'AT', 'SE', 'NO', 'DK',
@@ -1079,49 +1084,72 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
                 'ZA', 'NG', 'KE', 'GH', 'AE', 'SA', 'IL', 'TR', 'TH', 'PH',
                 'ID', 'MY', 'VN', 'PK', 'BD', 'EG', 'MA', 'TN', 'DZ',
             ]
-            session_params['shipping_address_collection'] = {'allowed_countries': ALL_COUNTRIES}
-            session_params['shipping_options'] = [
-                # Poland
-                {'shipping_rate_data': {
+
+            # Restrict allowed countries to the selected region
+            if region == 'poland':
+                allowed = POLAND_COUNTRIES
+            elif region == 'europe':
+                allowed = EUROPE_COUNTRIES
+            else:
+                allowed = ALL_COUNTRIES  # world — allow all
+
+            session_params['shipping_address_collection'] = {'allowed_countries': allowed}
+
+            # Build shipping options for selected region only
+            shipping_opts = []
+            if region == 'poland':
+                shipping_opts.append({'shipping_rate_data': {
                     'type': 'fixed_amount',
                     'fixed_amount': {'amount': 400, 'currency': 'usd'},
-                    'display_name': 'Poland — Standard (2–3 working days)',
+                    'display_name': 'Poland — Standard (2–4 working days)',
                     'metadata': {'region': 'poland', 'allowed_countries': 'PL'},
-                }},
-                # Europe
-                {'shipping_rate_data': {
-                    'type': 'fixed_amount',
-                    'fixed_amount': {'amount': 795, 'currency': 'usd'},
-                    'display_name': 'Europe — Standard Air Mail (5–7 days)',
-                    'metadata': {'region': 'europe'},
-                }},
-                {'shipping_rate_data': {
-                    'type': 'fixed_amount',
-                    'fixed_amount': {'amount': 1695, 'currency': 'usd'},
-                    'display_name': 'Europe — Expedited Tracked (3–5 days)',
-                    'metadata': {'region': 'europe'},
-                }},
-                # Rest of World
-                {'shipping_rate_data': {
-                    'type': 'fixed_amount',
-                    'fixed_amount': {'amount': 895, 'currency': 'usd'},
-                    'display_name': 'Rest of World — Standard Air Mail (5–10 days)',
-                    'metadata': {'region': 'world'},
-                }},
-                {'shipping_rate_data': {
-                    'type': 'fixed_amount',
-                    'fixed_amount': {'amount': 1950, 'currency': 'usd'},
-                    'display_name': 'Rest of World — Expedited Tracked (3–7 days)',
-                    'metadata': {'region': 'world'},
-                }},
-                {'shipping_rate_data': {
-                    'type': 'fixed_amount',
-                    'fixed_amount': {'amount': 3999, 'currency': 'usd'},
-                    'display_name': 'Urgent Courier — Worldwide (1–3 days)',
-                    'metadata': {'region': 'world'},
-                }},
-            ]
-            print(f"📦 USB order — shipping options added to Stripe session")
+                }})
+            elif region == 'europe':
+                shipping_opts += [
+                    {'shipping_rate_data': {
+                        'type': 'fixed_amount',
+                        'fixed_amount': {'amount': 795, 'currency': 'usd'},
+                        'display_name': 'Europe — Standard Air Mail (5–8 days)',
+                        'metadata': {'region': 'europe'},
+                    }},
+                    {'shipping_rate_data': {
+                        'type': 'fixed_amount',
+                        'fixed_amount': {'amount': 1695, 'currency': 'usd'},
+                        'display_name': 'Europe — Expedited Tracked (3–6 days)',
+                        'metadata': {'region': 'europe'},
+                    }},
+                    {'shipping_rate_data': {
+                        'type': 'fixed_amount',
+                        'fixed_amount': {'amount': 3999, 'currency': 'usd'},
+                        'display_name': 'Europe — Urgent Courier UPS/DHL (1–4 days)',
+                        'metadata': {'region': 'europe'},
+                    }},
+                ]
+            else:  # world
+                shipping_opts += [
+                    {'shipping_rate_data': {
+                        'type': 'fixed_amount',
+                        'fixed_amount': {'amount': 895, 'currency': 'usd'},
+                        'display_name': 'Rest of World — Standard Air Mail (5–11 days)',
+                        'metadata': {'region': 'world'},
+                    }},
+                    {'shipping_rate_data': {
+                        'type': 'fixed_amount',
+                        'fixed_amount': {'amount': 1950, 'currency': 'usd'},
+                        'display_name': 'Rest of World — Expedited Tracked (3–8 days)',
+                        'metadata': {'region': 'world'},
+                    }},
+                    {'shipping_rate_data': {
+                        'type': 'fixed_amount',
+                        'fixed_amount': {'amount': 3999, 'currency': 'usd'},
+                        'display_name': 'Urgent Courier — Worldwide UPS/DHL (1–4 days)',
+                        'metadata': {'region': 'world'},
+                    }},
+                ]
+
+            session_params['shipping_options'] = shipping_opts
+            metadata['shipping_region'] = region
+            print(f"📦 USB order — region: {region}, {len(shipping_opts)} shipping option(s)")
 
         # Create Stripe checkout session
         try:
@@ -1309,21 +1337,110 @@ async def create_multi_checkout_session(request: CreateMultiCheckoutSessionReque
         
         # Create Stripe checkout session with multiple items
         try:
-            checkout_session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=line_items,
-                mode='payment',
-                success_url=DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=DOMAIN + '/cart',
-                customer_email=None,  # Let Stripe collect email
-                metadata={
+            session_params = {
+                'payment_method_types': ['card'],
+                'line_items': line_items,
+                'mode': 'payment',
+                'success_url': DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url': DOMAIN + '/cart',
+                'customer_email': None,
+                'metadata': {
                     'product_ids': ','.join(map(str, request.product_ids)),
                     'is_multi_product': 'true',
                     'discount_code': request.discount_code or '',
                     'discount_amount': str(discount_amount),
                     'original_total': str(subtotal)
                 }
-            )
+            }
+
+            # Check if any product is USB format → add shipping
+            has_usb = False
+            if request.format_types:
+                has_usb = any(
+                    v == 'usb' for v in request.format_types.values()
+                )
+
+            if has_usb:
+                region = (request.shipping_region or 'world').lower()
+
+                POLAND_COUNTRIES = ['PL']
+                EUROPE_COUNTRIES = [
+                    'DE','FR','GB','IT','ES','NL','BE','AT','SE','NO','DK',
+                    'FI','PT','CZ','SK','HU','RO','BG','HR','SI','EE','LV',
+                    'LT','GR','IE','LU','MT','CY','CH','UA','RS','BA','MK',
+                    'AL','ME','MD','BY','GE','AM','AZ','IS','LI',
+                ]
+                ALL_COUNTRIES = POLAND_COUNTRIES + EUROPE_COUNTRIES + [
+                    'US','CA','AU','NZ','JP','KR','SG','IN','BR','MX',
+                    'ZA','NG','KE','GH','AE','SA','IL','TR','TH','PH',
+                    'ID','MY','VN','PK','BD','EG','MA','TN','DZ',
+                ]
+
+                if region == 'poland':
+                    allowed = POLAND_COUNTRIES
+                elif region == 'europe':
+                    allowed = EUROPE_COUNTRIES
+                else:
+                    allowed = ALL_COUNTRIES
+
+                session_params['shipping_address_collection'] = {'allowed_countries': allowed}
+
+                shipping_opts = []
+                if region == 'poland':
+                    shipping_opts.append({'shipping_rate_data': {
+                        'type': 'fixed_amount',
+                        'fixed_amount': {'amount': 400, 'currency': 'usd'},
+                        'display_name': 'Poland — Standard (2–4 working days)',
+                        'metadata': {'region': 'poland'},
+                    }})
+                elif region == 'europe':
+                    shipping_opts += [
+                        {'shipping_rate_data': {
+                            'type': 'fixed_amount',
+                            'fixed_amount': {'amount': 795, 'currency': 'usd'},
+                            'display_name': 'Europe — Standard Air Mail (5–8 working days)',
+                            'metadata': {'region': 'europe'},
+                        }},
+                        {'shipping_rate_data': {
+                            'type': 'fixed_amount',
+                            'fixed_amount': {'amount': 1695, 'currency': 'usd'},
+                            'display_name': 'Europe — Expedited Tracked (3–6 working days)',
+                            'metadata': {'region': 'europe'},
+                        }},
+                        {'shipping_rate_data': {
+                            'type': 'fixed_amount',
+                            'fixed_amount': {'amount': 3999, 'currency': 'usd'},
+                            'display_name': 'Europe — Urgent Courier UPS/DHL (1–4 days)',
+                            'metadata': {'region': 'europe'},
+                        }},
+                    ]
+                else:
+                    shipping_opts += [
+                        {'shipping_rate_data': {
+                            'type': 'fixed_amount',
+                            'fixed_amount': {'amount': 895, 'currency': 'usd'},
+                            'display_name': 'Rest of World — Standard Air Mail (5–11 working days)',
+                            'metadata': {'region': 'world'},
+                        }},
+                        {'shipping_rate_data': {
+                            'type': 'fixed_amount',
+                            'fixed_amount': {'amount': 1950, 'currency': 'usd'},
+                            'display_name': 'Rest of World — Expedited Tracked (3–8 working days)',
+                            'metadata': {'region': 'world'},
+                        }},
+                        {'shipping_rate_data': {
+                            'type': 'fixed_amount',
+                            'fixed_amount': {'amount': 3999, 'currency': 'usd'},
+                            'display_name': 'Urgent Courier — Worldwide UPS/DHL (1–4 days)',
+                            'metadata': {'region': 'world'},
+                        }},
+                    ]
+
+                session_params['shipping_options'] = shipping_opts
+                session_params['metadata']['shipping_region'] = region
+                print(f"📦 Multi-checkout with USB — region: {region}, {len(shipping_opts)} shipping option(s)")
+
+            checkout_session = stripe.checkout.Session.create(**session_params)
             
             print(f"✅ Multi-checkout session created: {checkout_session.id}")
             return {"url": checkout_session.url}
@@ -2139,5 +2256,102 @@ def update_import_progress(progress: int, total: int, current_batch: int = 0, er
     print(f"📊 Import Progress: {progress}/{total} ({current_batch} batch)")
 
 
+# ──────────────────────────────────────────────────────────────
+# Reviews API
+# ──────────────────────────────────────────────────────────────
+reviews_router = APIRouter(prefix="/api/reviews", tags=["reviews"])
+
+
+class SubmitReviewRequest(BaseModel):
+    product_id: int
+    email: str
+    name: str
+    rating: int  # 1-5
+    title: Optional[str] = None
+    comment: Optional[str] = None
+
+
+@reviews_router.get("/{product_id}")
+async def get_product_reviews(product_id: int):
+    """Get all approved reviews for a product"""
+    session = get_session()
+    try:
+        reviews = session.query(Review).filter(
+            Review.product_id == product_id,
+            Review.approved == True
+        ).order_by(Review.created_at.desc()).all()
+
+        review_list = []
+        for r in reviews:
+            review_list.append({
+                "id": r.id,
+                "name": r.name,
+                "rating": r.rating,
+                "title": r.title,
+                "comment": r.comment,
+                "verified_purchase": r.verified_purchase,
+                "created_at": r.created_at.strftime("%B %d, %Y") if r.created_at else None,
+            })
+
+        # Calculate aggregate
+        total = len(review_list)
+        avg_rating = round(sum(r["rating"] for r in review_list) / total, 1) if total else 0
+
+        return {
+            "reviews": review_list,
+            "total": total,
+            "average_rating": avg_rating,
+        }
+    finally:
+        session.close()
+
+
+@reviews_router.post("")
+async def submit_review(request: SubmitReviewRequest):
+    """Submit a review — verified_purchase is set automatically if email matches an order"""
+    session = get_session()
+    try:
+        # Validate rating
+        if request.rating < 1 or request.rating > 5:
+            raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+
+        # Check product exists
+        product = session.query(Product).filter(Product.id == request.product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        # Check for duplicate review
+        existing = session.query(Review).filter(
+            Review.product_id == request.product_id,
+            Review.email == request.email.lower().strip()
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="You have already reviewed this product")
+
+        # Verify purchase
+        has_purchased = session.query(Order).filter(
+            Order.product_id == request.product_id,
+            Order.email == request.email.lower().strip(),
+            Order.status == 'completed'
+        ).first() is not None
+
+        review = Review(
+            product_id=request.product_id,
+            email=request.email.lower().strip(),
+            name=request.name.strip()[:100],
+            rating=request.rating,
+            title=request.title.strip()[:255] if request.title else None,
+            comment=request.comment.strip()[:2000] if request.comment else None,
+            verified_purchase=has_purchased,
+            approved=True,
+        )
+        session.add(review)
+        session.commit()
+
+        return {"success": True, "verified_purchase": has_purchased}
+    finally:
+        session.close()
+
+
 # Export routers
-__all__ = ["router", "orders_router", "import_router"]
+__all__ = ["router", "orders_router", "import_router", "reviews_router"]

@@ -232,6 +232,24 @@ class Order(Base):
     product = relationship("Product")
 
 
+class Review(Base):
+    """Product reviews from verified buyers"""
+    __tablename__ = 'reviews'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False, index=True)
+    email = Column(String(255), nullable=False)
+    name = Column(String(100), nullable=False)
+    rating = Column(Integer, nullable=False)  # 1-5
+    title = Column(String(255), nullable=True)
+    comment = Column(Text, nullable=True)
+    verified_purchase = Column(Boolean, default=False)
+    approved = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    product = relationship("Product", back_populates="reviews")
+
+
 class Product(Base):
     """Product model with fields optimized for 100k+ products"""
     __tablename__ = 'products'
@@ -255,7 +273,10 @@ class Product(Base):
     preview_images = Column(Text, nullable=True)  # JSON array of preview image paths
     pdf_processed = Column(Boolean, default=False)  # Flag if PDF was processed
     is_featured = Column(Boolean, default=False)  # Featured product flag
-    
+
+    # Relationships
+    reviews = relationship("Review", back_populates="product", lazy="dynamic")
+
     # Create composite indexes for faster filtering
     __table_args__ = (
         Index('idx_category_brand', 'category', 'brand'),
