@@ -410,7 +410,11 @@ async def home(request: Request):
 @app.get("/cart", response_class=HTMLResponse)
 async def cart(request: Request):
     """Shopping cart page"""
-    return templates.TemplateResponse("cart.html", {"request": request})
+    return templates.TemplateResponse("cart.html", {
+        "request": request,
+        "page_title": "Shopping Cart - ManualBear",
+        "page_description": "Review the service manuals in your cart and check out securely with ManualBear."
+    })
 
 
 @app.get("/search", response_class=HTMLResponse)
@@ -910,13 +914,21 @@ async def success_page(request: Request, session_id: Optional[str] = None):
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     """Registration page"""
-    return templates.TemplateResponse("register.html", {"request": request})
+    return templates.TemplateResponse("register.html", {
+        "request": request,
+        "page_title": "Create Account - ManualBear",
+        "page_description": "Create a ManualBear account to track your orders and access your manuals."
+    })
 
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """Login page"""
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "page_title": "Login - ManualBear",
+        "page_description": "Log in to your ManualBear account to access your orders and downloads."
+    })
 
 
 @app.get("/forgot-password", response_class=HTMLResponse)
@@ -941,31 +953,51 @@ async def verify_email_page(request: Request, email: str):
 @app.get("/privacy-policy", response_class=HTMLResponse)
 async def privacy_policy(request: Request):
     """Privacy policy page"""
-    return templates.TemplateResponse("privacy_policy.html", {"request": request})
+    return templates.TemplateResponse("privacy_policy.html", {
+        "request": request,
+        "page_title": "Privacy Policy - ManualBear",
+        "page_description": "How ManualBear collects, uses and protects your personal data. GDPR compliant."
+    })
 
 
 @app.get("/terms-of-service", response_class=HTMLResponse)
 async def terms_of_service(request: Request):
     """Terms of service page"""
-    return templates.TemplateResponse("terms_of_service.html", {"request": request})
+    return templates.TemplateResponse("terms_of_service.html", {
+        "request": request,
+        "page_title": "Terms of Service - ManualBear",
+        "page_description": "The terms governing use of ManualBear and the purchase of our service manuals."
+    })
 
 
 @app.get("/refund-policy", response_class=HTMLResponse)
 async def refund_policy(request: Request):
     """Refund policy page"""
-    return templates.TemplateResponse("refund_policy.html", {"request": request})
+    return templates.TemplateResponse("refund_policy.html", {
+        "request": request,
+        "page_title": "Return & Refund Policy - ManualBear",
+        "page_description": "ManualBear return and refund policy for digital downloads and physical media (USB/DVD)."
+    })
 
 
 @app.get("/about-us", response_class=HTMLResponse)
 async def about_us(request: Request):
     """About us page"""
-    return templates.TemplateResponse("about_us.html", {"request": request})
+    return templates.TemplateResponse("about_us.html", {
+        "request": request,
+        "page_title": "About Us - ManualBear",
+        "page_description": "ManualBear is an independent technical documentation archive with 1,000+ service and repair manuals."
+    })
 
 
 @app.get("/contact", response_class=HTMLResponse)
 async def contact(request: Request):
     """Contact page"""
-    return templates.TemplateResponse("contact.html", {"request": request})
+    return templates.TemplateResponse("contact.html", {
+        "request": request,
+        "page_title": "Contact Us - ManualBear",
+        "page_description": "Contact ManualBear support for help with orders, manuals or general questions."
+    })
 
 
 @app.post("/contact/send")
@@ -1000,19 +1032,31 @@ async def contact_send(request: Request):
 @app.get("/faq", response_class=HTMLResponse)
 async def faq(request: Request):
     """Frequently asked questions page"""
-    return templates.TemplateResponse("faq.html", {"request": request})
+    return templates.TemplateResponse("faq.html", {
+        "request": request,
+        "page_title": "FAQ - ManualBear",
+        "page_description": "Answers about ordering, delivery, formats and refunds at ManualBear."
+    })
 
 
 @app.get("/shipping-policy", response_class=HTMLResponse)
 async def shipping_policy(request: Request):
     """Shipping policy page"""
-    return templates.TemplateResponse("shipping_policy.html", {"request": request})
+    return templates.TemplateResponse("shipping_policy.html", {
+        "request": request,
+        "page_title": "Shipping & Delivery Policy - ManualBear",
+        "page_description": "ManualBear delivery options, costs and processing times for digital and physical orders."
+    })
 
 
 @app.get("/payment-policy", response_class=HTMLResponse)
 async def payment_policy(request: Request):
     """Payment policy page"""
-    return templates.TemplateResponse("payment_policy.html", {"request": request})
+    return templates.TemplateResponse("payment_policy.html", {
+        "request": request,
+        "page_title": "Payment Policy - ManualBear",
+        "page_description": "Accepted payment methods, currency and security at ManualBear (Stripe, PCI-DSS Level 1)."
+    })
 
 
 # Admin Panel

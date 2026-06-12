@@ -11,7 +11,7 @@
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:url" content="{{ request.url|replace('http://','https://') }}">
     <meta property="og:title" content="{{ page_title }}">
     <meta property="og:description" content="{{ page_description }}">
     <meta property="og:image" content="https://manualbear.com/static/images/logo.png">
@@ -25,13 +25,13 @@
     <script>window.uetq = window.uetq || [];window.uetq.push('consent', 'default', {'ad_storage': 'denied'});</script>
     <!-- Implement a cookie banner or another method to collect user consent. When a user grants consent (e.g., selects 'Accept' on your banner), update the consent settings using the command below. -->
     <script>window.uetq = window.uetq || [];window.uetq.push('consent', 'update', {'ad_storage': 'granted'});</script>
-    <meta property="twitter:url" content="{{ request.url }}">
+    <meta property="twitter:url" content="{{ request.url|replace('http://','https://') }}">
     <meta property="twitter:title" content="{{ page_title }}">
     <meta property="twitter:description" content="{{ page_description }}">
     <meta property="twitter:image" content="https://manualbear.com/static/images/logo.png">
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="{{ request.url }}">
+    <link rel="canonical" href="{{ request.url|replace('http://','https://') }}">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/images/favicon/favicon-96x96.png" sizes="96x96" />
