@@ -18,27 +18,32 @@ async def google_merchant_feed_head():
     return Response(headers={"Content-Type": "application/xml; charset=UTF-8"})
 
 @merchant_router.get("/google-merchant.xml")
-async def generate_google_merchant_feed():
-    """Generate Google Merchant Center Product Feed (XML)"""
-    
+async def generate_google_merchant_feed(page: int = 0):
+    """Generate Google Merchant Center Product Feed (XML).
+    page=0 returns all products; page=1..4 returns one quarter each (~311 items).
+    """
+
     db_session = get_session()
-    
+    PAGE_SIZE = 311
+
     try:
         # Create RSS feed
         rss = ET.Element('rss', {
             'version': '2.0',
             'xmlns:g': 'http://base.google.com/ns/1.0'
         })
-        
+
         channel = ET.SubElement(rss, 'channel')
         ET.SubElement(channel, 'title').text = 'ManualBear - Technical Documentation & Service Information'
         ET.SubElement(channel, 'link').text = 'https://manualbear.com'
         ET.SubElement(channel, 'description').text = 'Comprehensive library of technical documentation and service information for vehicles, motorcycles, and equipment'
-        
-        # Get all active products
-        products = db_session.query(Product).filter(
-            Product.price > 0  # Only products with price
-        ).all()
+
+        # Get products — paginated when page param is provided
+        query = db_session.query(Product).filter(Product.price > 0).order_by(Product.id)
+        if page and page > 0:
+            products = query.offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+        else:
+            products = query.all()
         
         for product in products:
             item = ET.SubElement(channel, 'item')
