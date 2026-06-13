@@ -11,6 +11,12 @@ from datetime import datetime
 
 merchant_router = APIRouter(prefix="/feed", tags=["merchant"])
 
+@merchant_router.head("/google-merchant.xml")
+async def google_merchant_feed_head():
+    """HEAD request support for Google Merchant Center feed validation"""
+    from fastapi.responses import Response
+    return Response(headers={"Content-Type": "application/xml; charset=UTF-8"})
+
 @merchant_router.get("/google-merchant.xml")
 async def generate_google_merchant_feed():
     """Generate Google Merchant Center Product Feed (XML)"""
