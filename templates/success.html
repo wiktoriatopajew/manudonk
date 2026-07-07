@@ -4,6 +4,11 @@
 <meta name="robots" content="noindex, nofollow">
 {% endblock %}
 
+{# Load Shoparize API but do NOT init — this page fires a purchase conversion instead #}
+{% block shoparize %}
+<script src="https://partner-cdn.shoparize.com/js/shoparize.js" defer="defer"></script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
     <div class="bg-white rounded-2xl shadow-2xl p-12 text-center">
@@ -165,6 +170,38 @@
                             'transaction_id': data.order_id
                         });
                         console.log('Google Ads conversion tracked:', data.order_id, data.order_total);
+                    }
+
+                    // Shoparize purchase conversion
+                    if (data.order_id) {
+                        window.dataLayerShoparize = window.dataLayerShoparize || [];
+                        window.dataLayerShoparize.push({
+                            event: "purchase",
+                            ecommerce: {
+                                transaction_id: String(data.order_id),
+                                value: parseFloat(data.order_total) || 0,
+                                tax: 0,
+                                shipping: 0,
+                                currency: data.currency || "USD",
+                                items: (data.items || []).map(function (it) {
+                                    return {
+                                        item_id: String(it.item_id),
+                                        item_name: String(it.item_name).replace(/['"]/g, ''),
+                                        currency: data.currency || "USD",
+                                        price: parseFloat(it.price) || 0,
+                                        quantity: it.quantity || 1
+                                    };
+                                })
+                            }
+                        });
+                        (function fireShoparizeConv(attempt) {
+                            if (typeof SHOPARIZE_API === 'function') {
+                                SHOPARIZE_API().conv(4245);
+                                console.log('Shoparize conversion tracked:', data.order_id);
+                            } else if (attempt < 20) {
+                                setTimeout(function () { fireShoparizeConv(attempt + 1); }, 300);
+                            }
+                        })(0);
                     }
 
                     // Auto-login if user exists and token is provided

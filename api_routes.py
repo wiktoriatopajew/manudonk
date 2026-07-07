@@ -851,6 +851,17 @@ async def get_session_email(session_id: str):
             order_id = None
             order_total = None
             print(f"⚠️  No orders found yet for payment_intent {payment_intent} - webhook may still be processing")
+
+        # Build line items for tracking (Shoparize / analytics)
+        items = []
+        for o in all_orders:
+            product = db_session.query(Product).filter(Product.id == o.product_id).first()
+            items.append({
+                "item_id": str(o.product_id),
+                "item_name": (product.title if product and product.title else f"Manual {o.product_id}"),
+                "price": float(o.price),
+                "quantity": 1
+            })
         
         if user and user.is_verified:
             # Generate access token for automatic login
@@ -860,15 +871,19 @@ async def get_session_email(session_id: str):
                 "access_token": access_token,
                 "user_exists": True,
                 "order_id": order_id,
-                "order_total": float(order_total) if order_total else None
+                "order_total": float(order_total) if order_total else None,
+                "currency": "USD",
+                "items": items
             }
-        
+
         return {
             "email": email,
             "access_token": None,
             "user_exists": False,
             "order_id": order_id,
-            "order_total": float(order_total) if order_total else None
+            "order_total": float(order_total) if order_total else None,
+            "currency": "USD",
+            "items": items
         }
     except Exception as e:
         print(f"Error in session-email: {e}")

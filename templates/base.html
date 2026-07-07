@@ -1083,6 +1083,18 @@
         // Show banner on page load
         window.addEventListener('DOMContentLoaded', showCookieConsent);
     </script>
+
+    <!-- Shoparize tracking (init on all pages; success page overrides this block to fire a purchase conversion) -->
+    {% block shoparize %}
+    <script src="https://partner-cdn.shoparize.com/js/shoparize.js" defer="defer"></script>
+    <script>
+        window.addEventListener('load', function () {
+            if (typeof SHOPARIZE_API === 'function') {
+                SHOPARIZE_API().init(4245);
+            }
+        });
+    </script>
+    {% endblock %}
 </body>
 
 </html>
