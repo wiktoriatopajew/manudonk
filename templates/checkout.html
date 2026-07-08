@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<script src="https://js.stripe.com/v3/"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Secure Checkout</h1>
+        <div class="inline-flex items-center gap-2 text-sm text-gray-600">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                </path>
+            </svg>
+            Payment stays on <strong>manualbear.com</strong> — encrypted &amp; processed by Stripe
+        </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="checkoutLoading" class="bg-white rounded-2xl shadow-xl p-12 text-center">
+        <div class="inline-block w-12 h-12 border-4 border-gray-200 border-t-yellow-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-600">Preparing your secure payment form…</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="checkoutError" class="hidden bg-white rounded-2xl shadow-xl p-10 text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-9 h-9 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+            </svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Checkout unavailable</h2>
+        <p id="checkoutErrorMsg" class="text-gray-600 mb-6">We couldn't start the checkout. Please try again.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="/cart" class="inline-flex items-center justify-center px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg transition">
+                Back to Cart
+            </a>
+            <a href="/search" class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition">
+                Continue Shopping
+            </a>
+        </div>
+    </div>
+
+    <!-- Stripe Embedded Checkout mounts here -->
+    <div id="checkout" class="hidden"></div>
+
+    <!-- Trust row -->
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
+        <span class="flex items-center gap-1">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            256-bit SSL secured
+        </span>
+        <span class="flex items-center gap-1">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            Instant PDF delivery by email
+        </span>
+        <span class="flex items-center gap-1">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            Powered by Stripe
+        </span>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const PUBLISHABLE_KEY = "{{ stripe_publishable_key }}";
+
+        const loadingEl = document.getElementById('checkoutLoading');
+        const errorEl = document.getElementById('checkoutError');
+        const errorMsgEl = document.getElementById('checkoutErrorMsg');
+        const checkoutEl = document.getElementById('checkout');
+
+        function showError(msg) {
+            if (loadingEl) loadingEl.classList.add('hidden');
+            if (checkoutEl) checkoutEl.classList.add('hidden');
+            if (errorMsgEl && msg) errorMsgEl.textContent = msg;
+            if (errorEl) errorEl.classList.remove('hidden');
+        }
+
+        // 1) Read the checkout intent saved by product/cart page
+        let intent = null;
+        try {
+            intent = JSON.parse(sessionStorage.getItem('checkoutIntent') || 'null');
+        } catch (e) { intent = null; }
+
+        if (!intent || !intent.mode) {
+            showError('Your session expired or the cart is empty. Please start checkout again.');
+            return;
+        }
+
+        if (!PUBLISHABLE_KEY) {
+            showError('Payment configuration is missing. Please contact support@manualbear.com.');
+            console.error('STRIPE_PUBLISHABLE_KEY is not set on the server.');
+            return;
+        }
+
+        // 2) Build the request for the matching backend endpoint
+        let endpoint, body;
+        if (intent.mode === 'single') {
+            endpoint = '/api/orders/create-checkout-session';
+            body = {
+                product_id: intent.product_id,
+                format_type: 'pdf'
+            };
+            if (intent.discount_code) body.discount_code = intent.discount_code;
+        } else {
+            endpoint = '/api/orders/create-multi-checkout-session';
+            body = {
+                product_ids: intent.product_ids || [],
+                discount_code: intent.discount_code || null
+            };
+        }
+
+        // 3) Create the session, then mount Stripe embedded checkout
+        const stripe = Stripe(PUBLISHABLE_KEY);
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (!data || !data.client_secret) {
+                throw new Error(data && data.detail ? data.detail : 'No client secret returned');
+            }
+            return stripe.initEmbeddedCheckout({ clientSecret: data.client_secret });
+        })
+        .then(function (embedded) {
+            if (loadingEl) loadingEl.classList.add('hidden');
+            if (checkoutEl) checkoutEl.classList.remove('hidden');
+            embedded.mount('#checkout');
+            // Intent consumed — clear it so a refresh won't create a duplicate session
+            sessionStorage.removeItem('checkoutIntent');
+        })
+        .catch(function (err) {
+            console.error('Embedded checkout error:', err);
+            showError('We couldn\'t start the checkout. Please try again or contact support@manualbear.com.');
+        });
+    })();
+</script>
+{% endblock %}

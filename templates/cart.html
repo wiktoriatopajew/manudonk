@@ -258,57 +258,33 @@ document.addEventListener('DOMContentLoaded', function() {
         loadCart();
     }
 
-    // Checkout functionality
-    document.getElementById('checkoutBtn').addEventListener('click', async function() {
+    // Checkout — save intent and go to on-site checkout (payment stays on manualbear.com)
+    document.getElementById('checkoutBtn').addEventListener('click', function() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        
+
         if (cart.length === 0) {
             alert('Your cart is empty!');
             return;
         }
 
-        try {
-            // Disable button and show loading
-            this.disabled = true;
-            this.innerHTML = 'Processing...';
-            
-            // Get all product IDs from cart
-            const productIds = cart.map(item => parseInt(item.id));
+        // Disable button and show loading
+        this.disabled = true;
+        this.innerHTML = 'Processing...';
 
-            // Get discount info
-            const discountInfo = JSON.parse(localStorage.getItem('discountInfo') || 'null');
+        // Get all product IDs from cart
+        const productIds = cart.map(item => parseInt(item.id));
 
-            // Build request body (digital-only — all PDF, no shipping)
-            const requestBody = {
-                product_ids: productIds,
-                discount_code: discountInfo && discountInfo.valid ? discountInfo.code : null
-            };
-            
-            // Create Stripe checkout session for all products
-            const response = await fetch('/api/orders/create-multi-checkout-session', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-            
-            const data = await response.json();
-            
-            if (data.url) {
-                // Redirect to Stripe Checkout (cart will be cleared on success page)
-                window.location.href = data.url;
-            } else {
-                alert('Error creating checkout session. Please try again.');
-                this.disabled = false;
-                this.innerHTML = 'Proceed to Checkout';
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-            this.disabled = false;
-            this.innerHTML = 'Proceed to Checkout';
-        }
+        // Get discount info
+        const discountInfo = JSON.parse(localStorage.getItem('discountInfo') || 'null');
+
+        const intent = {
+            mode: 'multi',
+            product_ids: productIds,
+            discount_code: discountInfo && discountInfo.valid ? discountInfo.code : null
+        };
+
+        sessionStorage.setItem('checkoutIntent', JSON.stringify(intent));
+        window.location.href = '/checkout';
     });
 });
 </script>

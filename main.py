@@ -27,6 +27,7 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 # Import API routes
 from api_routes import router as auth_router, orders_router, search_router, newsletter_router, import_router, reviews_router
+from api_routes import STRIPE_PUBLISHABLE_KEY
 from email_marketing_routes import email_marketing_router
 from tracking_routes import tracking_router
 from discount_routes import router as discount_router
@@ -414,6 +415,17 @@ async def cart(request: Request):
         "request": request,
         "page_title": "Shopping Cart - ManualBear",
         "page_description": "Review the service manuals in your cart and check out securely with ManualBear."
+    })
+
+
+@app.get("/checkout", response_class=HTMLResponse)
+async def checkout(request: Request):
+    """On-site checkout — Stripe embedded checkout stays on manualbear.com (no redirect)."""
+    return templates.TemplateResponse("checkout.html", {
+        "request": request,
+        "page_title": "Secure Checkout - ManualBear",
+        "page_description": "Complete your purchase securely on ManualBear.",
+        "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY
     })
 
 

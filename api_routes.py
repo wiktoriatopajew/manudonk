@@ -75,6 +75,21 @@ if not webhook_secret:
 STRIPE_WEBHOOK_SECRET = webhook_secret if webhook_secret else "whsec_your_webhook_secret_here"
 print(f"🔐 Webhook secret configured: {STRIPE_WEBHOOK_SECRET[:20] if STRIPE_WEBHOOK_SECRET != 'whsec_your_webhook_secret_here' else 'PLACEHOLDER'}...")
 
+# Publishable key (safe to expose to the browser) - needed for embedded checkout
+publishable_key = None
+for key_name in ["STRIPE_PUBLISHABLE_KEY", "STRIPE_PUBLISHABLE_KEY\n", "STRIPE_PUBLISHABLE_KEY "]:
+    publishable_key = os.getenv(key_name)
+    if publishable_key:
+        publishable_key = publishable_key.strip()
+        break
+if not publishable_key:
+    for key, value in os.environ.items():
+        if 'STRIPE_PUBLISHABLE_KEY' in key:
+            publishable_key = value.strip()
+            break
+STRIPE_PUBLISHABLE_KEY = publishable_key or ""
+print(f"🔑 Publishable key configured: {STRIPE_PUBLISHABLE_KEY[:15] if STRIPE_PUBLISHABLE_KEY else 'NOT SET'}...")
+
 # Domain configuration - auto-detect Railway or use .env
 railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
 railway_static_url = os.getenv("RAILWAY_STATIC_URL")
@@ -1074,14 +1089,14 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
         metadata['format_type'] = 'pdf'
         print(f"💳 Creating Stripe session for product {product.id}: {product_name[:50]}... Price: ${final_price}")
 
-        # Build session params
+        # Build session params — embedded checkout keeps the payment on manualbear.com
+        # (no redirect to checkout.stripe.com). return_url is used instead of success/cancel.
         session_params = dict(
+            ui_mode='embedded',
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
-            success_url=DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=DOMAIN + f'/manuals/{product.slug}',
-            customer_email=None,  # Let Stripe collect email
+            return_url=DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
             metadata=metadata
         )
 
@@ -1172,9 +1187,9 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
         # Create Stripe checkout session
         try:
             checkout_session = stripe.checkout.Session.create(**session_params)
-            
+
             print(f"✅ Stripe session created: {checkout_session.id}")
-            return {"url": checkout_session.url}
+            return {"client_secret": checkout_session.client_secret, "session_id": checkout_session.id}
         except Exception as stripe_error:
             print(f"❌ Stripe error: {stripe_error}")
             print(f"   Product: {product.id}, Title: {product.title}")
@@ -1356,12 +1371,11 @@ async def create_multi_checkout_session(request: CreateMultiCheckoutSessionReque
         # Create Stripe checkout session with multiple items
         try:
             session_params = {
+                'ui_mode': 'embedded',
                 'payment_method_types': ['card'],
                 'line_items': line_items,
                 'mode': 'payment',
-                'success_url': DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url': DOMAIN + '/cart',
-                'customer_email': None,
+                'return_url': DOMAIN + '/success?session_id={CHECKOUT_SESSION_ID}',
                 'metadata': {
                     'product_ids': ','.join(map(str, request.product_ids)),
                     'is_multi_product': 'true',
@@ -1455,9 +1469,9 @@ async def create_multi_checkout_session(request: CreateMultiCheckoutSessionReque
                 print(f"📦 Multi-checkout with USB — region: {region}, {len(shipping_opts)} shipping option(s)")
 
             checkout_session = stripe.checkout.Session.create(**session_params)
-            
+
             print(f"✅ Multi-checkout session created: {checkout_session.id}")
-            return {"url": checkout_session.url}
+            return {"client_secret": checkout_session.client_secret, "session_id": checkout_session.id}
         except Exception as stripe_error:
             print(f"❌ Stripe multi-checkout error: {stripe_error}")
             print(f"   Products: {request.product_ids}")

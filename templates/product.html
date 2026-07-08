@@ -838,50 +838,22 @@
         }
     });
 
-    // Stripe Checkout Integration
-    document.getElementById('buyNowBtn').addEventListener('click', async function() {
-        try {
-            this.disabled = true;
-            this.innerHTML = '<span class="flex items-center justify-center">Processing...</span>';
-            
-            // Prepare request body
-            const requestBody = {
-                product_id: {{ product.id }}
-            };
+    // Buy Now — save intent and go to on-site checkout (payment stays on manualbear.com)
+    document.getElementById('buyNowBtn').addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = '<span class="flex items-center justify-center">Processing...</span>';
 
-            // Digital-only store — always PDF, no shipping
-            requestBody.format_type = 'pdf';
-
-            // Add discount code if validated
-            if (productDiscountInfo && productDiscountInfo.code) {
-                requestBody.discount_code = productDiscountInfo.code;
-            }
-            
-            // Create Stripe checkout session
-            const response = await fetch('/api/orders/create-checkout-session', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-            
-            const data = await response.json();
-            
-            if (data.url) {
-                // Redirect to Stripe Checkout
-                window.location.href = data.url;
-            } else {
-                alert('Error creating checkout session. Please try again.');
-                this.disabled = false;
-                this.innerHTML = '<span class="flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>Buy Now</span>';
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-            this.disabled = false;
-            this.innerHTML = '<span class="flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>Buy Now</span>';
+        const intent = {
+            mode: 'single',
+            product_id: {{ product.id }}
+        };
+        // Add discount code if validated
+        if (productDiscountInfo && productDiscountInfo.code) {
+            intent.discount_code = productDiscountInfo.code;
         }
+
+        sessionStorage.setItem('checkoutIntent', JSON.stringify(intent));
+        window.location.href = '/checkout';
     });
 
 
