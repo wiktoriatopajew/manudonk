@@ -3,11 +3,13 @@ Google Merchant Feed Generator
 Generates XML feed compatible with Google Merchant Center
 """
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import Response, PlainTextResponse
 from sqlalchemy.orm import Session
 from database.models import Product, get_session
 import xml.etree.ElementTree as ET
 from datetime import datetime
+import csv
+import io
 
 merchant_router = APIRouter(prefix="/feed", tags=["merchant"])
 
@@ -110,6 +112,100 @@ async def generate_google_merchant_feed(page: int = 0):
         
     except Exception as e:
         print(f"Error generating feed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db_session.close()
+
+
+@merchant_router.head("/bing-merchant.txt")
+async def bing_merchant_feed_head():
+    """HEAD request support for Bing/Microsoft Merchant Center feed validation"""
+    return Response(headers={"Content-Type": "text/tab-separated-values; charset=UTF-8"})
+
+
+@merchant_router.get("/bing-merchant.txt")
+async def generate_bing_merchant_feed(page: int = 0):
+    """Generate Bing / Microsoft Merchant Center Product Feed (tab-separated).
+    page=0 returns all products; page=1..4 returns one quarter each (~311 items).
+    Bing accepts Google-compatible TSV columns.
+    """
+    db_session = get_session()
+    PAGE_SIZE = 311
+
+    def clean(text):
+        """Collapse whitespace and strip tabs/newlines so TSV columns stay intact."""
+        if not text:
+            return ''
+        return ' '.join(str(text).replace('\t', ' ').split())
+
+    try:
+        query = db_session.query(Product).filter(Product.price > 0).order_by(Product.id)
+        if page and page > 0:
+            products = query.offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+        else:
+            products = query.all()
+
+        output = io.StringIO()
+        writer = csv.writer(output, delimiter='\t', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+
+        # Header — Bing/Google compatible columns
+        writer.writerow([
+            'id', 'title', 'description', 'link', 'image_link', 'price',
+            'availability', 'condition', 'brand', 'mpn', 'product_type',
+            'google_product_category', 'custom_label_0'
+        ])
+
+        for product in products:
+            product_url = (
+                f"https://manualbear.com/manuals/{product.slug}" if product.slug
+                else f"https://manualbear.com/product/{product.id}"
+            )
+
+            title = clean(product.title) or f"{product.brand} {product.model} Service & Repair Manual"
+
+            desc = clean(product.description) or (
+                f"Complete technical documentation and service information for "
+                f"{product.brand} {product.model}. Delivered as an instant PDF download."
+            )
+            if len(desc) < 100:
+                desc = (
+                    f"{desc} Comprehensive service and repair information for "
+                    f"{product.brand} {product.model}. Delivered as an instant PDF download."
+                )
+            desc = desc[:5000]
+
+            if product.image_url:
+                image = product.image_url.split(',')[0].strip()
+            else:
+                image = "https://manualbear.com/static/images/logo.png"
+
+            brand = product.brand or 'Generic'
+            mpn = f"{brand}-{product.model}-manual" if brand and product.model else str(product.id)
+            product_type = product.category or 'Service Manual'
+
+            writer.writerow([
+                str(product.id),
+                title,
+                desc,
+                product_url,
+                image,
+                f"{product.price:.2f} USD",
+                'in stock',
+                'new',
+                brand,
+                mpn,
+                product_type,
+                'Media > Books > Non-Fiction > Reference Books',
+                'Technical-Documentation'
+            ])
+
+        content = output.getvalue()
+        output.close()
+
+        return PlainTextResponse(content=content, media_type="text/tab-separated-values; charset=UTF-8")
+
+    except Exception as e:
+        print(f"Error generating Bing feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db_session.close()
