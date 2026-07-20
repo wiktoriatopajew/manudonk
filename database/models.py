@@ -448,7 +448,22 @@ def init_db():
                 print("✅ Indexes verified/created")
             except Exception as e:
                 print(f"⚠️  Index creation: {e}")
-    
+
+    # Orders gained a currency column when multi-market pricing landed. Doing it
+    # here means a deploy heals the schema itself — the app reads order.currency
+    # on startup paths, so a manual migration step would leave a broken window.
+    if 'orders' in inspector.get_table_names():
+        existing_columns = {col['name'] for col in inspector.get_columns('orders')}
+        if 'currency' not in existing_columns:
+            with engine.connect() as conn:
+                try:
+                    conn.execute(text("ALTER TABLE orders ADD COLUMN currency VARCHAR(3)"))
+                    conn.execute(text("UPDATE orders SET currency = 'USD' WHERE currency IS NULL"))
+                    conn.commit()
+                    print("✅ Added missing column: orders.currency (existing rows set to USD)")
+                except Exception as e:
+                    print(f"⚠️  Could not add column orders.currency: {e}")
+
     print("Database initialized successfully!")
 
 
