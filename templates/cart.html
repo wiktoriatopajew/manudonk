@@ -63,17 +63,17 @@
         <div class="border-b border-yellow-500/20 pb-4 mb-4">
             <div class="flex justify-between items-center text-lg mb-2">
                 <span class="font-medium text-gray-300">Subtotal:</span>
-                <span id="subtotal" class="font-bold text-yellow-400">$0.00</span>
+                <span id="subtotal" class="font-bold text-yellow-400">{{ currency_symbol }}0.00</span>
             </div>
             <div id="discountRow" class="hidden flex justify-between items-center text-lg text-green-400">
                 <span class="font-medium">Discount (<span id="discountPercent">10%</span>):</span>
-                <span id="discountAmount" class="font-bold">-$0.00</span>
+                <span id="discountAmount" class="font-bold">-{{ currency_symbol }}0.00</span>
             </div>
         </div>
         
         <div class="flex justify-between items-center text-xl font-bold mb-6">
             <span class="text-white">Total:</span>
-            <span id="total" class="text-yellow-400">$0.00</span>
+            <span id="total" class="text-yellow-400">{{ currency_symbol }}0.00</span>
         </div>
         
         <button id="checkoutBtn" class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-4 px-6 rounded-lg text-lg shadow-lg transition transform hover:scale-105 mb-2">
@@ -92,9 +92,11 @@
 </div>
 
 <script>
+const currencySymbol = {{ currency_symbol|tojson }};
+
 document.addEventListener('DOMContentLoaded', function() {
     loadCart();
-    
+
     function loadCart() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const cartItemsContainer = document.getElementById('cartItems');
@@ -131,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         <div class="flex-1 min-w-0">
                             <h3 class="text-base font-semibold text-white truncate">${item.title}</h3>
-                            <p class="text-yellow-400 text-sm">$${item.price.toFixed(2)}</p>
+                            <p class="text-yellow-400 text-sm">${currencySymbol}${item.price.toFixed(2)}</p>
                             
                             <p class="text-xs mt-1 text-green-400">
                                 📄 Instant digital delivery (PDF) · No shipping cost
@@ -139,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         
                         <div class="text-lg font-bold text-yellow-400 flex-shrink-0">
-                            $${(item.price * item.quantity).toFixed(2)}
+                            ${currencySymbol}${(item.price * item.quantity).toFixed(2)}
                         </div>
                         
                         <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-400 ml-2 transition flex-shrink-0">
@@ -164,31 +166,31 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get discount info from localStorage
         const discountInfo = JSON.parse(localStorage.getItem('discountInfo') || 'null');
         
-        document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-        
+        document.getElementById('subtotal').textContent = `${currencySymbol}${subtotal.toFixed(2)}`;
+
         if (discountInfo && discountInfo.valid) {
             // Calculate discount
             let discountAmount;
             let discountLabel;
-            
+
             if (discountInfo.type === 'percentage') {
                 discountAmount = subtotal * (discountInfo.value / 100);
                 discountLabel = `${discountInfo.value}%`;
             } else {
                 discountAmount = Math.min(discountInfo.value, subtotal);
-                discountLabel = `${discountInfo.value} zł`;
+                discountLabel = `${currencySymbol}${discountInfo.value}`;
             }
-            
+
             const total = subtotal - discountAmount;
-            
+
             document.getElementById('discountRow').classList.remove('hidden');
             document.getElementById('discountPercent').textContent = discountLabel;
-            document.getElementById('discountAmount').textContent = `-$${discountAmount.toFixed(2)}`;
-            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('discountAmount').textContent = `-${currencySymbol}${discountAmount.toFixed(2)}`;
+            document.getElementById('total').textContent = `${currencySymbol}${total.toFixed(2)}`;
         } else {
             // No discount
             document.getElementById('discountRow').classList.add('hidden');
-            document.getElementById('total').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('total').textContent = `${currencySymbol}${subtotal.toFixed(2)}`;
         }
     }
     
@@ -222,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     valid: true
                 }));
                 
-                const discountText = data.type === 'percentage' ? `${data.value}%` : `${data.value} zł`;
+                const discountText = data.type === 'percentage' ? `${data.value}%` : `${currencySymbol}${data.value}`;
                 messageDiv.textContent = `✅ Code applied! Discount: ${discountText}`;
                 messageDiv.className = 'mt-2 text-sm text-green-400 font-semibold';
                 messageDiv.classList.remove('hidden');

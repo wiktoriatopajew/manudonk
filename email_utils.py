@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
 from dotenv import load_dotenv
+from currency import format_amount
 import requests
 
 # Load environment variables
@@ -163,9 +164,10 @@ Saturday – Sunday: Closed</p>
     return send_email_smtp(to_email, subject, html_content)
 
 
-def send_order_confirmation_email(to_email: str, order_id: int, product_title: str, price: float):
-    """Send order confirmation email"""
+def send_order_confirmation_email(to_email: str, order_id: int, product_title: str, price: float, currency: str = 'USD'):
+    """Send order confirmation email. `price`/`currency` are what was actually charged."""
     subject = f"Order Confirmation #{order_id} - ManualBear"
+    amount = format_amount(price, currency)
     
     html_content = f"""
     <!DOCTYPE html>
@@ -190,7 +192,7 @@ def send_order_confirmation_email(to_email: str, order_id: int, product_title: s
                 <p><strong>Order ID:</strong> {order_id}</p>
                 <p><strong>Product:</strong> {product_title}</p>
                 <p><strong>Email:</strong> {to_email}</p>
-                <p><strong>Amount:</strong> ${price:.2f} USD</p>
+                <p><strong>Amount:</strong> {amount}</p>
             </div>
             <p>Your manual will be delivered to your email within 1-5 minutes.</p>
             <p>Please check your inbox and spam folder.</p>
@@ -464,17 +466,17 @@ def send_marketing_campaign_email(to_email: str, subject: str, html_content: str
     return send_email_smtp(to_email, subject, html_content)
 
 
-def send_abandoned_cart_email(to_email: str, products: list, total_value: float):
-    """Send abandoned cart reminder email"""
+def send_abandoned_cart_email(to_email: str, products: list, total_value: float, currency: str = 'USD'):
+    """Send abandoned cart reminder email. Prices must already be in `currency`."""
     subject = "Don't Forget Your Manuals! 🛒 Special Offer Inside"
-    
+
     # Build product list HTML
     product_items = ""
     for product in products:
         product_items += f"""
             <div style="background: #374151; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
                 <h3 style="color: #60a5fa; margin: 0 0 5px 0;">{product['title']}</h3>
-                <p style="color: #d1d5db; margin: 0; font-size: 18px; font-weight: bold;">${product['price']:.2f}</p>
+                <p style="color: #d1d5db; margin: 0; font-size: 18px; font-weight: bold;">{format_amount(product['price'], currency)}</p>
             </div>
         """
     
@@ -506,8 +508,8 @@ def send_abandoned_cart_email(to_email: str, products: list, total_value: float)
                 <div style="background: #059669; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
                     <h2 style="color: white; margin: 0 0 10px 0;">Special Offer!</h2>
                     <p style="color: white; margin: 0; font-size: 16px;">Complete your purchase now and get an extra 5% OFF!</p>
-                    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">Total: ${total_value * 0.95:.2f} USD</p>
-                    <p style="color: #d1fae5; margin: 0; font-size: 14px;">(Was: ${total_value:.2f})</p>
+                    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">Total: {format_amount(total_value * 0.95, currency)}</p>
+                    <p style="color: #d1fae5; margin: 0; font-size: 14px;">(Was: {format_amount(total_value, currency)})</p>
                 </div>
                 
                 <div style="text-align: center;">
@@ -629,10 +631,11 @@ Saturday – Sunday: Closed</p>
     return send_email_smtp(to_email, subject, html_content)
 
 
-def send_admin_order_notification(order_id: int, customer_email: str, product_title: str, price: float, link_sent: bool = True):
+def send_admin_order_notification(order_id: int, customer_email: str, product_title: str, price: float, link_sent: bool = True, currency: str = 'USD'):
     """Send notification to admin when a new order is placed"""
     admin_email = "sklosinski95@gmail.com"
     subject = f"🛍 New Order #{order_id} - ManualBear"
+    amount = format_amount(price, currency)
     
     # Determine action message based on whether link was sent
     if link_sent:
@@ -682,12 +685,12 @@ def send_admin_order_notification(order_id: int, customer_email: str, product_ti
                     <p style="margin: 5px 0;"><strong>Order ID:</strong> #{order_id}</p>
                     <p style="margin: 5px 0;"><strong>Product:</strong> {product_title}</p>
                     <p style="margin: 5px 0;"><strong>Customer Email:</strong> {customer_email}</p>
-                    <p style="margin: 5px 0;"><strong>Amount Paid:</strong> ${price:.2f} USD</p>
+                    <p style="margin: 5px 0;"><strong>Amount Paid:</strong> {amount}</p>
                 </div>
-                
+
                 <div class="highlight">
                     <p style="margin: 0; font-size: 18px; font-weight: bold; color: #059669;">
-                        💰 Payment: ${price:.2f} USD
+                        💰 Payment: {amount}
                     </p>
                 </div>
                 

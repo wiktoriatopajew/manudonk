@@ -223,7 +223,8 @@ class Order(Base):
     email = Column(String(255), nullable=False)
     paypal_order_id = Column(String(255), unique=True)
     status = Column(String(50), default='pending')  # pending, completed, failed
-    price = Column(Float, nullable=False)
+    price = Column(Float, nullable=False)  # amount actually charged, in `currency`
+    currency = Column(String(3), nullable=False, default='USD')  # ISO code the customer was charged in
     download_link = Column(String(500), nullable=True)  # Link to manual set by admin
     created_at = Column(DateTime, default=datetime.utcnow)
     

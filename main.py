@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from currency import market_context, convert_price, format_price, resolve_market, MARKETS
 from sqlalchemy import func, or_
 from database.models import Product, User, Order, Review, get_session, init_db, get_engine, Base
 from typing import Optional
@@ -43,7 +44,9 @@ app = FastAPI(
 
 # Mount static files and templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# market_context injects market/currency into every template render, so pricing
+# stays consistent across pages without each route having to pass it through.
+templates = Jinja2Templates(directory="templates", context_processors=[market_context])
 
 # Custom Exception Handler - Returns JSON for API routes, HTML for web pages
 @app.exception_handler(StarletteHTTPException)
@@ -107,6 +110,23 @@ async def add_performance_headers(request: Request, call_next):
     # Log slow requests (over 1 second)
     if process_time > 1.0:
         print(f"⚠️  SLOW REQUEST: {request.method} {request.url.path} took {process_time:.2f}s")
+    return response
+
+@app.middleware("http")
+async def persist_market(request: Request, call_next):
+    """Remember an explicit ?market= choice for the rest of the visit.
+
+    Shopping ads land on ...?market=UK; without persisting it the shopper would
+    fall back to geo-detection on the next click and see a different currency
+    than the one that was advertised.
+    """
+    response = await call_next(request)
+    requested = request.query_params.get('market', '').upper()
+    if requested in MARKETS and request.cookies.get('market') != requested:
+        response.set_cookie(
+            'market', requested,
+            max_age=60 * 60 * 24 * 30, samesite='lax', path='/'
+        )
     return response
 
 @app.on_event("startup")
@@ -284,6 +304,11 @@ def regex_search(text, pattern):
     return match.group(0) if match else None
 
 templates.env.filters['regex_search'] = regex_search
+
+# Price helpers — templates hold USD prices and render them for the active market.
+# `money` returns a symbol-prefixed string, `local_price` the bare number for JS/JSON-LD.
+templates.env.filters['money'] = format_price
+templates.env.filters['local_price'] = convert_price
 
 
 # Helper function to get distinct values

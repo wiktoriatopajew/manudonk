@@ -126,7 +126,7 @@
                             </p>
                             <div class="mt-auto">
                                 <div class="text-2xl font-bold text-gray-900 mb-3">
-                                    ${{ "%.2f"|format(product.price) }}
+                                    {{ product.price|money(market) }}
                                 </div>
                                 <!-- Action buttons -->
                                 <div class="space-y-2">

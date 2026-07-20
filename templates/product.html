@@ -20,8 +20,8 @@
   "offers": {
     "@type": "Offer",
     "url": "https://manualbear.com/manuals/{{ product.slug }}",
-    "priceCurrency": "USD",
-    "price": "{{ product.price }}",
+    "priceCurrency": "{{ currency }}",
+    "price": "{{ '%.2f'|format(product.price|local_price(market)) }}",
     "priceValidUntil": "2027-12-31",
     "availability": "https://schema.org/InStock",
     "itemCondition": "https://schema.org/NewCondition",
@@ -352,17 +352,17 @@
                     <div class="text-gray-600 text-sm mb-1">Price</div>
                     <div id="priceContainer">
                         <div id="originalPrice" class="text-5xl font-bold text-gray-900">
-                            ${{ "%.2f"|format(product.price) }}
+                            {{ product.price|money(market) }}
                         </div>
                         <div id="discountedPriceContainer" class="hidden">
                             <div class="text-2xl text-gray-400 line-through">
-                                $<span id="originalPriceStrike">{{ "%.2f"|format(product.price) }}</span>
+                                {{ currency_symbol }}<span id="originalPriceStrike">{{ "%.2f"|format(product.price|local_price(market)) }}</span>
                             </div>
                             <div class="text-5xl font-bold text-green-600">
-                                $<span id="discountedPrice">{{ "%.2f"|format(product.price) }}</span>
+                                {{ currency_symbol }}<span id="discountedPrice">{{ "%.2f"|format(product.price|local_price(market)) }}</span>
                             </div>
                             <div class="text-sm text-green-600 font-semibold mt-1">
-                                You save: $<span id="savingsAmount">0.00</span>
+                                You save: {{ currency_symbol }}<span id="savingsAmount">0.00</span>
                             </div>
                         </div>
                     </div>
@@ -684,7 +684,7 @@
                         <p class="text-sm text-gray-600 mb-3">{{ related.brand }} - {{ related.model }}</p>
                         <div class="mt-auto">
                             <div class="text-2xl font-bold text-gray-900">
-                                ${{ "%.2f"|format(related.price) }}
+                                {{ related.price|money(market) }}
                             </div>
                         </div>
                     </div>
@@ -728,7 +728,9 @@
     // Reset button state when page is shown (including browser back button)
     // Store validated discount info
     let productDiscountInfo = null;
-    const productPrice = {{ product.price }};
+    const productPrice = {{ "%.2f"|format(product.price|local_price(market)) }};
+    const currencySymbol = {{ currency_symbol|tojson }};
+    const activeMarket = {{ market|tojson }};
 
     // Update price display
     function updatePriceDisplay(discountAmount = 0) {
@@ -792,9 +794,9 @@
                 // Update price display
                 updatePriceDisplay(discountAmount);
                 
-                const discountText = data.type === 'percentage' 
-                    ? `${data.value}%` 
-                    : `$${data.value}`;
+                const discountText = data.type === 'percentage'
+                    ? `${data.value}%`
+                    : `${currencySymbol}${data.value}`;
                 feedback.innerHTML = `✅ Code applied! Discount: <strong>${discountText}</strong>`;
                 feedback.className = 'mt-2 text-sm text-green-700 font-semibold';
                 feedback.classList.remove('hidden');
@@ -1128,7 +1130,7 @@
                 removeFromCartById(productId);
             } else {
                 // Always add as PDF — format can be changed in the cart
-                addToCart(productId, '{{ product.title }}', {{ product.price }}, 1, imageUrl, 'pdf');
+                addToCart(productId, '{{ product.title }}', productPrice, 1, imageUrl, 'pdf');
                 
                 // If discount code is validated, save it to localStorage for cart
                 if (productDiscountInfo && productDiscountInfo.code) {

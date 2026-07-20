@@ -549,7 +549,7 @@ async function loadDiscountCodes() {
                     ? '<span class="px-2 py-1 bg-green-600 text-white text-xs rounded">Active</span>' 
                     : '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded">Inactive</span>';
                 
-                const typeText = code.type === 'percentage' ? `${code.value}%` : `${code.value} zł`;
+                const typeText = code.type === 'percentage' ? `${code.value}%` : formatMoney(code.value, 'USD');
                 
                 return `
                     <tr>

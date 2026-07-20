@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response, PlainTextResponse
 from sqlalchemy.orm import Session
 from database.models import Product, get_session
+from currency import convert_price, get_market, normalize_market
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import csv
@@ -124,15 +125,19 @@ async def bing_merchant_feed_head():
 
 
 @merchant_router.get("/bing-merchant.txt")
-async def generate_bing_merchant_feed(page: int = 0):
+async def generate_bing_merchant_feed(page: int = 0, market: str = 'US'):
     """Generate Bing / Microsoft Merchant Center Product Feed (tab-separated).
     page=0 returns all products; page=1..4 returns one quarter each (~311 items).
+    market selects the country of sale (US/UK/CA/AU) and therefore the currency;
+    Microsoft requires one feed per market, priced in that market's currency.
     Columns follow the Microsoft Merchant Center feed spec, which differs from
     Google's: product_category (not google_product_category), pipe-delimited
     product_type, and the bingads_* grouping attributes.
     """
     db_session = get_session()
     PAGE_SIZE = 311
+    market = normalize_market(market)
+    currency_code = get_market(market)['currency']
 
     def clean(text):
         """Collapse whitespace and strip tabs/newlines so TSV columns stay intact."""
@@ -164,6 +169,10 @@ async def generate_bing_merchant_feed(page: int = 0):
                 f"https://manualbear.com/manuals/{product.slug}" if product.slug
                 else f"https://manualbear.com/product/{product.id}"
             )
+            # Pin the landing page to this feed's market so the price the
+            # shopper lands on always matches the price that was advertised.
+            if market != 'US':
+                product_url += f"?market={market}"
 
             title = clean(product.title) or f"{product.brand} {product.model} Service & Repair Manual"
 
@@ -197,7 +206,7 @@ async def generate_bing_merchant_feed(page: int = 0):
                 title,
                 brand,
                 product_url,
-                f"{product.price:.2f} USD",
+                f"{convert_price(product.price, market):.2f} {currency_code}",
                 desc,
                 image,
                 mpn,

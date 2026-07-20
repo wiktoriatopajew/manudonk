@@ -11,6 +11,7 @@ from database.models import User, VerificationCode, Order, Product, PasswordRese
 from sqlalchemy import func, desc
 from sqlalchemy.orm import joinedload
 from auth import create_access_token, get_current_user, get_current_admin_user
+from currency import resolve_market, get_market, convert_price
 from email_utils import send_verification_email, send_order_confirmation_email, send_manual_ready_email, send_password_reset_email, send_welcome_newsletter_email, send_admin_order_notification
 import stripe
 import os
@@ -399,6 +400,7 @@ async def get_my_orders(current_user: User = Depends(get_current_user)):
                 "product_brand": order.product.brand,
                 "product_model": order.product.model,
                 "price": order.price,
+                "currency": order.currency or 'USD',
                 "status": order.status,
                 "download_link": order.download_link,
                 "created_at": order.created_at.isoformat() if order.created_at else None
@@ -640,6 +642,7 @@ async def get_all_orders(
                     "product_id": order.product_id,
                     "product_title": order.product.title if order.product else None,
                     "price": order.price,
+                    "currency": order.currency or 'USD',
                     "status": order.status,
                     "download_link": order.download_link,
                     "paypal_order_id": order.paypal_order_id,
@@ -861,10 +864,12 @@ async def get_session_email(session_id: str):
         if all_orders:
             order_id = all_orders[0].id if len(all_orders) == 1 else f"MULTI-{payment_intent[:8]}"
             order_total = sum(order.price for order in all_orders)
-            print(f"✅ Found {len(all_orders)} order(s) for this payment, total: ${order_total}")
+            order_currency = all_orders[0].currency or 'USD'
+            print(f"✅ Found {len(all_orders)} order(s) for this payment, total: {order_total} {order_currency}")
         else:
             order_id = None
             order_total = None
+            order_currency = 'USD'
             print(f"⚠️  No orders found yet for payment_intent {payment_intent} - webhook may still be processing")
 
         # Build line items for tracking (Shoparize / analytics)
@@ -875,6 +880,7 @@ async def get_session_email(session_id: str):
                 "item_id": str(o.product_id),
                 "item_name": (product.title if product and product.title else f"Manual {o.product_id}"),
                 "price": float(o.price),
+                "currency": o.currency or 'USD',
                 "quantity": 1
             })
         
@@ -887,7 +893,7 @@ async def get_session_email(session_id: str):
                 "user_exists": True,
                 "order_id": order_id,
                 "order_total": float(order_total) if order_total else None,
-                "currency": "USD",
+                "currency": order_currency,
                 "items": items
             }
 
@@ -897,7 +903,7 @@ async def get_session_email(session_id: str):
             "user_exists": False,
             "order_id": order_id,
             "order_total": float(order_total) if order_total else None,
-            "currency": "USD",
+            "currency": order_currency,
             "items": items
         }
     except Exception as e:
@@ -969,9 +975,11 @@ async def debug_configuration():
 
 
 @orders_router.post("/create-checkout-session")
-async def create_checkout_session(request: CreateCheckoutSessionRequest):
+async def create_checkout_session(request: CreateCheckoutSessionRequest, http_request: Request):
     """Create Stripe checkout session"""
     session = get_session()
+    market = resolve_market(http_request)
+    currency_code = get_market(market)['currency']
     try:
         print(f"💳 Single checkout request: product_id={request.product_id}, discount='{request.discount_code}'")
         print(f"🔑 Stripe API Key status: {'SET' if stripe.api_key else 'NOT SET'}")
@@ -999,10 +1007,12 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
                 detail=f"Product {product.id} has invalid price: {product.price}"
             )
         
-        # Calculate price with discount if provided
-        final_price = product.price
+        # Prices are stored in USD; charge in the visitor's market currency so the
+        # amount matches what the product page and the Shopping ad advertised.
+        base_price = convert_price(product.price, market)
+        final_price = base_price
         discount_amount = 0
-        metadata = {'product_id': product.id}
+        metadata = {'product_id': product.id, 'market': market, 'currency': currency_code}
         
         # Validate discount code if provided
         if request.discount_code:
@@ -1019,11 +1029,11 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
                 print(f"✅ Found regular discount code: {discount.code}")
                 valid, message = discount.is_valid()
                 if valid:
-                    discount_amount = discount.calculate_discount(product.price)
-                    final_price = max(0.50, product.price - discount_amount)  # Minimum $0.50 for Stripe
+                    discount_amount = discount.calculate_discount(base_price)
+                    final_price = max(0.50, base_price - discount_amount)  # Stripe minimum charge
                     metadata['discount_code'] = discount.code
                     metadata['discount_amount'] = str(discount_amount)
-                    metadata['original_price'] = str(product.price)
+                    metadata['original_price'] = str(base_price)
             else:
                 # Check newsletter discount codes (10% off)
                 newsletter = session.query(Newsletter).filter(
@@ -1033,11 +1043,11 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
                 
                 if newsletter:
                     print(f"✅ Found newsletter discount code: {newsletter.discount_code}")
-                    discount_amount = product.price * 0.10  # 10% off
-                    final_price = max(0.50, product.price - discount_amount)  # Minimum $0.50 for Stripe
+                    discount_amount = base_price * 0.10  # 10% off
+                    final_price = max(0.50, base_price - discount_amount)  # Stripe minimum charge
                     metadata['discount_code'] = clean_code
                     metadata['discount_amount'] = str(discount_amount)
-                    metadata['original_price'] = str(product.price)
+                    metadata['original_price'] = str(base_price)
                     metadata['discount_source'] = 'newsletter'
                 else:
                     print(f"❌ No discount code found for: '{clean_code}'")
@@ -1049,7 +1059,7 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
         # Simple description with brand and model
         product_desc = f'{product.brand} {product.model}'
         if discount_amount > 0:
-            product_desc += f' - Discount: ${discount_amount:.2f}'
+            product_desc += f' - Discount: {discount_amount:.2f} {currency_code}'
         product_desc = product_desc[:350]  # Ensure within Stripe limit
         
         # Prepare product images for Stripe
@@ -1076,8 +1086,8 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
         
         line_items = [{
             'price_data': {
-                'currency': 'usd',
-                'unit_amount': int(final_price * 100),  # Convert to cents
+                'currency': currency_code.lower(),
+                'unit_amount': int(round(final_price * 100)),  # Convert to minor units
                 'product_data': product_data,
             },
             'quantity': 1,
@@ -1087,7 +1097,7 @@ async def create_checkout_session(request: CreateCheckoutSessionRequest):
         request.format_type = "pdf"
         request.shipping_region = None
         metadata['format_type'] = 'pdf'
-        print(f"💳 Creating Stripe session for product {product.id}: {product_name[:50]}... Price: ${final_price}")
+        print(f"💳 Creating Stripe session for product {product.id}: {product_name[:50]}... Price: {final_price} {currency_code}")
 
         # Build session params — embedded checkout keeps the payment on manualbear.com
         # (no redirect to checkout.stripe.com). return_url is used instead of success/cancel.
@@ -1635,6 +1645,13 @@ async def stripe_webhook(request: Request):
                 metadata = session_data.get('metadata', {})
                 is_multi = metadata.get('is_multi_product') == 'true'
 
+                # What Stripe actually charged is the only trustworthy figure for
+                # receipts — product.price is the USD list price and ignores both
+                # the customer's market and any discount code they applied.
+                paid_currency = (session_data.get('currency') or 'usd').upper()
+                paid_total = (session_data.get('amount_total') or 0) / 100.0
+                order_market = metadata.get('market') or 'US'
+
                 # ── Shipping region fraud check for USB orders ────────────────
                 if metadata.get('format_type') == 'usb':
                     shipping_details = session_data.get('shipping_details') or {}
@@ -1705,7 +1722,8 @@ async def stripe_webhook(request: Request):
                         order = Order(
                             email=customer_email,
                             product_id=product.id,
-                            price=product.price,
+                            price=convert_price(product.price, order_market),
+                            currency=paid_currency,
                             paypal_order_id=payment_intent,
                             status="completed"
                         )
@@ -1722,13 +1740,13 @@ async def stripe_webhook(request: Request):
                     
                     # Send confirmation email for all products
                     try:
-                        total_price = sum(p.price for p in products)
                         product_titles = ", ".join([p.title for p in products])
                         send_order_confirmation_email(
                             to_email=customer_email,
                             order_id=f"MULTI-{payment_intent[:8]}",
                             product_title=f"{len(products)} products: {product_titles}",
-                            price=total_price
+                            price=paid_total,
+                            currency=paid_currency
                         )
                     except Exception as e:
                         print(f"Failed to send confirmation email: {e}")
@@ -1784,14 +1802,14 @@ async def stripe_webhook(request: Request):
                     
                     # Send admin notification for multi-product order
                     try:
-                        total_price = sum(p.price for p in products)
                         product_titles = ", ".join([p.title for p in products])
                         send_admin_order_notification(
                             order_id=f"MULTI-{payment_intent[:8]}",
                             customer_email=customer_email,
                             product_title=f"{len(products)} products: {product_titles}",
-                            price=total_price,
-                            link_sent=all_links_sent
+                            price=paid_total,
+                            link_sent=all_links_sent,
+                            currency=paid_currency
                         )
                     except Exception as e:
                         print(f"Failed to send admin notification: {e}")
@@ -1823,21 +1841,23 @@ async def stripe_webhook(request: Request):
                 order = Order(
                     email=customer_email,
                     product_id=product.id,
-                    price=product.price,
+                    price=paid_total,
+                    currency=paid_currency,
                     paypal_order_id=payment_intent,  # Store Stripe payment_intent as order ID
                     status="completed"
                 )
                 db_session.add(order)
                 db_session.commit()
                 db_session.refresh(order)
-                
+
                 # Send confirmation email
                 try:
                     send_order_confirmation_email(
                         to_email=customer_email,
                         order_id=order.id,
                         product_title=product.title,
-                        price=product.price
+                        price=paid_total,
+                        currency=paid_currency
                     )
                 except Exception as e:
                     print(f"Failed to send confirmation email: {e}")
@@ -1901,8 +1921,9 @@ async def stripe_webhook(request: Request):
                         order_id=order.id,
                         customer_email=customer_email,
                         product_title=product.title,
-                        price=product.price,
-                        link_sent=link_was_sent
+                        price=paid_total,
+                        link_sent=link_was_sent,
+                        currency=paid_currency
                     )
                 except Exception as e:
                     print(f"Failed to send admin notification: {e}")
