@@ -127,7 +127,9 @@ async def bing_merchant_feed_head():
 async def generate_bing_merchant_feed(page: int = 0):
     """Generate Bing / Microsoft Merchant Center Product Feed (tab-separated).
     page=0 returns all products; page=1..4 returns one quarter each (~311 items).
-    Bing accepts Google-compatible TSV columns.
+    Columns follow the Microsoft Merchant Center feed spec, which differs from
+    Google's: product_category (not google_product_category), pipe-delimited
+    product_type, and the bingads_* grouping attributes.
     """
     db_session = get_session()
     PAGE_SIZE = 311
@@ -148,11 +150,13 @@ async def generate_bing_merchant_feed(page: int = 0):
         output = io.StringIO()
         writer = csv.writer(output, delimiter='\t', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
 
-        # Header — Bing/Google compatible columns
+        # Header — Microsoft Merchant Center column names and order
         writer.writerow([
-            'id', 'title', 'description', 'link', 'image_link', 'price',
-            'availability', 'condition', 'brand', 'mpn', 'product_type',
-            'google_product_category', 'custom_label_0'
+            'id', 'title', 'brand', 'link', 'price', 'description', 'image_link',
+            'mpn', 'gtin', 'availability', 'condition', 'product_type',
+            'product_category', 'bingads_grouping', 'bingads_label',
+            'custom_label_0', 'custom_label_1', 'custom_label_2',
+            'custom_label_3', 'custom_label_4'
         ])
 
         for product in products:
@@ -181,22 +185,34 @@ async def generate_bing_merchant_feed(page: int = 0):
 
             brand = product.brand or 'Generic'
             mpn = f"{brand}-{product.model}-manual" if brand and product.model else str(product.id)
-            product_type = product.category or 'Service Manual'
+
+            # Category is stored as "Cars/Volkswagen"; Microsoft delimits
+            # product_type levels with " | " and groups campaigns on the top level.
+            segments = [s.strip() for s in (product.category or 'Service Manual').split('/') if s.strip()]
+            product_type = ' | '.join(segments)
+            grouping = segments[0] if segments else 'Service Manual'
 
             writer.writerow([
                 str(product.id),
                 title,
-                desc,
-                product_url,
-                image,
-                f"{product.price:.2f} USD",
-                'in stock',
-                'new',
                 brand,
+                product_url,
+                f"{product.price:.2f} USD",
+                desc,
+                image,
                 mpn,
+                '',
+                'In Stock',
+                'New',
                 product_type,
                 'Media > Books > Non-Fiction > Reference Books',
-                'Technical-Documentation'
+                grouping,
+                f"{brand},service manual,repair manual",
+                'Technical-Documentation',
+                'Service-Manual',
+                brand,
+                grouping,
+                str(product.model or '')
             ])
 
         content = output.getvalue()
