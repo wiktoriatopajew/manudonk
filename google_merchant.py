@@ -202,7 +202,7 @@ async def generate_bing_merchant_feed(page: int = 0):
         content = output.getvalue()
         output.close()
 
-        return PlainTextResponse(content=content, media_type="text/tab-separated-values; charset=UTF-8")
+        return PlainTextResponse(content=content, media_type="text/tab-separated-values")
 
     except Exception as e:
         print(f"Error generating Bing feed: {e}")
