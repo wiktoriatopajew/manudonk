@@ -28,6 +28,11 @@ DEFAULT_NOTIFY_EMAIL = os.getenv("KALKULATOR_NOTIFY_EMAIL", "wiktoriatopajew@gma
 # "you can run the ad now" mails for windows that closed days ago.
 NOTIFY_POLL_SECONDS = 30
 NOTIFY_MAX_LATE_HOURS = 24
+NOTIFY_RETRY_MINUTES = 5  # after a rejected send, wait before trying again
+
+# timer id -> earliest next attempt, kept in memory: a restart may retry sooner,
+# which is the harmless direction.
+_retry_after = {}
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -190,7 +195,10 @@ async def send_test_email(timer_id: int):
 
     sent = await asyncio.to_thread(_send_email, payload)
     if not sent:
-        raise HTTPException(status_code=502, detail="Nie udało się wysłać e-maila — sprawdź logi/konfigurację Brevo")
+        raise HTTPException(
+            status_code=502,
+            detail="Nie udało się wysłać e-maila. Sprawdź BREVO_API_KEY w Railway — szczegóły są w logach."
+        )
     return {"sent_to": payload['to_email']}
 
 
@@ -216,6 +224,7 @@ async def delete_timer(timer_id: int):
 def _email_payload(timer: GmcTimer) -> dict:
     """Everything the mail needs, read while the session is still open."""
     return {
+        'timer_id': timer.id,
         'to_email': timer.notify_email,
         'timer_name': timer.name,
         'uploaded_at': _format_pl(timer.start_at),
@@ -229,8 +238,9 @@ def _send_email(payload: dict) -> bool:
     """Blocking send - always call through asyncio.to_thread from the loop."""
     # Imported lazily so a mail-config problem can never break page rendering.
     from email_utils import send_gmc_timer_ready_email
+    fields = {k: v for k, v in payload.items() if k != 'timer_id'}
     try:
-        return bool(send_gmc_timer_ready_email(**payload))
+        return bool(send_gmc_timer_ready_email(**fields))
     except Exception as e:
         print(f"❌ Kalkulator: email send failed for {payload.get('to_email')}: {e}")
         return False
@@ -248,6 +258,7 @@ def _collect_due_timers():
     due = []
     try:
         now = datetime.utcnow()
+        stamped_any = False
         candidates = session.query(GmcTimer).filter(
             GmcTimer.notified_at.is_(None),
             GmcTimer.notify_email.isnot(None),
@@ -258,16 +269,31 @@ def _collect_due_timers():
             if target > now:
                 continue
             if now - target <= timedelta(hours=NOTIFY_MAX_LATE_HOURS):
-                due.append(_email_payload(timer))
+                if _retry_after.get(timer.id, now) <= now:
+                    due.append(_email_payload(timer))
             else:
+                # Stamped here and only here: giving up is final, delivery is not.
                 print(f"⏭️  Kalkulator: '{timer.name}' finished {now - target} ago - marking without email")
-            timer.notified_at = now
+                timer.notified_at = now
+                stamped_any = True
 
-        if candidates:
+        if stamped_any:
             session.commit()
     finally:
         session.close()
     return due
+
+
+def _mark_notified(timer_id: int):
+    """Stamp only after the provider accepted the message."""
+    session = get_session()
+    try:
+        timer = session.query(GmcTimer).filter(GmcTimer.id == timer_id).first()
+        if timer:
+            timer.notified_at = datetime.utcnow()
+            session.commit()
+    finally:
+        session.close()
 
 
 async def _notify_loop():
@@ -276,10 +302,17 @@ async def _notify_loop():
         try:
             due = await asyncio.to_thread(_collect_due_timers)
             for payload in due:
+                timer_id = payload['timer_id']
                 if await asyncio.to_thread(_send_email, payload):
+                    await asyncio.to_thread(_mark_notified, timer_id)
+                    _retry_after.pop(timer_id, None)
                     print(f"✅ Kalkulator: notification sent for '{payload['timer_name']}'")
                 else:
-                    print(f"⚠️  Kalkulator: notification NOT delivered for '{payload['timer_name']}'")
+                    # Not stamped, so a fixed mail provider still delivers this
+                    # one - but back off instead of retrying every poll.
+                    _retry_after[timer_id] = datetime.utcnow() + timedelta(minutes=NOTIFY_RETRY_MINUTES)
+                    print(f"⚠️  Kalkulator: delivery failed for '{payload['timer_name']}', "
+                          f"retrying in {NOTIFY_RETRY_MINUTES} min")
         except Exception as e:
             print(f"⚠️  Kalkulator notifier error: {e}")
         await asyncio.sleep(NOTIFY_POLL_SECONDS)
