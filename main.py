@@ -33,6 +33,7 @@ from email_marketing_routes import email_marketing_router
 from tracking_routes import tracking_router
 from discount_routes import router as discount_router
 from google_merchant import merchant_router
+from kalkulator_routes import router as kalkulator_router
 from auth import get_current_user, get_current_admin_user
 
 # Initialize FastAPI app
@@ -255,7 +256,7 @@ async def startup_event():
         
         # Create any missing tables (pdf_cache, reviews, etc.)
         existing_tables = inspector.get_table_names()
-        for table_name in ['pdf_cache', 'reviews']:
+        for table_name in ['pdf_cache', 'reviews', 'gmc_timers']:
             if table_name not in existing_tables:
                 print(f"🔄 Creating {table_name} table...")
                 Base.metadata.create_all(bind=engine)
@@ -283,6 +284,7 @@ app.include_router(discount_router)
 app.include_router(import_router)
 app.include_router(merchant_router)
 app.include_router(reviews_router)
+app.include_router(kalkulator_router)
 
 # Configuration
 # Railway automatically provides RAILWAY_PUBLIC_DOMAIN
@@ -1096,6 +1098,12 @@ async def payment_policy(request: Request):
     })
 
 
+@app.get("/kalkulator", response_class=HTMLResponse)
+async def kalkulator_page(request: Request):
+    """GMC upload-window countdown calculators (internal tool, noindex)"""
+    return templates.TemplateResponse("kalkulator.html", {"request": request})
+
+
 # Admin Panel
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
@@ -1299,6 +1307,7 @@ Disallow: /cart
 Disallow: /checkout
 Disallow: /login
 Disallow: /register
+Disallow: /kalkulator
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

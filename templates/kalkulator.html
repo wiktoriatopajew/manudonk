@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Kalkulator GMC — odliczanie do wgrania produktów</title>
+<style>
+  :root{
+    --bg:#080b12;
+    --bg-2:#0d1220;
+    --card:#121a2b;
+    --card-2:#161f33;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.16);
+    --text:#e8edf7;
+    --muted:#8a96ad;
+    --accent:#7c9cff;
+    --accent-2:#5b7cfa;
+    --ready:#34d399;
+    --soon:#fbbf24;
+    --danger:#f87171;
+    --radius:18px;
+    --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,'Roboto Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(900px 500px at 12% -8%, rgba(124,156,255,.16), transparent 60%),
+      radial-gradient(800px 500px at 92% 0%, rgba(52,211,153,.10), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1360px;margin:0 auto;padding:32px 24px 96px}
+
+  /* ---------- header ---------- */
+  header.top{
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+    padding:22px 24px;margin-bottom:28px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    border:1px solid var(--line);border-radius:var(--radius);
+    backdrop-filter:blur(8px);
+  }
+  .brand{display:flex;align-items:center;gap:14px;margin-right:auto}
+  .logo{
+    width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+    background:linear-gradient(140deg,var(--accent),#a78bfa);
+    box-shadow:0 8px 24px rgba(124,156,255,.35);font-size:22px;
+  }
+  .brand h1{margin:0;font-size:20px;letter-spacing:-.02em}
+  .brand p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+  .clock{
+    font-family:var(--mono);font-size:13px;color:var(--muted);
+    padding:9px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);
+    white-space:nowrap;
+  }
+  .clock b{color:var(--text);font-weight:600}
+  .counter{
+    font-size:13px;color:var(--muted);padding:9px 14px;border-radius:12px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);white-space:nowrap;
+  }
+  .counter b{color:var(--text)}
+  .counter.full b{color:var(--danger)}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;
+    background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#0a0f1c;
+    box-shadow:0 8px 22px rgba(91,124,250,.32);transition:transform .12s ease,box-shadow .12s ease,opacity .12s;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(91,124,250,.42)}
+  .btn:active{transform:translateY(0)}
+  .btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
+  .btn.ghost{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--line);box-shadow:none;font-weight:500}
+  .btn.ghost:hover{background:rgba(255,255,255,.09);box-shadow:none}
+  .btn.ghost.off{color:var(--muted)}
+
+  /* ---------- grid ---------- */
+  .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+
+  .card{
+    position:relative;overflow:hidden;
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 20px 18px;
+    transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease;
+  }
+  .card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+  .card::before{
+    content:'';position:absolute;inset:0 0 auto 0;height:3px;
+    background:linear-gradient(90deg,var(--accent),#a78bfa);opacity:.85;
+  }
+  .card.is-ready{border-color:rgba(52,211,153,.45);box-shadow:0 0 0 1px rgba(52,211,153,.18),0 18px 40px -22px rgba(52,211,153,.6)}
+  .card.is-ready::before{background:linear-gradient(90deg,var(--ready),#22d3ee)}
+  .card.is-soon::before{background:linear-gradient(90deg,var(--soon),#fb923c)}
+
+  .card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+  input.name{
+    flex:1;min-width:0;background:transparent;border:1px solid transparent;border-radius:10px;
+    color:var(--text);font-size:17px;font-weight:650;letter-spacing:-.01em;padding:6px 8px;margin:-6px 0 0 -8px;
+    transition:background .15s,border-color .15s;
+  }
+  input.name:hover{background:rgba(255,255,255,.04)}
+  input.name:focus{outline:none;background:rgba(255,255,255,.06);border-color:var(--line-strong)}
+  .tools{display:flex;gap:6px;flex-shrink:0}
+  .icon-btn{
+    width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+    color:var(--muted);border:1px solid transparent;font-size:14px;line-height:1;
+    transition:all .15s;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,.07);color:var(--text);border-color:var(--line)}
+  .icon-btn.del:hover{background:rgba(248,113,113,.14);color:var(--danger);border-color:rgba(248,113,113,.3)}
+
+  .status{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(124,156,255,.16)}
+  .is-soon .dot{background:var(--soon);box-shadow:0 0 0 4px rgba(251,191,36,.16)}
+  .is-ready .dot{background:var(--ready);box-shadow:0 0 0 4px rgba(52,211,153,.18);animation:pulse 1.8s ease-in-out infinite}
+  .is-ready .status{color:var(--ready)}
+  .is-soon .status{color:var(--soon)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+  .count{
+    font-family:var(--mono);font-size:38px;font-weight:600;letter-spacing:-.02em;
+    line-height:1.1;margin:2px 0 4px;font-variant-numeric:tabular-nums;
+  }
+  .count .u{font-size:.5em;color:var(--muted);margin:0 8px 0 1px;font-weight:500}
+  .is-ready .count{color:var(--ready);font-size:30px}
+  .sub{font-size:13px;color:var(--muted);margin-bottom:14px;min-height:18px}
+  .sub b{color:var(--text);font-weight:600}
+
+  .bar{height:6px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:18px}
+  .fill{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent),#a78bfa);transition:width .9s linear}
+  .is-soon .fill{background:linear-gradient(90deg,var(--soon),#fb923c)}
+  .is-ready .fill{background:linear-gradient(90deg,var(--ready),#22d3ee)}
+
+  .fields{display:grid;grid-template-columns:1fr 116px;gap:10px}
+  label.f{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+  label.f span{display:block;margin-bottom:6px}
+  .fields input,.note{
+    width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;
+    color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);
+    transition:border-color .15s,background .15s;
+  }
+  .fields input:hover,.note:hover{background:rgba(255,255,255,.06)}
+  .fields input:focus,.note:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
+  .fields input::-webkit-calendar-picker-indicator{filter:invert(.7);cursor:pointer}
+  .note{margin-top:10px;font-family:inherit;font-size:13px}
+  .note::placeholder{color:#5d6880}
+
+  .saved{
+    position:absolute;right:16px;bottom:14px;font-size:11px;color:var(--ready);
+    opacity:0;transition:opacity .25s;pointer-events:none;font-weight:600;
+  }
+  .saved.show{opacity:1}
+
+  /* ---------- empty / toast ---------- */
+  .empty{
+    grid-column:1/-1;text-align:center;padding:70px 24px;
+    border:1px dashed var(--line-strong);border-radius:var(--radius);color:var(--muted);
+  }
+  .empty h2{color:var(--text);margin:0 0 8px;font-size:18px}
+  .empty p{margin:0 0 20px;font-size:14px}
+  #toast{
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);
+    background:#1b2438;border:1px solid var(--line-strong);color:var(--text);
+    padding:12px 20px;border-radius:12px;font-size:14px;box-shadow:0 18px 40px rgba(0,0,0,.5);
+    opacity:0;pointer-events:none;transition:all .25s;z-index:50;max-width:90vw;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.err{border-color:rgba(248,113,113,.5);color:#ffd7d7}
+  @media (max-width:560px){
+    .wrap{padding:18px 14px 70px}
+    .grid{grid-template-columns:1fr}
+    .count{font-size:32px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">⏱</div>
+      <div>
+        <h1>Kalkulator GMC</h1>
+        <p>Wgrywasz produkty → wiesz co do sekundy, kiedy możesz odpalić reklamę</p>
+      </div>
+    </div>
+    <div class="clock" id="clock">—</div>
+    <div class="counter" id="counter">0 / 50</div>
+    <button class="btn ghost off" id="sound-btn" title="Dźwięk po zakończeniu odliczania">🔇 Dźwięk</button>
+    <button class="btn" id="add-btn">＋ Dodaj kalkulator</button>
+  </header>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var API = '/api/kalkulator';
+  var MAX = 50;
+  var DEFAULT_HOURS = 19;
+
+  var state = { timers: [], sound: localStorage.getItem('gmc-sound') === '1' };
+  var cards = new Map();      // id -> card element
+  var saveTimers = new Map(); // id -> debounce handle
+  var wasReady = new Map();   // id -> bool, for the completion chime
+
+  var grid = document.getElementById('grid');
+  var counterEl = document.getElementById('counter');
+  var clockEl = document.getElementById('clock');
+  var addBtn = document.getElementById('add-btn');
+  var soundBtn = document.getElementById('sound-btn');
+  var toastEl = document.getElementById('toast');
+
+  var fmtTarget = new Intl.DateTimeFormat('pl-PL', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit'
+  });
+  var fmtClock = new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+
+  /* ---------- helpers ---------- */
+
+  function toast(msg, isError) {
+    toastEl.textContent = msg;
+    toastEl.className = 'show' + (isError ? ' err' : '');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { toastEl.className = ''; }, 3200);
+  }
+
+  function api(path, method, body) {
+    return fetch(API + path, {
+      method: method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok) throw new Error(data.detail || ('Błąd ' + res.status));
+        return data;
+      });
+    });
+  }
+
+  // <input type="datetime-local"> works in local time; the API speaks UTC.
+  function isoToInput(iso) {
+    var d = new Date(iso);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+  function inputToIso(value) {
+    var d = new Date(value);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function formatDuration(ms) {
+    var total = Math.floor(Math.abs(ms) / 1000);
+    var d = Math.floor(total / 86400);
+    var h = Math.floor((total % 86400) / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    var s = total % 60;
+    var out = '';
+    if (d > 0) out += d + '<span class="u">d</span>';
+    if (d > 0 || h > 0) out += pad(h) + '<span class="u">h</span>';
+    out += pad(m) + '<span class="u">m</span>' + pad(s) + '<span class="u">s</span>';
+    return out;
+  }
+
+  function humanShort(ms) {
+    var total = Math.floor(Math.abs(ms) / 1000);
+    var d = Math.floor(total / 86400);
+    var h = Math.floor((total % 86400) / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    if (d > 0) return d + ' dn. ' + h + ' godz.';
+    if (h > 0) return h + ' godz. ' + m + ' min';
+    return m + ' min';
+  }
+
+  function chime() {
+    if (!state.sound) return;
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      var ctx = new Ctx();
+      [880, 1320].forEach(function (freq, i) {
+        var osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + i * 0.18 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.18 + 0.35);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.18);
+        osc.stop(ctx.currentTime + i * 0.18 + 0.4);
+      });
+      setTimeout(function () { ctx.close(); }, 1200);
+    } catch (e) { /* audio blocked - visual state is enough */ }
+  }
+
+  /* ---------- saving ---------- */
+
+  function scheduleSave(id, patch, cardEl) {
+    var pending = saveTimers.get(id) || { handle: null, patch: {} };
+    Object.assign(pending.patch, patch);
+    clearTimeout(pending.handle);
+    pending.handle = setTimeout(function () {
+      var payload = pending.patch;
+      saveTimers.delete(id);
+      api('/' + id, 'PATCH', payload).then(function (fresh) {
+        var t = state.timers.find(function (x) { return x.id === id; });
+        if (t) Object.assign(t, fresh);
+        flashSaved(cardEl);
+      }).catch(function (err) { toast(err.message, true); });
+    }, 600);
+    saveTimers.set(id, pending);
+  }
+
+  function flashSaved(cardEl) {
+    var el = cardEl && cardEl.querySelector('.saved');
+    if (!el) return;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.classList.remove('show'); }, 1400);
+  }
+
+  /* ---------- rendering ---------- */
+
+  function buildCard(timer) {
+    var el = document.createElement('article');
+    el.className = 'card';
+    el.dataset.id = timer.id;
+    el.innerHTML =
+      '<div class="card-top">' +
+        '<input class="name" maxlength="80" spellcheck="false">' +
+        '<div class="tools">' +
+          '<button class="icon-btn now" title="Ustaw start na teraz">⟳</button>' +
+          '<button class="icon-btn del" title="Usuń kalkulator">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="status"><span class="dot"></span><span class="status-text">Odliczanie</span></div>' +
+      '<div class="count">--</div>' +
+      '<div class="sub"></div>' +
+      '<div class="bar"><span class="fill"></span></div>' +
+      '<div class="fields">' +
+        '<label class="f"><span>Produkty wgrane o</span><input type="datetime-local" class="start"></label>' +
+        '<label class="f"><span>Po ilu godz.</span><input type="number" class="hours" min="0" max="8760" step="0.5"></label>' +
+      '</div>' +
+      '<input class="note" maxlength="255" placeholder="Notatka (np. partia 500 szt.)">' +
+      '<span class="saved">✓ zapisano</span>';
+
+    var nameEl = el.querySelector('.name');
+    var startEl = el.querySelector('.start');
+    var hoursEl = el.querySelector('.hours');
+    var noteEl = el.querySelector('.note');
+
+    nameEl.addEventListener('input', function () {
+      local(timer.id).name = nameEl.value;
+      scheduleSave(timer.id, { name: nameEl.value }, el);
+    });
+
+    startEl.addEventListener('change', function () {
+      var iso = inputToIso(startEl.value);
+      if (!iso) return;
+      var t = local(timer.id);
+      t.start_at = iso;
+      t.target_at = new Date(new Date(iso).getTime() + t.offset_hours * 3600000).toISOString();
+      wasReady.delete(timer.id);
+      scheduleSave(timer.id, { start_at: iso }, el);
+      tick();
+    });
+
+    hoursEl.addEventListener('input', function () {
+      var hours = parseFloat(hoursEl.value);
+      if (isNaN(hours) || hours < 0) return;
+      var t = local(timer.id);
+      t.offset_hours = hours;
+      t.target_at = new Date(new Date(t.start_at).getTime() + hours * 3600000).toISOString();
+      wasReady.delete(timer.id);
+      scheduleSave(timer.id, { offset_hours: hours }, el);
+      tick();
+    });
+
+    noteEl.addEventListener('input', function () {
+      local(timer.id).note = noteEl.value;
+      scheduleSave(timer.id, { note: noteEl.value }, el);
+    });
+
+    el.querySelector('.now').addEventListener('click', function () {
+      var iso = new Date().toISOString();
+      var t = local(timer.id);
+      t.start_at = iso;
+      t.target_at = new Date(new Date(iso).getTime() + t.offset_hours * 3600000).toISOString();
+      startEl.value = isoToInput(iso);
+      wasReady.delete(timer.id);
+      scheduleSave(timer.id, { start_at: iso }, el);
+      tick();
+    });
+
+    el.querySelector('.del').addEventListener('click', function () {
+      if (!confirm('Usunąć kalkulator "' + local(timer.id).name + '"?')) return;
+      api('/' + timer.id, 'DELETE').then(function () {
+        state.timers = state.timers.filter(function (x) { return x.id !== timer.id; });
+        cards.delete(timer.id);
+        el.remove();
+        syncCounter();
+        renderEmpty();
+        toast('Kalkulator usunięty');
+      }).catch(function (err) { toast(err.message, true); });
+    });
+
+    return el;
+  }
+
+  function local(id) {
+    return state.timers.find(function (t) { return t.id === id; }) || {};
+  }
+
+  // Fill inputs from state, but never yank a field the user is typing in.
+  function syncInputs(el, timer) {
+    var nameEl = el.querySelector('.name');
+    var startEl = el.querySelector('.start');
+    var hoursEl = el.querySelector('.hours');
+    var noteEl = el.querySelector('.note');
+    if (document.activeElement !== nameEl) nameEl.value = timer.name;
+    if (document.activeElement !== startEl) startEl.value = isoToInput(timer.start_at);
+    if (document.activeElement !== hoursEl) hoursEl.value = timer.offset_hours;
+    if (document.activeElement !== noteEl) noteEl.value = timer.note || '';
+  }
+
+  function renderEmpty() {
+    var existing = grid.querySelector('.empty');
+    if (state.timers.length === 0 && !existing) {
+      var box = document.createElement('div');
+      box.className = 'empty';
+      box.innerHTML =
+        '<h2>Brak kalkulatorów</h2>' +
+        '<p>Dodaj pierwszy — wpisz godzinę wgrania produktów, a policzy resztę.</p>' +
+        '<button class="btn" id="empty-add">＋ Dodaj kalkulator</button>';
+      grid.appendChild(box);
+      box.querySelector('#empty-add').addEventListener('click', addTimer);
+    } else if (state.timers.length > 0 && existing) {
+      existing.remove();
+    }
+  }
+
+  function render() {
+    state.timers.forEach(function (timer) {
+      var el = cards.get(timer.id);
+      if (!el) {
+        el = buildCard(timer);
+        cards.set(timer.id, el);
+        grid.appendChild(el);
+      }
+      syncInputs(el, timer);
+    });
+    renderEmpty();
+    syncCounter();
+    tick();
+  }
+
+  function syncCounter() {
+    counterEl.innerHTML = '<b>' + state.timers.length + '</b> / ' + MAX;
+    counterEl.className = 'counter' + (state.timers.length >= MAX ? ' full' : '');
+    addBtn.disabled = state.timers.length >= MAX;
+  }
+
+  /* ---------- the ticking part ---------- */
+
+  function tick() {
+    var now = Date.now();
+    var soonest = null;
+
+    state.timers.forEach(function (timer) {
+      var el = cards.get(timer.id);
+      if (!el) return;
+
+      var start = new Date(timer.start_at).getTime();
+      var target = new Date(timer.target_at).getTime();
+      var remaining = target - now;
+      var total = Math.max(target - start, 1);
+      var ready = remaining <= 0;
+      var soon = !ready && remaining <= 3600000; // last hour
+
+      el.classList.toggle('is-ready', ready);
+      el.classList.toggle('is-soon', soon);
+
+      var countEl = el.querySelector('.count');
+      var subEl = el.querySelector('.sub');
+      var statusEl = el.querySelector('.status-text');
+      var fillEl = el.querySelector('.fill');
+
+      if (ready) {
+        statusEl.textContent = 'Gotowe — możesz dodać reklamę';
+        countEl.innerHTML = '✓ GOTOWE';
+        subEl.innerHTML = 'produkty w feedzie od <b>' + humanShort(remaining) + '</b> · ' +
+                          fmtTarget.format(new Date(target));
+        fillEl.style.width = '100%';
+      } else {
+        statusEl.textContent = soon ? 'Ostatnia godzina' : 'Odliczanie';
+        countEl.innerHTML = formatDuration(remaining);
+        subEl.innerHTML = 'gotowe: <b>' + fmtTarget.format(new Date(target)) + '</b>';
+        fillEl.style.width = Math.min(100, Math.max(0, ((now - start) / total) * 100)).toFixed(2) + '%';
+        if (soonest === null || remaining < soonest) soonest = remaining;
+      }
+
+      var before = wasReady.get(timer.id);
+      if (before === false && ready) chime();
+      wasReady.set(timer.id, ready);
+    });
+
+    clockEl.innerHTML = 'Teraz: <b>' + fmtClock.format(new Date()) + '</b>';
+    document.title = soonest !== null
+      ? '⏱ ' + humanShort(soonest) + ' — Kalkulator GMC'
+      : 'Kalkulator GMC';
+  }
+
+  /* ---------- actions ---------- */
+
+  function addTimer() {
+    if (state.timers.length >= MAX) { toast('Limit ' + MAX + ' kalkulatorów', true); return; }
+    var name = 'GMC Sebek ' + (state.timers.length + 1);
+    api('', 'POST', {
+      name: name,
+      start_at: new Date().toISOString(),
+      offset_hours: DEFAULT_HOURS
+    }).then(function (timer) {
+      state.timers.push(timer);
+      render();
+      var el = cards.get(timer.id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        el.querySelector('.name').focus();
+        el.querySelector('.name').select();
+      }
+    }).catch(function (err) { toast(err.message, true); });
+  }
+
+  function load() {
+    api('').then(function (data) {
+      MAX = data.max_timers || MAX;
+      state.timers = data.timers;
+      render();
+    }).catch(function (err) {
+      toast('Nie udało się wczytać kalkulatorów: ' + err.message, true);
+    });
+  }
+
+  function syncSoundBtn() {
+    soundBtn.textContent = (state.sound ? '🔔' : '🔇') + ' Dźwięk';
+    soundBtn.className = 'btn ghost' + (state.sound ? '' : ' off');
+  }
+
+  addBtn.addEventListener('click', addTimer);
+  soundBtn.addEventListener('click', function () {
+    state.sound = !state.sound;
+    localStorage.setItem('gmc-sound', state.sound ? '1' : '0');
+    syncSoundBtn();
+    if (state.sound) chime();
+  });
+
+  syncSoundBtn();
+  load();
+  setInterval(tick, 1000);
+  // Refresh from the DB now and then, so another device's edits show up here.
+  setInterval(function () {
+    if (document.hidden || saveTimers.size > 0) return;
+    api('').then(function (data) {
+      var ids = new Set(data.timers.map(function (t) { return t.id; }));
+      cards.forEach(function (el, id) {
+        if (!ids.has(id)) { el.remove(); cards.delete(id); }
+      });
+      state.timers = data.timers;
+      render();
+    }).catch(function () { /* transient - next pass will retry */ });
+  }, 60000);
+})();
+</script>
+</body>
+</html>

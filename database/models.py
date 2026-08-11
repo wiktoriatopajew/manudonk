@@ -251,6 +251,45 @@ class Review(Base):
     product = relationship("Product", back_populates="reviews")
 
 
+class GmcTimer(Base):
+    """
+    Countdown calculator for the Google Merchant upload window (/kalkulator).
+
+    One row = one independent timer: products were uploaded at `start_at`, and
+    they show up in the feed `offset_hours` later. Everything is stored in UTC
+    (naive, like the rest of the schema) and rendered in the browser's timezone.
+    """
+    __tablename__ = 'gmc_timers'
+
+    MAX_TIMERS = 50
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(80), nullable=False)
+    start_at = Column(DateTime, nullable=False)  # when products were uploaded (UTC)
+    offset_hours = Column(Float, nullable=False, default=19.0)
+    note = Column(String(255), nullable=True)
+    position = Column(Integer, nullable=False, default=0)  # display order
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @property
+    def target_at(self):
+        """Moment the products should be live in the feed"""
+        return self.start_at + timedelta(hours=self.offset_hours or 0)
+
+    def to_dict(self):
+        """Serialize with explicit UTC markers so JS Date() parses them correctly"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'start_at': self.start_at.isoformat() + 'Z',
+            'target_at': self.target_at.isoformat() + 'Z',
+            'offset_hours': self.offset_hours,
+            'note': self.note,
+            'position': self.position,
+        }
+
+
 class Product(Base):
     """Product model with fields optimized for 100k+ products"""
     __tablename__ = 'products'
