@@ -24,10 +24,49 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-brevo-api-key")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@manualbear.com")
 FROM_NAME = os.getenv("FROM_NAME", "ManualBear")
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")  # xkeysib-... key
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")  # re_... key
+# Resend rejects unverified senders; override while the domain is still pending.
+RESEND_FROM = os.getenv("RESEND_FROM", f"{FROM_NAME} <{FROM_EMAIL}>")
 
-# Use Brevo API instead of SMTP (Railway blocks SMTP ports)
-USE_BREVO_API = bool(BREVO_API_KEY)
-print(f"📧 Email configured: Brevo API={'Yes' if USE_BREVO_API else 'No'}, SMTP={SMTP_SERVER}:{SMTP_PORT}, FROM={FROM_EMAIL}")
+try:
+    import resend
+    resend.api_key = RESEND_API_KEY
+except ImportError:  # package missing => Resend simply isn't an option
+    resend = None
+
+# Mail goes out over an HTTP API, never SMTP: Railway blocks the SMTP ports.
+# Resend is the primary sender, Brevo stays as a fallback for older setups.
+USE_API_SENDER = bool((RESEND_API_KEY and resend) or BREVO_API_KEY)
+print(f"📧 Email configured: Resend={'Yes' if (RESEND_API_KEY and resend) else 'No'}, "
+      f"Brevo={'Yes' if BREVO_API_KEY else 'No'}, SMTP={SMTP_SERVER}:{SMTP_PORT}, FROM={FROM_EMAIL}")
+
+
+def send_email_resend(to_email: str, subject: str, html_content: str):
+    """Send email using the Resend API"""
+    print(f"🚀 Attempting to send email via Resend to {to_email}")
+    try:
+        result = resend.Emails.send({
+            "from": RESEND_FROM,
+            "to": to_email,
+            "subject": subject,
+            "html": html_content,
+        })
+        print(f"✅ Email sent to {to_email} via Resend. Id: {result.get('id') if isinstance(result, dict) else result}")
+        return True
+    except Exception as e:
+        print(f"❌ Resend API error: {str(e)}")
+        return False
+
+
+def send_email_api(to_email: str, subject: str, html_content: str):
+    """Try every configured HTTP mail provider in order of preference."""
+    if RESEND_API_KEY and resend:
+        if send_email_resend(to_email, subject, html_content):
+            return True
+        print("⚠️ Resend failed, trying Brevo..." if BREVO_API_KEY else "⚠️ Resend failed")
+    if BREVO_API_KEY:
+        return send_email_brevo_api(to_email, subject, html_content)
+    return False
 
 
 def send_email_brevo_api(to_email: str, subject: str, html_content: str):
@@ -57,22 +96,6 @@ def send_email_brevo_api(to_email: str, subject: str, html_content: str):
         return True
     except Exception as e:
         print(f"❌ Brevo API error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return False
-    """Send email using Resend API"""
-    print(f"🚀 Attempting to send email via Resend to {to_email}")
-    try:
-        result = resend.Emails.send({
-            "from": f"{FROM_NAME} <onboarding@resend.dev>",
-            "to": to_email,
-            "subject": subject,
-            "html": html_content
-        })
-        print(f"✅ Email sent successfully to {to_email} via Resend. Result: {result}")
-        return True
-    except Exception as e:
-        print(f"❌ Resend API error: {str(e)}")
         import traceback
         traceback.print_exc()
         return False
@@ -150,15 +173,15 @@ Saturday – Sunday: Closed</p>
     </html>
     """
     
-    # Try Brevo API first, fallback to SMTP
+    # Try the API sender first, fallback to SMTP
     print(f"📨 send_verification_email called for {to_email}")
-    print(f"USE_BREVO_API: {USE_BREVO_API}")
+    print(f"USE_API_SENDER: {USE_API_SENDER}")
     
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
         else:
-            print("⚠️ Brevo API failed, trying SMTP fallback...")
+            print("⚠️ Email API failed, trying SMTP fallback...")
     
     # Fallback to SMTP (won't work on Railway but works locally)
     return send_email_smtp(to_email, subject, html_content)
@@ -217,8 +240,8 @@ Saturday – Sunday: Closed</p>
     """
     
     # Try Resend first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
     
     return send_email_smtp(to_email, subject, html_content)
@@ -294,8 +317,8 @@ Saturday – Sunday: Closed</p>
     """
     
     # Try Resend first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
     
     return send_email_smtp(to_email, subject, html_content)
@@ -368,8 +391,8 @@ Saturday – Sunday: Closed</p>
     """
     
     # Try Resend first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
     
     return send_email_smtp(to_email, subject, html_content)
@@ -443,8 +466,8 @@ Saturday – Sunday: Closed</p>
     """
     
     # Try Resend first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
     
     return send_email_smtp(to_email, subject, html_content)
@@ -459,8 +482,8 @@ def send_marketing_campaign_email(to_email: str, subject: str, html_content: str
         html_content = html_content.replace('</body>', f'{tracking_pixel}</body>')
     
     # Try Resend first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
     
     return send_email_smtp(to_email, subject, html_content)
@@ -542,8 +565,8 @@ Saturday – Sunday: Closed</p>
     """
     
     # Try Resend first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
     
     return send_email_smtp(to_email, subject, html_content)
@@ -624,8 +647,8 @@ Saturday – Sunday: Closed</p>
     """
     
     # Try Resend first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
     
     return send_email_smtp(to_email, subject, html_content)
@@ -710,13 +733,13 @@ def send_admin_order_notification(order_id: int, customer_email: str, product_ti
     
     print(f"📧 Sending admin notification to {admin_email} for order #{order_id}")
     
-    # Try Brevo API first, fallback to SMTP
-    if USE_BREVO_API:
-        if send_email_brevo_api(admin_email, subject, html_content):
+    # Try the API sender first, fallback to SMTP
+    if USE_API_SENDER:
+        if send_email_api(admin_email, subject, html_content):
             print(f"✅ Admin notification sent successfully for order #{order_id}")
             return True
         else:
-            print(f"⚠️ Brevo API failed for admin notification, trying SMTP fallback...")
+            print(f"⚠️ Email API failed for admin notification, trying SMTP fallback...")
     
     # Fallback to SMTP
     result = send_email_smtp(admin_email, subject, html_content)
@@ -781,10 +804,10 @@ def send_contact_form_email(sender_name: str, sender_email: str, subject: str, m
     """
 
     print(f"📩 Sending contact form email from {sender_email} to {to_email}")
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, email_subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, email_subject, html_content):
             return True
-        print("⚠️ Brevo API failed for contact form, trying SMTP fallback...")
+        print("⚠️ Email API failed for contact form, trying SMTP fallback...")
     return send_email_smtp(to_email, email_subject, html_content)
 
 
@@ -886,8 +909,8 @@ def send_gmc_timer_ready_email(to_email: str, timer_name: str, uploaded_at: str,
 </html>"""
 
     print(f"⏱ Sending GMC timer notification to {to_email} ({timer_name})")
-    if USE_BREVO_API:
-        if send_email_brevo_api(to_email, subject, html_content):
+    if USE_API_SENDER:
+        if send_email_api(to_email, subject, html_content):
             return True
-        print("⚠️ Brevo API failed for GMC timer, trying SMTP fallback...")
+        print("⚠️ Email API failed for GMC timer, trying SMTP fallback...")
     return send_email_smtp(to_email, subject, html_content)
