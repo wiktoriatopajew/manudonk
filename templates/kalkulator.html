@@ -152,6 +152,28 @@
   .note{margin-top:10px;font-family:inherit;font-size:13px}
   .note::placeholder{color:#5d6880}
 
+  .mail-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+  .mail-ico{
+    width:34px;height:38px;flex-shrink:0;display:grid;place-items:center;font-size:15px;
+    border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#5d6880;
+    transition:color .15s,border-color .15s;
+  }
+  .mail-ico.on{color:var(--accent);border-color:rgba(124,156,255,.35)}
+  .mail{
+    flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;
+    color:var(--text);padding:10px 12px;font-size:13px;transition:border-color .15s,background .15s;
+  }
+  .mail:hover{background:rgba(255,255,255,.06)}
+  .mail:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
+  .mail::placeholder{color:#5d6880}
+  .btn-test{
+    flex-shrink:0;padding:10px 12px;border-radius:11px;font-size:12px;font-weight:600;
+    border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);transition:all .15s;
+  }
+  .btn-test:hover{background:rgba(255,255,255,.09);color:var(--text)}
+  .btn-test[disabled]{opacity:.5;cursor:wait}
+  .mail-state{font-size:11px;color:var(--ready);font-weight:600;margin-top:7px;min-height:14px;display:block}
+
   .saved{
     position:absolute;right:16px;bottom:14px;font-size:11px;color:var(--ready);
     opacity:0;transition:opacity .25s;pointer-events:none;font-weight:600;
@@ -355,6 +377,13 @@
         '<label class="f"><span>Po ilu godz.</span><input type="number" class="hours" min="0" max="8760" step="0.5"></label>' +
       '</div>' +
       '<input class="note" maxlength="255" placeholder="Notatka (np. partia 500 szt.)">' +
+      '<div class="mail-row">' +
+        '<span class="mail-ico">✉</span>' +
+        '<input class="mail" type="email" maxlength="255" spellcheck="false" ' +
+               'placeholder="e-mail po zakończeniu (puste = bez maila)">' +
+        '<button class="btn-test" title="Wyślij próbny e-mail teraz">Test</button>' +
+      '</div>' +
+      '<span class="mail-state"></span>' +
       '<span class="saved">✓ zapisano</span>';
 
     var nameEl = el.querySelector('.name');
@@ -392,6 +421,31 @@
     noteEl.addEventListener('input', function () {
       local(timer.id).note = noteEl.value;
       scheduleSave(timer.id, { note: noteEl.value }, el);
+    });
+
+    // Saved on change (blur/Enter) rather than per keystroke - a half-typed
+    // address would just bounce off the server's validation.
+    var mailEl = el.querySelector('.mail');
+    mailEl.addEventListener('change', function () {
+      var value = mailEl.value.trim();
+      api('/' + timer.id, 'PATCH', { notify_email: value }).then(function (fresh) {
+        Object.assign(local(timer.id), fresh);
+        flashSaved(el);
+        tick();
+      }).catch(function (err) {
+        toast(err.message, true);
+        mailEl.value = local(timer.id).notify_email || '';
+      });
+    });
+
+    el.querySelector('.btn-test').addEventListener('click', function () {
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = '...';
+      api('/' + timer.id + '/test-email', 'POST')
+        .then(function (r) { toast('Testowy e-mail wysłany na ' + r.sent_to); })
+        .catch(function (err) { toast(err.message, true); })
+        .then(function () { btn.disabled = false; btn.textContent = 'Test'; });
     });
 
     el.querySelector('.now').addEventListener('click', function () {
@@ -434,6 +488,8 @@
     if (document.activeElement !== startEl) startEl.value = isoToInput(timer.start_at);
     if (document.activeElement !== hoursEl) hoursEl.value = timer.offset_hours;
     if (document.activeElement !== noteEl) noteEl.value = timer.note || '';
+    var mailEl = el.querySelector('.mail');
+    if (document.activeElement !== mailEl) mailEl.value = timer.notify_email || '';
   }
 
   function renderEmpty() {
@@ -512,8 +568,23 @@
         if (soonest === null || remaining < soonest) soonest = remaining;
       }
 
+      el.querySelector('.mail-ico').classList.toggle('on', !!timer.notify_email);
+      var mailState = el.querySelector('.mail-state');
+      if (timer.notified_at) {
+        mailState.textContent = '✓ e-mail wysłany na ' + timer.notify_email;
+      } else if (timer.notify_email) {
+        mailState.textContent = ready ? '✉ e-mail w drodze…' : '';
+      } else {
+        mailState.textContent = '';
+      }
+
       var before = wasReady.get(timer.id);
-      if (before === false && ready) chime();
+      if (before === false && ready) {
+        chime();
+        // The notifier polls every 30s; look again so "e-mail wysłany" shows up
+        // without waiting for the regular refresh.
+        setTimeout(refresh, 45000);
+      }
       wasReady.set(timer.id, ready);
     });
 
@@ -554,6 +625,18 @@
     });
   }
 
+  function refresh() {
+    if (saveTimers.size > 0) return;  // don't stomp on edits waiting to save
+    api('').then(function (data) {
+      var ids = new Set(data.timers.map(function (t) { return t.id; }));
+      cards.forEach(function (el, id) {
+        if (!ids.has(id)) { el.remove(); cards.delete(id); }
+      });
+      state.timers = data.timers;
+      render();
+    }).catch(function () { /* transient - next pass will retry */ });
+  }
+
   function syncSoundBtn() {
     soundBtn.textContent = (state.sound ? '🔔' : '🔇') + ' Dźwięk';
     soundBtn.className = 'btn ghost' + (state.sound ? '' : ' off');
@@ -570,18 +653,9 @@
   syncSoundBtn();
   load();
   setInterval(tick, 1000);
-  // Refresh from the DB now and then, so another device's edits show up here.
-  setInterval(function () {
-    if (document.hidden || saveTimers.size > 0) return;
-    api('').then(function (data) {
-      var ids = new Set(data.timers.map(function (t) { return t.id; }));
-      cards.forEach(function (el, id) {
-        if (!ids.has(id)) { el.remove(); cards.delete(id); }
-      });
-      state.timers = data.timers;
-      render();
-    }).catch(function () { /* transient - next pass will retry */ });
-  }, 60000);
+  // Pull from the DB now and then, so another device's edits - and the mail
+  // notifier's "sent" stamp - show up here too.
+  setInterval(refresh, 60000);
 })();
 </script>
 </body>

@@ -268,6 +268,8 @@ class GmcTimer(Base):
     start_at = Column(DateTime, nullable=False)  # when products were uploaded (UTC)
     offset_hours = Column(Float, nullable=False, default=19.0)
     note = Column(String(255), nullable=True)
+    notify_email = Column(String(255), nullable=True)  # empty = no email when it hits zero
+    notified_at = Column(DateTime, nullable=True)  # set once the email went out
     position = Column(Integer, nullable=False, default=0)  # display order
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -286,6 +288,8 @@ class GmcTimer(Base):
             'target_at': self.target_at.isoformat() + 'Z',
             'offset_hours': self.offset_hours,
             'note': self.note,
+            'notify_email': self.notify_email,
+            'notified_at': (self.notified_at.isoformat() + 'Z') if self.notified_at else None,
             'position': self.position,
         }
 
@@ -502,6 +506,24 @@ def init_db():
                     print("✅ Added missing column: orders.currency (existing rows set to USD)")
                 except Exception as e:
                     print(f"⚠️  Could not add column orders.currency: {e}")
+
+    # The email-notification columns landed after the first /kalkulator deploy,
+    # so heal older gmc_timers tables instead of failing on every query.
+    if 'gmc_timers' in inspector.get_table_names():
+        existing_columns = {col['name'] for col in inspector.get_columns('gmc_timers')}
+        timer_columns = {
+            'notify_email': 'VARCHAR(255)',
+            'notified_at': 'TIMESTAMP' if DATABASE_URL.startswith("postgresql") else 'DATETIME',
+        }
+        with engine.connect() as conn:
+            for col_name, col_type in timer_columns.items():
+                if col_name not in existing_columns:
+                    try:
+                        conn.execute(text(f"ALTER TABLE gmc_timers ADD COLUMN {col_name} {col_type}"))
+                        conn.commit()
+                        print(f"✅ Added missing column: gmc_timers.{col_name}")
+                    except Exception as e:
+                        print(f"⚠️  Could not add column gmc_timers.{col_name}: {e}")
 
     print("Database initialized successfully!")
 

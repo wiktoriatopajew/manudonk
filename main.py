@@ -33,7 +33,7 @@ from email_marketing_routes import email_marketing_router
 from tracking_routes import tracking_router
 from discount_routes import router as discount_router
 from google_merchant import merchant_router
-from kalkulator_routes import router as kalkulator_router
+from kalkulator_routes import router as kalkulator_router, start_notifier as start_kalkulator_notifier
 from auth import get_current_user, get_current_admin_user
 
 # Initialize FastAPI app
@@ -268,6 +268,12 @@ async def startup_event():
         import traceback
         traceback.print_exc()
     
+    # Watches /kalkulator timers and mails when a window closes
+    try:
+        start_kalkulator_notifier()
+    except Exception as e:
+        print(f"⚠️  Kalkulator notifier could not start: {e}")
+
     print("=" * 50)
     print("✅ Application ready!")
     print("=" * 50)

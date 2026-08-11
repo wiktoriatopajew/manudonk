@@ -787,3 +787,107 @@ def send_contact_form_email(sender_name: str, sender_email: str, subject: str, m
         print("⚠️ Brevo API failed for contact form, trying SMTP fallback...")
     return send_email_smtp(to_email, email_subject, html_content)
 
+
+
+def send_gmc_timer_ready_email(to_email: str, timer_name: str, uploaded_at: str,
+                               ready_at: str, offset_hours: float, note: str = None):
+    """
+    Notify that a /kalkulator countdown finished - the products should be live
+    in the Google Merchant feed, so the ad can go up. Times come in already
+    formatted for the local timezone.
+    """
+    subject = f"⏱ {timer_name} — czas minął, możesz ustawić reklamy"
+
+    hours_label = (f"{offset_hours:g}").replace('.', ',')
+    # The last row carries no divider, so which row that is depends on the note.
+    ready_row_style = ("padding:14px 0;border-bottom:1px solid #e5e9f2;" if note
+                       else "padding:14px 0 0 0;")
+    note_row = f"""
+                    <tr>
+                      <td style="padding:14px 0 0 0;">
+                        <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8a96ad;font-weight:700;">Notatka</div>
+                        <div style="font-size:15px;color:#1f2937;margin-top:4px;">{note}</div>
+                      </td>
+                    </tr>""" if note else ""
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="pl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#eef1f7;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f7;padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 32px rgba(15,23,42,.12);">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#10b981,#0ea5e9);padding:34px 32px;text-align:center;">
+              <div style="font-size:44px;line-height:1;">&#9203;</div>
+              <h1 style="margin:14px 0 6px;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-.02em;">Czas minął!</h1>
+              <p style="margin:0;color:rgba(255,255,255,.92);font-size:15px;">Produkty powinny być już w feedzie — możesz ustawiać reklamy.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:30px 32px 8px;">
+              <div style="display:inline-block;background:#ecfdf5;color:#047857;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;border-radius:99px;">&#10003; Gotowe</div>
+              <h2 style="margin:16px 0 0;font-size:22px;color:#0f172a;font-weight:700;">{timer_name}</h2>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:18px 32px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e9f2;border-radius:14px;background:#f8fafc;">
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:0 0 14px 0;border-bottom:1px solid #e5e9f2;">
+                          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8a96ad;font-weight:700;">Produkty wgrane</div>
+                          <div style="font-size:16px;color:#1f2937;margin-top:4px;font-weight:600;">{uploaded_at}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:14px 0;border-bottom:1px solid #e5e9f2;">
+                          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8a96ad;font-weight:700;">Okno oczekiwania</div>
+                          <div style="font-size:16px;color:#1f2937;margin-top:4px;font-weight:600;">{hours_label} godz.</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="{ready_row_style}">
+                          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8a96ad;font-weight:700;">Gotowe od</div>
+                          <div style="font-size:18px;color:#047857;margin-top:4px;font-weight:700;">{ready_at}</div>
+                        </td>
+                      </tr>{note_row}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:26px 32px 32px;text-align:center;">
+              <a href="{DOMAIN}/kalkulator" style="display:inline-block;background:#5b7cfa;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 30px;border-radius:12px;">Otwórz kalkulator</a>
+              <p style="margin:16px 0 0;font-size:13px;color:#94a3b8;">Wszystkie godziny w czasie polskim (Europe/Warsaw).</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#f8fafc;border-top:1px solid #e5e9f2;padding:18px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">Automatyczne powiadomienie z kalkulatora GMC na {DOMAIN}</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    print(f"⏱ Sending GMC timer notification to {to_email} ({timer_name})")
+    if USE_BREVO_API:
+        if send_email_brevo_api(to_email, subject, html_content):
+            return True
+        print("⚠️ Brevo API failed for GMC timer, trying SMTP fallback...")
+    return send_email_smtp(to_email, subject, html_content)
