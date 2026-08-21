@@ -309,9 +309,11 @@ class ShopifyStore(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
     url = Column(String(500), nullable=False)
-    domain = Column(String(255), nullable=False)  # active domain, e.g. manualplanet95.com
+    domain = Column(String(255), nullable=True)  # active domain, e.g. manualplanet95.com (empty = none assigned)
     google_login = Column(String(255), nullable=True)
     google_password = Column(String(255), nullable=True)
+    gmc_account_id = Column(Integer, ForeignKey('gmc_accounts.id'), nullable=True)  # GMC account assigned to this store
+    ads_account_id = Column(Integer, ForeignKey('ads_accounts.id'), nullable=True)  # Google Ads account assigned to this store
     position = Column(Integer, nullable=False, default=0)  # display order
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -324,6 +326,8 @@ class ShopifyStore(Base):
             'domain': self.domain,
             'google_login': self.google_login,
             'google_password': self.google_password,
+            'gmc_account_id': self.gmc_account_id,
+            'ads_account_id': self.ads_account_id,
             'position': self.position,
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
         }
@@ -339,6 +343,83 @@ class StoreNameHistory(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Domain(Base):
+    """
+    Purchased domains inventory (side panel on /panel).
+
+    Lifecycle: available -> (assigned to a store) active -> (unassigned once)
+    disabled / red -> (re-assigned and unassigned again) deleted for good.
+    After two deactivations a domain disappears from the list entirely.
+    """
+    __tablename__ = 'domains'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    domain = Column(String(255), unique=True, nullable=False, index=True)
+    status = Column(String(20), nullable=False, default='available')  # available | active | disabled
+    deactivation_count = Column(Integer, nullable=False, default=0)
+    store_id = Column(Integer, ForeignKey('shopify_stores.id'), nullable=True)  # store currently using it
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'domain': self.domain,
+            'status': self.status,
+            'deactivation_count': self.deactivation_count,
+            'store_id': self.store_id,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+        }
+
+
+class GmcAccount(Base):
+    """Google Merchant Center accounts kept in reserve (side panel on /panel)."""
+    __tablename__ = 'gmc_accounts'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    login = Column(String(255), nullable=True)
+    password = Column(String(255), nullable=True)
+    store_id = Column(Integer, ForeignKey('shopify_stores.id'), nullable=True)  # set = account in use
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'login': self.login,
+            'password': self.password,
+            'store_id': self.store_id,
+            'used': self.store_id is not None,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+        }
+
+
+class AdsAccount(Base):
+    """Google Ads accounts kept in reserve (side panel on /panel)."""
+    __tablename__ = 'ads_accounts'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    login = Column(String(255), nullable=True)
+    password = Column(String(255), nullable=True)
+    store_id = Column(Integer, ForeignKey('shopify_stores.id'), nullable=True)  # set = account in use
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'login': self.login,
+            'password': self.password,
+            'store_id': self.store_id,
+            'used': self.store_id is not None,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+        }
 
 
 class Product(Base):
@@ -572,6 +653,24 @@ def init_db():
                         print(f"✅ Added missing column: gmc_timers.{col_name}")
                     except Exception as e:
                         print(f"⚠️  Could not add column gmc_timers.{col_name}: {e}")
+
+    # The /panel store cards gained account links after first deploy - heal an
+    # older shopify_stores table the same way (new installs get them via create_all).
+    if 'shopify_stores' in inspector.get_table_names():
+        existing_columns = {col['name'] for col in inspector.get_columns('shopify_stores')}
+        store_columns = {
+            'gmc_account_id': 'INTEGER',
+            'ads_account_id': 'INTEGER',
+        }
+        with engine.connect() as conn:
+            for col_name, col_type in store_columns.items():
+                if col_name not in existing_columns:
+                    try:
+                        conn.execute(text(f"ALTER TABLE shopify_stores ADD COLUMN {col_name} {col_type}"))
+                        conn.commit()
+                        print(f"✅ Added missing column: shopify_stores.{col_name}")
+                    except Exception as e:
+                        print(f"⚠️  Could not add column shopify_stores.{col_name}: {e}")
 
     print("Database initialized successfully!")
 

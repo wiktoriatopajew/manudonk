@@ -10,7 +10,7 @@
     --bg:#080b12;--bg-2:#0d1220;--card:#121a2b;--card-2:#161f33;
     --line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.16);
     --text:#e8edf7;--muted:#8a96ad;--accent:#7c9cff;--accent-2:#5b7cfa;
-    --ready:#34d399;--soon:#fbbf24;--danger:#f87171;--radius:18px;
+    --ready:#34d399;--soon:#fbbf24;--danger:#f87171;--info:#7dd3fc;--radius:18px;
     --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,'Roboto Mono',monospace;
   }
   *{box-sizing:border-box}
@@ -23,9 +23,9 @@
     font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1360px;margin:0 auto;padding:32px 24px 96px}
+  .wrap{max-width:1500px;margin:0 auto;padding:32px 24px 96px}
   header.top{
-    display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:22px 24px;margin-bottom:28px;
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:22px 24px;margin-bottom:24px;
     background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
     border:1px solid var(--line);border-radius:var(--radius);backdrop-filter:blur(8px);
   }
@@ -59,8 +59,13 @@
   .btn.ghost:hover{background:rgba(255,255,255,.09);box-shadow:none}
   .btn.danger{background:linear-gradient(140deg,#f87171,#ef4444);color:#1a0a0a;box-shadow:0 8px 22px rgba(239,68,68,.3)}
   .btn.danger:hover{box-shadow:0 12px 28px rgba(239,68,68,.4)}
+  .btn.small{padding:7px 12px;font-size:12.5px;border-radius:9px}
 
+  .layout{display:flex;gap:24px;align-items:flex-start}
+  .main{flex:1;min-width:0}
   .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+
+  /* ---------- store card ---------- */
   .card{
     position:relative;display:flex;flex-direction:column;
     background:linear-gradient(180deg,var(--card-2),var(--card));
@@ -93,6 +98,11 @@
     border:1px solid var(--line);border-radius:11px;padding:8px 8px 8px 12px;min-height:38px;
   }
   .val .v{flex:1;min-width:0;font-family:var(--mono);font-size:13.5px;overflow-wrap:anywhere;word-break:break-all}
+  .val select{
+    flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--text);
+    font-family:var(--mono);font-size:13.5px;padding:2px 0;
+  }
+  .val select option{background:#161f33;color:var(--text)}
   .copy-btn,.eye-btn{
     flex-shrink:0;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
     border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px;transition:all .15s;
@@ -119,20 +129,58 @@
   .calc-chip .ct.done{color:var(--ready)}
   .calc-chip.done{border-color:rgba(52,211,153,.45)}
 
-  .add-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:260px;border-style:dashed;background:transparent}
+  .add-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:240px;border-style:dashed;background:transparent}
   .add-card:hover{border-color:var(--accent);background:rgba(124,156,255,.05);transform:none}
   .add-card.hidden{display:none}
   .hint{font-size:12.5px;color:var(--muted)}
   .add-card .btn .plus{font-size:20px;line-height:1}
-
   .empty{grid-column:1/-1;text-align:center;padding:70px 24px;border:1px dashed var(--line-strong);border-radius:var(--radius);color:var(--muted)}
   .empty h2{color:var(--text);margin:0 0 8px;font-size:18px}
   .empty p{margin:0 0 20px;font-size:14px}
 
+  /* ---------- side panel ---------- */
+  .side{width:330px;flex-shrink:0;display:flex;flex-direction:column;gap:18px;position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto}
+  .side-card{
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    border:1px solid var(--line);border-radius:var(--radius);padding:16px;
+  }
+  .side-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .side-head h3{margin:0;font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text);flex:1}
+  .side-head .cnt{font-size:11px;color:var(--muted);padding:3px 9px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+  .side-head .cnt b{color:var(--text)}
+  .side-add-btn{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line);color:var(--muted);font-size:16px;transition:all .15s}
+  .side-add-btn:hover{background:rgba(124,156,255,.12);color:var(--accent);border-color:rgba(124,156,255,.4)}
+  .side-form{display:none;flex-direction:column;gap:8px;margin-bottom:12px;padding:12px;border:1px dashed var(--line-strong);border-radius:12px}
+  .side-form.open{display:flex}
+  .side-form input{
+    width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;
+    color:var(--text);padding:9px 11px;font-size:13px;font-family:var(--mono);transition:border-color .15s,background .15s;
+  }
+  .side-form input:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
+  .side-form input::placeholder{color:#5d6880}
+  .side-form-actions{display:flex;gap:8px}
+  .side-form-actions .btn{flex:1;justify-content:center;padding:8px 10px;font-size:13px}
+  .side-list{display:flex;flex-direction:column;gap:8px;max-height:230px;overflow-y:auto;padding-right:2px}
+  .side-item{
+    display:flex;align-items:center;gap:8px;padding:9px 10px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;
+  }
+  .side-item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+  .side-item .t small{display:block;font-size:11px;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis}
+  .side-status{flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px}
+  .st-active{background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.4);color:var(--ready)}
+  .st-disabled{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.4);color:var(--danger)}
+  .st-available{background:rgba(125,211,252,.12);border:1px solid rgba(125,211,252,.35);color:var(--info)}
+  .st-used{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.4);color:var(--danger)}
+  .side-item .rm{flex-shrink:0;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:var(--muted);border:1px solid transparent;transition:all .15s}
+  .side-item .rm:hover{background:rgba(248,113,113,.14);color:var(--danger);border-color:rgba(248,113,113,.3)}
+  .side-empty{font-size:12px;color:var(--muted);text-align:center;padding:10px 0}
+
+  /* ---------- modals ---------- */
   .overlay{position:fixed;inset:0;background:rgba(5,8,15,.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:40;padding:20px}
   .overlay.hidden{display:none}
   .modal{
-    width:100%;max-width:480px;background:linear-gradient(180deg,var(--card-2),var(--card));
+    width:100%;max-width:520px;background:linear-gradient(180deg,var(--card-2),var(--card));
     border:1px solid var(--line-strong);border-radius:20px;padding:24px;
     box-shadow:0 24px 60px rgba(0,0,0,.6);animation:pop .2s ease;max-height:90vh;overflow-y:auto;
   }
@@ -140,9 +188,13 @@
   .modal h2{margin:0 0 18px;font-size:18px}
   label.f{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
   label.f span{display:block;margin-bottom:6px}
-  label.f input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;transition:border-color .15s,background .15s}
-  label.f input:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
+  label.f input,label.f select{
+    width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;
+    color:var(--text);padding:11px 12px;font-size:14px;transition:border-color .15s,background .15s;
+  }
+  label.f input:focus,label.f select:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
   label.f input::placeholder{color:#5d6880}
+  label.f select option{background:#161f33;color:var(--text)}
   .form-error{color:var(--danger);font-size:13px;min-height:18px;margin:2px 0 10px}
   .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
   .modal-text{font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:20px}
@@ -157,6 +209,10 @@
   #toast.show{opacity:1;transform:translate(-50%,0)}
   #toast.err{border-color:rgba(248,113,113,.5);color:#ffd7d7}
 
+  @media (max-width:1100px){
+    .layout{flex-direction:column}
+    .side{width:100%;position:static;max-height:none}
+  }
   @media (max-width:560px){
     .wrap{padding:18px 14px 70px}
     .grid{grid-template-columns:1fr}
@@ -178,13 +234,75 @@
     <button class="btn" id="add-btn">＋ Dodaj sklep</button>
   </header>
 
-  <div class="grid" id="grid"></div>
-  <div id="addCard" class="card add-card hidden">
-    <button class="btn" id="add-card-btn"><span class="plus">＋</span> Dodaj sklep</button>
-    <p class="hint">Możesz dodać maksymalnie 4 sklepy</p>
+  <div class="layout">
+    <div class="main">
+      <div class="grid" id="grid"></div>
+      <div id="addCard" class="card add-card hidden">
+        <button class="btn" id="add-card-btn"><span class="plus">＋</span> Dodaj sklep</button>
+        <p class="hint">Możesz dodać maksymalnie 4 sklepy</p>
+      </div>
+    </div>
+
+    <aside class="side">
+      <!-- Domains -->
+      <div class="side-card">
+        <div class="side-head">
+          <h3>🌐 Domeny kupione</h3>
+          <span class="cnt" id="domain-cnt">0</span>
+          <button class="side-add-btn" data-side-add="domain" title="Dodaj domenę">＋</button>
+        </div>
+        <div class="side-form" id="domain-form">
+          <input type="text" id="domain-input" placeholder="np. manualplanet95.com" autocomplete="off">
+          <div class="side-form-actions">
+            <button class="btn ghost" data-side-cancel="domain">Anuluj</button>
+            <button class="btn" data-side-save="domain">Dodaj</button>
+          </div>
+        </div>
+        <div class="side-list" id="domain-list"></div>
+      </div>
+
+      <!-- GMC accounts -->
+      <div class="side-card">
+        <div class="side-head">
+          <h3>📦 Konta GMC</h3>
+          <span class="cnt" id="gmc-cnt">0</span>
+          <button class="side-add-btn" data-side-add="gmc" title="Dodaj konto GMC">＋</button>
+        </div>
+        <div class="side-form" id="gmc-form">
+          <input type="text" placeholder="Nazwa (np. GMC Sebek 2)" data-side-field="name" autocomplete="off">
+          <input type="text" placeholder="Login" data-side-field="login" autocomplete="off">
+          <input type="password" placeholder="Hasło" data-side-field="password" autocomplete="off">
+          <div class="side-form-actions">
+            <button class="btn ghost" data-side-cancel="gmc">Anuluj</button>
+            <button class="btn" data-side-save="gmc">Dodaj</button>
+          </div>
+        </div>
+        <div class="side-list" id="gmc-list"></div>
+      </div>
+
+      <!-- Ads accounts -->
+      <div class="side-card">
+        <div class="side-head">
+          <h3>🎯 Google Ads</h3>
+          <span class="cnt" id="ads-cnt">0</span>
+          <button class="side-add-btn" data-side-add="ads" title="Dodaj konto Ads">＋</button>
+        </div>
+        <div class="side-form" id="ads-form">
+          <input type="text" placeholder="Nazwa (np. Ads Sebek 2)" data-side-field="name" autocomplete="off">
+          <input type="text" placeholder="Login" data-side-field="login" autocomplete="off">
+          <input type="password" placeholder="Hasło" data-side-field="password" autocomplete="off">
+          <div class="side-form-actions">
+            <button class="btn ghost" data-side-cancel="ads">Anuluj</button>
+            <button class="btn" data-side-save="ads">Dodaj</button>
+          </div>
+        </div>
+        <div class="side-list" id="ads-list"></div>
+      </div>
+    </aside>
   </div>
 </div>
 
+<!-- Store modal -->
 <div id="overlay" class="overlay hidden">
   <div class="modal">
     <h2 id="modal-title">Dodaj sklep</h2>
@@ -197,8 +315,14 @@
       <label class="f"><span>Link do sklepu</span>
         <input type="text" id="f-url" placeholder="np. www.manualplanet.net" maxlength="500" autocomplete="off">
       </label>
-      <label class="f"><span>Aktualna domena</span>
-        <input type="text" id="f-domain" placeholder="np. manualplanet95.com" maxlength="255" autocomplete="off">
+      <label class="f"><span>Aktualna domena (z listy kupionych)</span>
+        <select id="f-domain"><option value="">— bez domeny —</option></select>
+      </label>
+      <label class="f"><span>Konto GMC</span>
+        <select id="f-gmc"><option value="">— brak —</option></select>
+      </label>
+      <label class="f"><span>Konto Google Ads</span>
+        <select id="f-ads"><option value="">— brak —</option></select>
       </label>
       <label class="f"><span>Login Google</span>
         <input type="text" id="f-login" maxlength="255" autocomplete="off">
@@ -215,10 +339,38 @@
   </div>
 </div>
 
+<!-- Calculator modal -->
+<div id="calcOverlay" class="overlay hidden">
+  <div class="modal">
+    <h2 id="calc-title">Dodaj kalkulator</h2>
+    <form id="calc-form" novalidate>
+      <input type="hidden" id="calc-store-id">
+      <label class="f"><span>Nazwa kalkulatora</span>
+        <input type="text" id="c-name" placeholder="np. GMC Sebek" maxlength="80" autocomplete="off">
+      </label>
+      <label class="f"><span>Produkty wgrane o</span>
+        <input type="datetime-local" id="c-start">
+      </label>
+      <label class="f"><span>Po ilu godzinach gotowe</span>
+        <input type="number" id="c-hours" min="0" max="8760" step="0.5" value="19">
+      </label>
+      <label class="f"><span>E-mail do powiadomienia</span>
+        <input type="email" id="c-email" value="wiktoriatopajew@gmail.com" maxlength="255" autocomplete="off">
+      </label>
+      <p class="form-error" id="calc-error"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="calc-cancel">Anuluj</button>
+        <button type="submit" class="btn">Utwórz</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete store confirm -->
 <div id="delOverlay" class="overlay hidden">
   <div class="modal">
     <h2>Usunąć sklep?</h2>
-    <p class="modal-text">Sklep <b id="del-name"></b> zostanie trwale usunięty. Powiązane kalkulatory pozostaną, ale stracą połączenie ze sklepem.</p>
+    <p class="modal-text">Sklep <b id="del-name"></b> zostanie trwale usunięty. Jego domena przejdzie przez cykl wyłączania (czerwona, potem usunięta), a kalkulatory stracą połączenie ze sklepem.</p>
     <div class="modal-actions">
       <button class="btn ghost" id="del-cancel">Anuluj</button>
       <button class="btn danger" id="del-confirm">Usuń</button>
@@ -233,7 +385,7 @@
   'use strict';
 
   var MAX = 4;
-  var state = { stores: [], calculators: [], names: [] };
+  var state = { stores: [], calculators: [], names: [], domains: [], gmc: [], ads: [] };
   var pendingDeleteId = null;
   var toastTimer = null;
   var clockTimer = null;
@@ -251,6 +403,10 @@
   var storeIdInput = document.getElementById('store-id');
   var delOverlay = document.getElementById('delOverlay');
   var delName = document.getElementById('del-name');
+
+  var calcOverlay = document.getElementById('calcOverlay');
+  var calcForm = document.getElementById('calc-form');
+  var calcError = document.getElementById('calc-error');
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -313,8 +469,18 @@
     return pad(h) + ':' + pad(m) + ':' + pad(s);
   }
 
+  function toLocalInputValue(date) {
+    var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+      'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+  }
+
   function connectedCalcs(storeId) {
     return (state.calculators || []).filter(function (c) { return c.store_id === storeId; });
+  }
+
+  function accountLabel(acc) {
+    return acc.name + (acc.used ? ' (UŻYTE)' : ' (DOSTĘPNE)');
   }
 
   function updateClock() {
@@ -331,6 +497,61 @@
     });
   }
 
+  /* ---------- side panel render ---------- */
+
+  function renderSide() {
+    // Domains
+    document.getElementById('domain-cnt').innerHTML = '<b>' + state.domains.length + '</b>';
+    var domList = document.getElementById('domain-list');
+    domList.innerHTML = '';
+    if (state.domains.length === 0) {
+      domList.innerHTML = '<div class="side-empty">Brak domen — dodaj kupioną domenę.</div>';
+    } else {
+      state.domains.forEach(function (d) {
+        var badge, cls;
+        if (d.status === 'active') { badge = 'AKTYWNA'; cls = 'st-active'; }
+        else if (d.status === 'disabled') { badge = 'WYŁĄCZONA'; cls = 'st-disabled'; }
+        else { badge = 'DOSTĘPNA'; cls = 'st-available'; }
+        var item = document.createElement('div');
+        item.className = 'side-item';
+        item.innerHTML =
+          '<div class="t">' + esc(d.domain) +
+            '<small>' + (d.store_id ? 'w użyciu' : '') + '</small>' +
+          '</div>' +
+          '<span class="side-status ' + cls + '">' + badge + '</span>' +
+          '<button class="rm" data-rm-domain="' + d.id + '" title="Usuń">✕</button>';
+        domList.appendChild(item);
+      });
+    }
+
+    renderAccountList('gmc', state.gmc, 'Konta GMC');
+    renderAccountList('ads', state.ads, 'Konta Ads');
+  }
+
+  function renderAccountList(key, accounts, label) {
+    document.getElementById(key + '-cnt').innerHTML = '<b>' + accounts.length + '</b>';
+    var list = document.getElementById(key + '-list');
+    list.innerHTML = '';
+    if (accounts.length === 0) {
+      list.innerHTML = '<div class="side-empty">Brak kont — dodaj zapasowe.</div>';
+      return;
+    }
+    accounts.forEach(function (a) {
+      var item = document.createElement('div');
+      item.className = 'side-item';
+      item.innerHTML =
+        '<div class="t">' + esc(a.name) +
+          '<small>' + esc(a.login || '') + '</small>' +
+        '</div>' +
+        '<span class="side-status ' + (a.used ? 'st-used' : 'st-available') + '">' +
+          (a.used ? 'UŻYTE' : 'DOSTĘPNE') + '</span>' +
+        '<button class="rm" data-rm-' + key + '="' + a.id + '" title="Usuń">✕</button>';
+      list.appendChild(item);
+    });
+  }
+
+  /* ---------- stores render ---------- */
+
   function render() {
     counterEl.innerHTML = '<b>' + state.stores.length + '</b> / ' + MAX;
     counterEl.className = 'counter' + (state.stores.length >= MAX ? ' full' : '');
@@ -342,7 +563,7 @@
     if (state.stores.length === 0) {
       var empty = document.createElement('div');
       empty.className = 'empty';
-      empty.innerHTML = '<h2>Brak sklepów</h2><p>Dodaj sklep, wpisz domenę i dane Google, a potem podepnij do niego kalkulator GMC.</p><button class="btn" id="empty-add">＋ Dodaj sklep</button>';
+      empty.innerHTML = '<h2>Brak sklepów</h2><p>Dodaj sklep, wybierz domenę z zapasów, podepnij konto GMC / Ads i kalkulator.</p><button class="btn" id="empty-add">＋ Dodaj sklep</button>';
       grid.appendChild(empty);
       document.getElementById('empty-add').addEventListener('click', function () { openModal(null); });
     }
@@ -354,7 +575,7 @@
       var calcs = connectedCalcs(store.id);
       var chips = '';
       if (calcs.length === 0) {
-        chips = '<div class="calc-empty">Brak kalkulatora — kliknij ⏱, aby dodać odliczanie do tego sklepu.</div>';
+        chips = '<div class="calc-empty">Brak kalkulatora — kliknij ⏱, aby dodać odliczanie dla tego sklepu.</div>';
       } else {
         chips = calcs.map(function (c) {
           var end = new Date(c.target_at).getTime();
@@ -380,8 +601,10 @@
         '</div>' +
         '<div class="rows">' +
           '<div class="row">' +
-            '<div class="lab">Aktualna domena <span class="badge">Aktywna</span></div>' +
-            '<div class="val"><span class="v">' + esc(store.domain) + '</span><button class="copy-btn" data-copy="domain" data-id="' + store.id + '" title="Kopiuj domenę">⧉</button></div>' +
+            '<div class="lab">Aktualna domena' + (store.domain ? ' <span class="badge">Aktywna</span>' : '') + '</div>' +
+            '<div class="val"><span class="v">' + esc(store.domain || '—') + '</span>'
+            + (store.domain ? '<button class="copy-btn" data-copy="domain" data-id="' + store.id + '" title="Kopiuj domenę">⧉</button>' : '') +
+            '</div>' +
           '</div>' +
           '<div class="row">' +
             '<div class="lab">Login Google</div>' +
@@ -400,8 +623,11 @@
 
       grid.appendChild(card);
     });
+    renderSide();
     updateClock();
   }
+
+  /* ---------- form helpers ---------- */
 
   function populateNameList() {
     var list = document.getElementById('name-list');
@@ -416,20 +642,62 @@
     });
   }
 
+  function populateStoreSelects(store) {
+    var domSel = document.getElementById('f-domain');
+    domSel.innerHTML = '<option value="">— bez domeny —</option>';
+    var currentDomain = store ? store.domain : '';
+    var hasCurrent = false;
+    state.domains.forEach(function (d) {
+      var opt = document.createElement('option');
+      opt.value = d.domain;
+      var suffix = d.status === 'active' ? ' (AKTYWNA)' : (d.status === 'disabled' ? ' (WYŁĄCZONA)' : ' (DOSTĘPNA)');
+      opt.textContent = d.domain + suffix;
+      if (d.domain === currentDomain) { opt.selected = true; hasCurrent = true; }
+      domSel.appendChild(opt);
+    });
+    if (currentDomain && !hasCurrent) {
+      var opt = document.createElement('option');
+      opt.value = currentDomain;
+      opt.textContent = currentDomain + ' (AKTYWNA)';
+      opt.selected = true;
+      domSel.appendChild(opt);
+    }
+
+    populateAccountSelect('f-gmc', state.gmc, store ? store.gmc_account_id : null);
+    populateAccountSelect('f-ads', state.ads, store ? store.ads_account_id : null);
+  }
+
+  function populateAccountSelect(selId, accounts, currentId) {
+    var sel = document.getElementById(selId);
+    sel.innerHTML = '<option value="">— brak —</option>';
+    accounts.forEach(function (a) {
+      // Only unused accounts (plus the one this store already uses) can be picked.
+      if (a.used && a.id !== currentId) return;
+      var opt = document.createElement('option');
+      opt.value = String(a.id);
+      opt.textContent = accountLabel(a);
+      if (String(a.id) === String(currentId)) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
   function openModal(store) {
     formError.textContent = '';
+    populateStoreSelects(store);
     if (store) {
       modalTitle.textContent = 'Edytuj sklep';
       storeIdInput.value = store.id;
       document.getElementById('f-name').value = store.name;
       document.getElementById('f-url').value = store.url.replace(/^https?:\/\//, '');
-      document.getElementById('f-domain').value = store.domain;
       document.getElementById('f-login').value = store.google_login || '';
       document.getElementById('f-password').value = store.google_password || '';
     } else {
       modalTitle.textContent = 'Dodaj sklep';
       form.reset();
       storeIdInput.value = '';
+      document.getElementById('f-domain').selectedIndex = 0;
+      document.getElementById('f-gmc').selectedIndex = 0;
+      document.getElementById('f-ads').selectedIndex = 0;
     }
     populateNameList();
     overlay.classList.remove('hidden');
@@ -437,17 +705,44 @@
   }
 
   function closeModal() { overlay.classList.add('hidden'); form.reset(); formError.textContent = ''; }
+
   function openDel(store) { pendingDeleteId = store.id; delName.textContent = store.name; delOverlay.classList.remove('hidden'); }
   function closeDel() { pendingDeleteId = null; delOverlay.classList.add('hidden'); }
 
+  /* ---------- calculator modal ---------- */
+
+  function openCalcModal(store) {
+    calcError.textContent = '';
+    document.getElementById('calc-store-id').value = store.id;
+    document.getElementById('c-name').value = 'GMC Sebek';
+    var now = new Date(); now.setSeconds(0, 0);
+    document.getElementById('c-start').value = toLocalInputValue(now);
+    document.getElementById('c-hours').value = '19';
+    document.getElementById('c-email').value = 'wiktoriatopajew@gmail.com';
+    calcOverlay.classList.remove('hidden');
+    setTimeout(function () { document.getElementById('c-name').focus(); }, 50);
+  }
+
+  function closeCalcModal() { calcOverlay.classList.add('hidden'); calcForm.reset(); calcError.textContent = ''; }
+
+  /* ---------- load ---------- */
+
   function load() {
-    Promise.all([api('/api/stores'), api('/api/kalkulator'), api('/api/name-history')]).then(function (r) {
+    Promise.all([
+      api('/api/stores'), api('/api/kalkulator'), api('/api/name-history'),
+      api('/api/domains'), api('/api/gmc-accounts'), api('/api/ads-accounts')
+    ]).then(function (r) {
       state.stores = r[0].stores || [];
       state.calculators = r[1].timers || [];
       state.names = r[2].names || [];
+      state.domains = r[3].domains || [];
+      state.gmc = r[4].accounts || [];
+      state.ads = r[5].accounts || [];
       render();
     }).catch(function (err) { toast('Nie udało się wczytać: ' + err.message, true); });
   }
+
+  /* ---------- events ---------- */
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -456,16 +751,36 @@
       url: document.getElementById('f-url').value,
       domain: document.getElementById('f-domain').value,
       google_login: document.getElementById('f-login').value,
-      google_password: document.getElementById('f-password').value
+      google_password: document.getElementById('f-password').value,
+      gmc_account_id: document.getElementById('f-gmc').value ? Number(document.getElementById('f-gmc').value) : null,
+      ads_account_id: document.getElementById('f-ads').value ? Number(document.getElementById('f-ads').value) : null
     };
     var isEdit = Boolean(storeIdInput.value);
     api(isEdit ? '/api/stores/' + storeIdInput.value : '/api/stores', isEdit ? 'PUT' : 'POST', payload)
-      .then(function () {
-        closeModal();
-        return load();
-      })
+      .then(function () { closeModal(); return load(); })
       .then(function () { toast('Zapisano'); })
       .catch(function (err) { formError.textContent = err.message; });
+  });
+
+  calcForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var startVal = document.getElementById('c-start').value;
+    var startDate = new Date(startVal);
+    if (!startVal || isNaN(startDate.getTime())) {
+      calcError.textContent = 'Podaj datę i godzinę wgrania produktów.';
+      return;
+    }
+    var payload = {
+      name: document.getElementById('c-name').value,
+      start_at: startDate.toISOString(),
+      offset_hours: Number(document.getElementById('c-hours').value),
+      notify_email: document.getElementById('c-email').value,
+      store_id: Number(document.getElementById('calc-store-id').value)
+    };
+    api('/api/kalkulator', 'POST', payload)
+      .then(function () { closeCalcModal(); return load(); })
+      .then(function () { toast('Kalkulator dodany'); })
+      .catch(function (err) { calcError.textContent = err.message; });
   });
 
   grid.addEventListener('click', function (e) {
@@ -487,9 +802,33 @@
     var store = state.stores.find(function (x) { return x.id === Number(actionBtn.dataset.id); });
     if (!store) return;
     var action = actionBtn.dataset.action;
-    if (action === 'calc') window.location.href = '/kalkulator?store_id=' + store.id;
+    if (action === 'calc') openCalcModal(store);
     else if (action === 'edit') openModal(store);
     else if (action === 'del') openDel(store);
+  });
+
+  document.addEventListener('click', function (e) {
+    var rmDomain = e.target.closest('[data-rm-domain]');
+    if (rmDomain) {
+      api('/api/domains/' + rmDomain.dataset.rmDomain, 'DELETE')
+        .then(load).then(function () { toast('Domena usunięta'); })
+        .catch(function (err) { toast(err.message, true); });
+      return;
+    }
+    var rmGmc = e.target.closest('[data-rm-gmc]');
+    if (rmGmc) {
+      api('/api/gmc-accounts/' + rmGmc.dataset.rmGmc, 'DELETE')
+        .then(load).then(function () { toast('Konto GMC usunięte'); })
+        .catch(function (err) { toast(err.message, true); });
+      return;
+    }
+    var rmAds = e.target.closest('[data-rm-ads]');
+    if (rmAds) {
+      api('/api/ads-accounts/' + rmAds.dataset.rmAds, 'DELETE')
+        .then(load).then(function () { toast('Konto Ads usunięte'); })
+        .catch(function (err) { toast(err.message, true); });
+      return;
+    }
   });
 
   addBtn.addEventListener('click', function () { openModal(null); });
@@ -505,8 +844,51 @@
       .then(function () { toast('Sklep usunięty'); })
       .catch(function (err) { closeDel(); toast(err.message, true); });
   });
+  document.getElementById('calc-cancel').addEventListener('click', closeCalcModal);
+  calcOverlay.addEventListener('click', function (e) { if (e.target === calcOverlay) closeCalcModal(); });
 
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeDel(); } });
+  /* side panel add/cancel/save */
+  document.querySelectorAll('[data-side-add]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.dataset.sideAdd;
+      document.getElementById(key + '-form').classList.add('open');
+    });
+  });
+  document.querySelectorAll('[data-side-cancel]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.dataset.sideCancel;
+      var formEl = document.getElementById(key + '-form');
+      formEl.classList.remove('open');
+      formEl.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+    });
+  });
+  document.querySelectorAll('[data-side-save]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.dataset.sideSave;
+      var formEl = document.getElementById(key + '-form');
+      var inputs = formEl.querySelectorAll('input');
+      if (key === 'domain') {
+        var dom = inputs[0].value;
+        if (!dom.trim()) { toast('Podaj domenę', true); return; }
+        api('/api/domains', 'POST', { domain: dom })
+          .then(load).then(function () {
+            formEl.classList.remove('open'); inputs[0].value = '';
+            toast('Domena dodana');
+          }).catch(function (err) { toast(err.message, true); });
+      } else {
+        var payload = { name: inputs[0].value, login: inputs[1].value, password: inputs[2].value };
+        if (!payload.name.trim()) { toast('Podaj nazwę konta', true); return; }
+        api('/api/' + key + '-accounts', 'POST', payload)
+          .then(load).then(function () {
+            formEl.classList.remove('open');
+            inputs.forEach(function (i) { i.value = ''; });
+            toast('Konto dodane');
+          }).catch(function (err) { toast(err.message, true); });
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeDel(); closeCalcModal(); } });
 
   clockTimer = setInterval(updateClock, 1000);
   load();
