@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel sklepów — ManualBear</title>
+<style>
+  :root{
+    --bg:#080b12;--bg-2:#0d1220;--card:#121a2b;--card-2:#161f33;
+    --line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.16);
+    --text:#e8edf7;--muted:#8a96ad;--accent:#7c9cff;--accent-2:#5b7cfa;
+    --ready:#34d399;--soon:#fbbf24;--danger:#f87171;--radius:18px;
+    --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,'Roboto Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);
+    background:
+      radial-gradient(900px 500px at 12% -8%, rgba(124,156,255,.16), transparent 60%),
+      radial-gradient(800px 500px at 92% 0%, rgba(52,211,153,.10), transparent 55%),
+      var(--bg);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1360px;margin:0 auto;padding:32px 24px 96px}
+  header.top{
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:22px 24px;margin-bottom:28px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    border:1px solid var(--line);border-radius:var(--radius);backdrop-filter:blur(8px);
+  }
+  .brand{display:flex;align-items:center;gap:14px;margin-right:auto}
+  .logo{
+    width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+    background:linear-gradient(140deg,#a78bfa,var(--accent-2));
+    box-shadow:0 8px 24px rgba(124,156,255,.35);font-size:22px;
+  }
+  .brand h1{margin:0;font-size:20px;letter-spacing:-.02em}
+  .brand p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+  .link{
+    display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);
+    text-decoration:none;font-size:13px;font-weight:600;transition:all .15s;
+  }
+  .link:hover{color:var(--text);border-color:var(--line-strong);background:rgba(255,255,255,.07)}
+  .counter{font-size:13px;color:var(--muted);padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);white-space:nowrap}
+  .counter b{color:var(--text)}
+  .counter.full b{color:var(--danger)}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:12px;
+    font-weight:600;font-size:14px;
+    background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#0a0f1c;
+    box-shadow:0 8px 22px rgba(91,124,250,.32);transition:transform .12s,box-shadow .12s,opacity .12s;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(91,124,250,.42)}
+  .btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
+  .btn.ghost{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--line);box-shadow:none;font-weight:500}
+  .btn.ghost:hover{background:rgba(255,255,255,.09);box-shadow:none}
+  .btn.danger{background:linear-gradient(140deg,#f87171,#ef4444);color:#1a0a0a;box-shadow:0 8px 22px rgba(239,68,68,.3)}
+  .btn.danger:hover{box-shadow:0 12px 28px rgba(239,68,68,.4)}
+
+  .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+  .card{
+    position:relative;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    border:1px solid var(--line);border-radius:var(--radius);padding:20px;
+    transition:border-color .2s,box-shadow .2s,transform .2s;
+  }
+  .card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+  .card::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;border-radius:var(--radius) var(--radius) 0 0;background:linear-gradient(90deg,var(--accent),#a78bfa);opacity:.85}
+  .card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .store-name{flex:1;min-width:0;font-size:17px;font-weight:650;letter-spacing:-.01em;line-height:1.3;overflow-wrap:anywhere}
+  .tools{display:flex;gap:6px;flex-shrink:0}
+  .icon-btn{
+    width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+    color:var(--muted);border:1px solid transparent;font-size:14px;transition:all .15s;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,.07);color:var(--text);border-color:var(--line)}
+  .icon-btn.calc:hover{background:rgba(251,191,36,.12);color:var(--soon);border-color:rgba(251,191,36,.3)}
+  .icon-btn.del:hover{background:rgba(248,113,113,.14);color:var(--danger);border-color:rgba(248,113,113,.3)}
+  .store-url{
+    display:block;color:#a78bfa;font-size:13.5px;text-decoration:none;margin-top:4px;
+    overflow-wrap:anywhere;transition:color .15s;
+  }
+  .store-url:hover{color:#c4b5fd;text-decoration:underline}
+
+  .rows{display:flex;flex-direction:column;gap:10px}
+  .row .lab{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:99px;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.4);color:var(--ready)}
+  .val{
+    display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);
+    border:1px solid var(--line);border-radius:11px;padding:8px 8px 8px 12px;min-height:38px;
+  }
+  .val .v{flex:1;min-width:0;font-family:var(--mono);font-size:13.5px;overflow-wrap:anywhere;word-break:break-all}
+  .copy-btn,.eye-btn{
+    flex-shrink:0;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+    border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px;transition:all .15s;
+  }
+  .copy-btn:hover{background:rgba(52,211,153,.12);color:var(--ready);border-color:rgba(52,211,153,.4)}
+  .copy-btn.copied{background:rgba(52,211,153,.18);color:var(--ready);border-color:var(--ready)}
+  .eye-btn:hover{background:rgba(255,255,255,.06);color:var(--text)}
+  .password-wrap.hidden .v{filter:blur(5px);user-select:none}
+
+  .calc-connector{display:flex;flex-direction:column;align-items:center;margin:16px 0 0}
+  .connector-line{width:2px;height:16px;background:linear-gradient(180deg,rgba(124,156,255,.4),rgba(124,156,255,.85));border-radius:2px}
+  .connector-arrow{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--accent)}
+  .calc-connected{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding:12px;background:rgba(124,156,255,.06);border:1px solid rgba(124,156,255,.2);border-radius:12px}
+  .calc-connected .lab{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .calc-empty{font-size:12px;color:var(--muted);line-height:1.5}
+  .calc-chip{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;
+    background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;
+    text-decoration:none;transition:border-color .15s,background .15s;
+  }
+  .calc-chip:hover{border-color:var(--accent);background:rgba(124,156,255,.08)}
+  .calc-chip .cn{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .calc-chip .ct{flex-shrink:0;font-size:12px;font-weight:700;font-family:var(--mono);color:var(--soon);font-variant-numeric:tabular-nums}
+  .calc-chip .ct.done{color:var(--ready)}
+  .calc-chip.done{border-color:rgba(52,211,153,.45)}
+
+  .add-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:260px;border-style:dashed;background:transparent}
+  .add-card:hover{border-color:var(--accent);background:rgba(124,156,255,.05);transform:none}
+  .add-card.hidden{display:none}
+  .hint{font-size:12.5px;color:var(--muted)}
+  .add-card .btn .plus{font-size:20px;line-height:1}
+
+  .empty{grid-column:1/-1;text-align:center;padding:70px 24px;border:1px dashed var(--line-strong);border-radius:var(--radius);color:var(--muted)}
+  .empty h2{color:var(--text);margin:0 0 8px;font-size:18px}
+  .empty p{margin:0 0 20px;font-size:14px}
+
+  .overlay{position:fixed;inset:0;background:rgba(5,8,15,.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:40;padding:20px}
+  .overlay.hidden{display:none}
+  .modal{
+    width:100%;max-width:480px;background:linear-gradient(180deg,var(--card-2),var(--card));
+    border:1px solid var(--line-strong);border-radius:20px;padding:24px;
+    box-shadow:0 24px 60px rgba(0,0,0,.6);animation:pop .2s ease;max-height:90vh;overflow-y:auto;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .modal h2{margin:0 0 18px;font-size:18px}
+  label.f{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
+  label.f span{display:block;margin-bottom:6px}
+  label.f input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;transition:border-color .15s,background .15s}
+  label.f input:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
+  label.f input::placeholder{color:#5d6880}
+  .form-error{color:var(--danger);font-size:13px;min-height:18px;margin:2px 0 10px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+  .modal-text{font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:20px}
+  .modal-text b{color:var(--text)}
+
+  #toast{
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);
+    background:#1b2438;border:1px solid var(--line-strong);color:var(--text);
+    padding:12px 20px;border-radius:12px;font-size:14px;box-shadow:0 18px 40px rgba(0,0,0,.5);
+    opacity:0;pointer-events:none;transition:all .25s;z-index:60;max-width:90vw;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.err{border-color:rgba(248,113,113,.5);color:#ffd7d7}
+
+  @media (max-width:560px){
+    .wrap{padding:18px 14px 70px}
+    .grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">🛍</div>
+      <div>
+        <h1>Panel sklepów</h1>
+        <p>Domeny i konta Google powiązane z kalkulatorami GMC</p>
+      </div>
+    </div>
+    <a class="link" href="/kalkulator">⏱ Kalkulator GMC</a>
+    <div class="counter" id="counter">0 / 4</div>
+    <button class="btn" id="add-btn">＋ Dodaj sklep</button>
+  </header>
+
+  <div class="grid" id="grid"></div>
+  <div id="addCard" class="card add-card hidden">
+    <button class="btn" id="add-card-btn"><span class="plus">＋</span> Dodaj sklep</button>
+    <p class="hint">Możesz dodać maksymalnie 4 sklepy</p>
+  </div>
+</div>
+
+<div id="overlay" class="overlay hidden">
+  <div class="modal">
+    <h2 id="modal-title">Dodaj sklep</h2>
+    <form id="store-form" novalidate>
+      <input type="hidden" id="store-id">
+      <label class="f"><span>Nazwa sklepu</span>
+        <input type="text" id="f-name" list="name-list" placeholder="np. Shopify - Manualplanet" maxlength="255" autocomplete="off">
+        <datalist id="name-list"></datalist>
+      </label>
+      <label class="f"><span>Link do sklepu</span>
+        <input type="text" id="f-url" placeholder="np. www.manualplanet.net" maxlength="500" autocomplete="off">
+      </label>
+      <label class="f"><span>Aktualna domena</span>
+        <input type="text" id="f-domain" placeholder="np. manualplanet95.com" maxlength="255" autocomplete="off">
+      </label>
+      <label class="f"><span>Login Google</span>
+        <input type="text" id="f-login" maxlength="255" autocomplete="off">
+      </label>
+      <label class="f"><span>Hasło Google</span>
+        <input type="password" id="f-password" maxlength="255" autocomplete="off">
+      </label>
+      <p class="form-error" id="form-error"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="form-cancel">Anuluj</button>
+        <button type="submit" class="btn">Zapisz</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="delOverlay" class="overlay hidden">
+  <div class="modal">
+    <h2>Usunąć sklep?</h2>
+    <p class="modal-text">Sklep <b id="del-name"></b> zostanie trwale usunięty. Powiązane kalkulatory pozostaną, ale stracą połączenie ze sklepem.</p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="del-cancel">Anuluj</button>
+      <button class="btn danger" id="del-confirm">Usuń</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var MAX = 4;
+  var state = { stores: [], calculators: [], names: [] };
+  var pendingDeleteId = null;
+  var toastTimer = null;
+  var clockTimer = null;
+
+  var grid = document.getElementById('grid');
+  var addCard = document.getElementById('addCard');
+  var counterEl = document.getElementById('counter');
+  var addBtn = document.getElementById('add-btn');
+  var toastEl = document.getElementById('toast');
+
+  var overlay = document.getElementById('overlay');
+  var modalTitle = document.getElementById('modal-title');
+  var form = document.getElementById('store-form');
+  var formError = document.getElementById('form-error');
+  var storeIdInput = document.getElementById('store-id');
+  var delOverlay = document.getElementById('delOverlay');
+  var delName = document.getElementById('del-name');
+
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function toast(msg, isError) {
+    toastEl.textContent = msg;
+    toastEl.className = 'show' + (isError ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.className = ''; }, 2600);
+  }
+
+  function api(path, method, body) {
+    return fetch(path, {
+      method: method || 'GET',
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok) throw new Error(data.detail || ('Błąd ' + res.status));
+        return data;
+      });
+    });
+  }
+
+  function copyText(text, btn) {
+    function done() {
+      if (btn) {
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = '⧉'; btn.classList.remove('copied'); }, 1300);
+      }
+      toast('Skopiowano do schowka');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () { fallback(text, done); });
+    } else {
+      fallback(text, done);
+    }
+  }
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('Nie udało się skopiować', true); }
+    document.body.removeChild(ta);
+  }
+
+  function fmtCountdown(ms) {
+    if (ms <= 0) return 'Gotowe!';
+    var t = Math.floor(ms / 1000);
+    var d = Math.floor(t / 86400), h = Math.floor((t % 86400) / 3600);
+    var m = Math.floor((t % 3600) / 60), s = t % 60;
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    if (d > 0) return d + 'd ' + pad(h) + 'h ' + pad(m) + 'm';
+    return pad(h) + ':' + pad(m) + ':' + pad(s);
+  }
+
+  function connectedCalcs(storeId) {
+    return (state.calculators || []).filter(function (c) { return c.store_id === storeId; });
+  }
+
+  function updateClock() {
+    var now = Date.now();
+    document.querySelectorAll('[data-mini]').forEach(function (el) {
+      var calc = (state.calculators || []).find(function (c) { return c.id === Number(el.dataset.mini); });
+      if (!calc) return;
+      var end = new Date(calc.target_at).getTime();
+      var done = end <= now;
+      el.textContent = done ? '✔ Gotowe' : fmtCountdown(end - now);
+      el.classList.toggle('done', done);
+      var chip = el.closest('.calc-chip');
+      if (chip) chip.classList.toggle('done', done);
+    });
+  }
+
+  function render() {
+    counterEl.innerHTML = '<b>' + state.stores.length + '</b> / ' + MAX;
+    counterEl.className = 'counter' + (state.stores.length >= MAX ? ' full' : '');
+    var atLimit = state.stores.length >= MAX;
+    addCard.classList.toggle('hidden', atLimit);
+    addBtn.disabled = atLimit;
+    grid.innerHTML = '';
+
+    if (state.stores.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<h2>Brak sklepów</h2><p>Dodaj sklep, wpisz domenę i dane Google, a potem podepnij do niego kalkulator GMC.</p><button class="btn" id="empty-add">＋ Dodaj sklep</button>';
+      grid.appendChild(empty);
+      document.getElementById('empty-add').addEventListener('click', function () { openModal(null); });
+    }
+
+    state.stores.forEach(function (store, index) {
+      var card = document.createElement('article');
+      card.className = 'card';
+      card.style.animationDelay = (index * 50) + 'ms';
+      var calcs = connectedCalcs(store.id);
+      var chips = '';
+      if (calcs.length === 0) {
+        chips = '<div class="calc-empty">Brak kalkulatora — kliknij ⏱, aby dodać odliczanie do tego sklepu.</div>';
+      } else {
+        chips = calcs.map(function (c) {
+          var end = new Date(c.target_at).getTime();
+          var done = end <= Date.now();
+          return '<a class="calc-chip' + (done ? ' done' : '') + '" href="/kalkulator" title="' + esc(c.name) + '">' +
+            '<span class="cn">' + esc(c.name) + '</span>' +
+            '<span class="ct' + (done ? ' done' : '') + '" data-mini="' + c.id + '">' + (done ? '✔ Gotowe' : fmtCountdown(end - Date.now())) + '</span>' +
+            '</a>';
+        }).join('');
+      }
+
+      card.innerHTML =
+        '<div class="card-top">' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="store-name">' + esc(store.name) + '</div>' +
+            '<a class="store-url" href="' + esc(store.url) + '" target="_blank" rel="noopener noreferrer">' + esc(store.url.replace(/^https?:\/\//, '')) + '</a>' +
+          '</div>' +
+          '<div class="tools">' +
+            '<button class="icon-btn calc" data-action="calc" data-id="' + store.id + '" title="Dodaj kalkulator GMC">⏱</button>' +
+            '<button class="icon-btn" data-action="edit" data-id="' + store.id + '" title="Edytuj">✏️</button>' +
+            '<button class="icon-btn del" data-action="del" data-id="' + store.id + '" title="Usuń">✕</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rows">' +
+          '<div class="row">' +
+            '<div class="lab">Aktualna domena <span class="badge">Aktywna</span></div>' +
+            '<div class="val"><span class="v">' + esc(store.domain) + '</span><button class="copy-btn" data-copy="domain" data-id="' + store.id + '" title="Kopiuj domenę">⧉</button></div>' +
+          '</div>' +
+          '<div class="row">' +
+            '<div class="lab">Login Google</div>' +
+            '<div class="val"><span class="v">' + esc(store.google_login) + '</span><button class="copy-btn" data-copy="google_login" data-id="' + store.id + '" title="Kopiuj login">⧉</button></div>' +
+          '</div>' +
+          '<div class="row">' +
+            '<div class="lab">Hasło Google</div>' +
+            '<div class="val password-wrap hidden"><span class="v">' + esc(store.google_password) + '</span>' +
+              '<button class="eye-btn" data-eye="1" data-id="' + store.id + '" title="Pokaż/ukryj hasło">👁</button>' +
+              '<button class="copy-btn" data-copy="google_password" data-id="' + store.id + '" title="Kopiuj hasło">⧉</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="calc-connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>' +
+        '<div class="calc-connected"><div class="lab">Kalkulatory GMC</div>' + chips + '</div>';
+
+      grid.appendChild(card);
+    });
+    updateClock();
+  }
+
+  function populateNameList() {
+    var list = document.getElementById('name-list');
+    list.innerHTML = '';
+    var seen = {};
+    state.names.forEach(function (n) {
+      if (!n || seen[n]) return;
+      seen[n] = true;
+      var opt = document.createElement('option');
+      opt.value = n;
+      list.appendChild(opt);
+    });
+  }
+
+  function openModal(store) {
+    formError.textContent = '';
+    if (store) {
+      modalTitle.textContent = 'Edytuj sklep';
+      storeIdInput.value = store.id;
+      document.getElementById('f-name').value = store.name;
+      document.getElementById('f-url').value = store.url.replace(/^https?:\/\//, '');
+      document.getElementById('f-domain').value = store.domain;
+      document.getElementById('f-login').value = store.google_login || '';
+      document.getElementById('f-password').value = store.google_password || '';
+    } else {
+      modalTitle.textContent = 'Dodaj sklep';
+      form.reset();
+      storeIdInput.value = '';
+    }
+    populateNameList();
+    overlay.classList.remove('hidden');
+    setTimeout(function () { document.getElementById('f-name').focus(); }, 50);
+  }
+
+  function closeModal() { overlay.classList.add('hidden'); form.reset(); formError.textContent = ''; }
+  function openDel(store) { pendingDeleteId = store.id; delName.textContent = store.name; delOverlay.classList.remove('hidden'); }
+  function closeDel() { pendingDeleteId = null; delOverlay.classList.add('hidden'); }
+
+  function load() {
+    Promise.all([api('/api/stores'), api('/api/kalkulator'), api('/api/name-history')]).then(function (r) {
+      state.stores = r[0].stores || [];
+      state.calculators = r[1].timers || [];
+      state.names = r[2].names || [];
+      render();
+    }).catch(function (err) { toast('Nie udało się wczytać: ' + err.message, true); });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var payload = {
+      name: document.getElementById('f-name').value,
+      url: document.getElementById('f-url').value,
+      domain: document.getElementById('f-domain').value,
+      google_login: document.getElementById('f-login').value,
+      google_password: document.getElementById('f-password').value
+    };
+    var isEdit = Boolean(storeIdInput.value);
+    api(isEdit ? '/api/stores/' + storeIdInput.value : '/api/stores', isEdit ? 'PUT' : 'POST', payload)
+      .then(function () {
+        closeModal();
+        return load();
+      })
+      .then(function () { toast('Zapisano'); })
+      .catch(function (err) { formError.textContent = err.message; });
+  });
+
+  grid.addEventListener('click', function (e) {
+    var copyBtn = e.target.closest('[data-copy]');
+    if (copyBtn) {
+      var s = state.stores.find(function (x) { return x.id === Number(copyBtn.dataset.id); });
+      if (s) copyText(s[copyBtn.dataset.copy] || '', copyBtn);
+      return;
+    }
+    var eyeBtn = e.target.closest('[data-eye]');
+    if (eyeBtn) {
+      var wrap = eyeBtn.closest('.password-wrap');
+      wrap.classList.toggle('hidden');
+      eyeBtn.textContent = wrap.classList.contains('hidden') ? '👁' : '🙈';
+      return;
+    }
+    var actionBtn = e.target.closest('[data-action]');
+    if (!actionBtn) return;
+    var store = state.stores.find(function (x) { return x.id === Number(actionBtn.dataset.id); });
+    if (!store) return;
+    var action = actionBtn.dataset.action;
+    if (action === 'calc') window.location.href = '/kalkulator?store_id=' + store.id;
+    else if (action === 'edit') openModal(store);
+    else if (action === 'del') openDel(store);
+  });
+
+  addBtn.addEventListener('click', function () { openModal(null); });
+  document.getElementById('add-card-btn').addEventListener('click', function () { openModal(null); });
+  document.getElementById('form-cancel').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+  document.getElementById('del-cancel').addEventListener('click', closeDel);
+  delOverlay.addEventListener('click', function (e) { if (e.target === delOverlay) closeDel(); });
+  document.getElementById('del-confirm').addEventListener('click', function () {
+    if (!pendingDeleteId) return;
+    api('/api/stores/' + pendingDeleteId, 'DELETE')
+      .then(function () { closeDel(); return load(); })
+      .then(function () { toast('Sklep usunięty'); })
+      .catch(function (err) { closeDel(); toast(err.message, true); });
+  });
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeDel(); } });
+
+  clockTimer = setInterval(updateClock, 1000);
+  load();
+})();
+</script>
+</body>
+</html>

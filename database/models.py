@@ -270,6 +270,7 @@ class GmcTimer(Base):
     note = Column(String(255), nullable=True)
     notify_email = Column(String(255), nullable=True)  # empty = no email when it hits zero
     notified_at = Column(DateTime, nullable=True)  # set once the email went out
+    store_id = Column(Integer, ForeignKey('shopify_stores.id'), nullable=True)  # optional link to a /panel store card
     position = Column(Integer, nullable=False, default=0)  # display order
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -290,8 +291,54 @@ class GmcTimer(Base):
             'note': self.note,
             'notify_email': self.notify_email,
             'notified_at': (self.notified_at.isoformat() + 'Z') if self.notified_at else None,
+            'store_id': self.store_id,
             'position': self.position,
         }
+
+
+class ShopifyStore(Base):
+    """
+    Store card on the internal /panel dashboard (name, link, active domain and
+    the Google account that runs its ads). Own table, so nothing here can touch
+    the shop's data. Max 4 stores - one per connected Google account.
+    """
+    __tablename__ = 'shopify_stores'
+
+    MAX_STORES = 4
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    url = Column(String(500), nullable=False)
+    domain = Column(String(255), nullable=False)  # active domain, e.g. manualplanet95.com
+    google_login = Column(String(255), nullable=True)
+    google_password = Column(String(255), nullable=True)
+    position = Column(Integer, nullable=False, default=0)  # display order
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'url': self.url,
+            'domain': self.domain,
+            'google_login': self.google_login,
+            'google_password': self.google_password,
+            'position': self.position,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+        }
+
+
+class StoreNameHistory(Base):
+    """
+    Remembered store names for the /panel form's pick-list. Names survive the
+    store being deleted, so the next time you type a name it is suggested again.
+    """
+    __tablename__ = 'store_name_history'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Product(Base):
@@ -514,6 +561,7 @@ def init_db():
         timer_columns = {
             'notify_email': 'VARCHAR(255)',
             'notified_at': 'TIMESTAMP' if DATABASE_URL.startswith("postgresql") else 'DATETIME',
+            'store_id': 'INTEGER',
         }
         with engine.connect() as conn:
             for col_name, col_type in timer_columns.items():

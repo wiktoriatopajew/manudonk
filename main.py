@@ -34,6 +34,7 @@ from tracking_routes import tracking_router
 from discount_routes import router as discount_router
 from google_merchant import merchant_router
 from kalkulator_routes import router as kalkulator_router, start_notifier as start_kalkulator_notifier
+from stores_routes import router as stores_router
 from auth import get_current_user, get_current_admin_user
 
 # Initialize FastAPI app
@@ -291,6 +292,7 @@ app.include_router(import_router)
 app.include_router(merchant_router)
 app.include_router(reviews_router)
 app.include_router(kalkulator_router)
+app.include_router(stores_router)
 
 # Configuration
 # Railway automatically provides RAILWAY_PUBLIC_DOMAIN
@@ -1110,6 +1112,12 @@ async def kalkulator_page(request: Request):
     return templates.TemplateResponse("kalkulator.html", {"request": request})
 
 
+@app.get("/panel", response_class=HTMLResponse)
+async def panel_page(request: Request):
+    """Store cards - domains and Google accounts behind the calculators (internal tool, noindex)"""
+    return templates.TemplateResponse("panel.html", {"request": request})
+
+
 # Admin Panel
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
@@ -1314,6 +1322,7 @@ Disallow: /checkout
 Disallow: /login
 Disallow: /register
 Disallow: /kalkulator
+Disallow: /panel
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

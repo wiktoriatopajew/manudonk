@@ -149,6 +149,14 @@
   .fields input:hover,.note:hover{background:rgba(255,255,255,.06)}
   .fields input:focus,.note:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
   .fields input::-webkit-calendar-picker-indicator{filter:invert(.7);cursor:pointer}
+  select.store{
+    width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;
+    color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);
+    transition:border-color .15s,background .15s;
+  }
+  select.store:hover{background:rgba(255,255,255,.06)}
+  select.store:focus{outline:none;border-color:var(--accent);background:rgba(124,156,255,.08)}
+  select.store option{background:#161f33;color:var(--text)}
   .note{margin-top:10px;font-family:inherit;font-size:13px}
   .note::placeholder{color:#5d6880}
 
@@ -213,6 +221,7 @@
       </div>
     </div>
     <div class="clock" id="clock">—</div>
+    <a class="link" href="/panel" style="display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;transition:all .15s;">🛍 Panel sklepów</a>
     <div class="counter" id="counter">0 / 50</div>
     <button class="btn ghost off" id="sound-btn" title="Dźwięk po zakończeniu odliczania">🔇 Dźwięk</button>
     <button class="btn" id="add-btn">＋ Dodaj kalkulator</button>
@@ -235,6 +244,7 @@
   var cards = new Map();      // id -> card element
   var saveTimers = new Map(); // id -> debounce handle
   var wasReady = new Map();   // id -> bool, for the completion chime
+  var stores = [];
 
   var grid = document.getElementById('grid');
   var counterEl = document.getElementById('counter');
@@ -377,6 +387,7 @@
         '<label class="f"><span>Po ilu godz.</span><input type="number" class="hours" min="0" max="8760" step="0.5"></label>' +
       '</div>' +
       '<input class="note" maxlength="255" placeholder="Notatka (np. partia 500 szt.)">' +
+      '<label class="f" style="margin-top:10px"><span>Sklep (panel)</span><select class="store"><option value="">— bez sklepu —</option></select></label>' +
       '<div class="mail-row">' +
         '<span class="mail-ico">✉</span>' +
         '<input class="mail" type="email" maxlength="255" spellcheck="false" ' +
@@ -459,6 +470,14 @@
       tick();
     });
 
+    var storeSel = el.querySelector('select.store');
+    storeSel.addEventListener('change', function () {
+      var sid = storeSel.value === '' ? null : Number(storeSel.value);
+      var t = local(timer.id);
+      t.store_id = sid;
+      scheduleSave(timer.id, { store_id: sid }, el);
+    });
+
     el.querySelector('.del').addEventListener('click', function () {
       if (!confirm('Usunąć kalkulator "' + local(timer.id).name + '"?')) return;
       api('/' + timer.id, 'DELETE').then(function () {
@@ -478,6 +497,20 @@
     return state.timers.find(function (t) { return t.id === id; }) || {};
   }
 
+  // Rebuild the store options on every select from the fresh /api/stores list,
+  // then restore each timer's chosen store so selections survive refreshes.
+  function populateStoreSelects() {
+    document.querySelectorAll('select.store').forEach(function (sel) {
+      var cardEl = sel.closest('.card');
+      var timerId = cardEl ? Number(cardEl.dataset.id) : null;
+      var t = timerId ? state.timers.find(function (x) { return x.id === timerId; }) : null;
+      sel.innerHTML = '<option value="">— bez sklepu —</option>' + stores.map(function (s) {
+        return '<option value="' + s.id + '">' + s.name + '</option>';
+      }).join('');
+      if (t && t.store_id) sel.value = String(t.store_id);
+    });
+  }
+
   // Fill inputs from state, but never yank a field the user is typing in.
   function syncInputs(el, timer) {
     var nameEl = el.querySelector('.name');
@@ -490,6 +523,8 @@
     if (document.activeElement !== noteEl) noteEl.value = timer.note || '';
     var mailEl = el.querySelector('.mail');
     if (document.activeElement !== mailEl) mailEl.value = timer.notify_email || '';
+    var storeSel = el.querySelector('select.store');
+    if (storeSel) storeSel.value = timer.store_id ? String(timer.store_id) : '';
   }
 
   function renderEmpty() {
@@ -599,11 +634,15 @@
   function addTimer() {
     if (state.timers.length >= MAX) { toast('Limit ' + MAX + ' kalkulatorów', true); return; }
     var name = 'GMC Sebek ' + (state.timers.length + 1);
-    api('', 'POST', {
+    var params = new URLSearchParams(window.location.search);
+    var storeParam = params.get('store_id');
+    var payload = {
       name: name,
       start_at: new Date().toISOString(),
       offset_hours: DEFAULT_HOURS
-    }).then(function (timer) {
+    };
+    if (storeParam) payload.store_id = Number(storeParam);
+    api('', 'POST', payload).then(function (timer) {
       state.timers.push(timer);
       render();
       var el = cards.get(timer.id);
@@ -616,13 +655,17 @@
   }
 
   function load() {
-    api('').then(function (data) {
-      MAX = data.max_timers || MAX;
-      state.timers = data.timers;
-      render();
-    }).catch(function (err) {
-      toast('Nie udało się wczytać kalkulatorów: ' + err.message, true);
-    });
+    Promise.all([api(''), fetch('/api/stores').then(function (r) { return r.json(); })])
+      .then(function (r) {
+        var data = r[0];
+        MAX = data.max_timers || MAX;
+        state.timers = data.timers;
+        stores = r[1].stores || [];
+        render();
+        populateStoreSelects();
+      }).catch(function (err) {
+        toast('Nie udało się wczytać kalkulatorów: ' + err.message, true);
+      });
   }
 
   function refresh() {
@@ -634,6 +677,7 @@
       });
       state.timers = data.timers;
       render();
+      populateStoreSelects();
     }).catch(function () { /* transient - next pass will retry */ });
   }
 

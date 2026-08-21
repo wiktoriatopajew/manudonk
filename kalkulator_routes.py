@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
-from database.models import GmcTimer, get_session
+from database.models import GmcTimer, ShopifyStore, get_session
 
 router = APIRouter(prefix="/api/kalkulator", tags=["kalkulator"])
 
@@ -79,6 +79,7 @@ class TimerCreate(BaseModel):
     offset_hours: float = Field(default=DEFAULT_OFFSET_HOURS, ge=0, le=8760)
     note: Optional[str] = Field(default=None, max_length=255)
     notify_email: Optional[str] = Field(default=None, max_length=255)
+    store_id: Optional[int] = None
 
 
 class TimerUpdate(BaseModel):
@@ -87,6 +88,7 @@ class TimerUpdate(BaseModel):
     offset_hours: Optional[float] = Field(default=None, ge=0, le=8760)
     note: Optional[str] = Field(default=None, max_length=255)
     notify_email: Optional[str] = Field(default=None, max_length=255)
+    store_id: Optional[int] = None
 
 
 @router.get("")
@@ -124,6 +126,12 @@ async def create_timer(data: TimerCreate):
         start_at = _to_naive_utc(data.start_at) if data.start_at else datetime.utcnow()
         max_position = session.query(func.max(GmcTimer.position)).scalar()
 
+        store_id = data.store_id
+        if store_id is not None:
+            linked_store = session.query(ShopifyStore).filter(ShopifyStore.id == store_id).first()
+            if not linked_store:
+                raise HTTPException(status_code=400, detail="Podłączony sklep nie istnieje.")
+
         notify_email = (_clean_email(data.notify_email) if data.notify_email is not None
                         else DEFAULT_NOTIFY_EMAIL)
 
@@ -133,6 +141,7 @@ async def create_timer(data: TimerCreate):
             offset_hours=data.offset_hours,
             note=(data.note or None),
             notify_email=notify_email,
+            store_id=store_id,
             position=(max_position or 0) + 1,
         )
         session.add(timer)
@@ -170,6 +179,13 @@ async def update_timer(timer_id: int, data: TimerUpdate):
             timer.note = note[:255] or None
         if 'notify_email' in fields:
             timer.notify_email = _clean_email(fields['notify_email'])
+        if 'store_id' in fields:
+            sid = fields['store_id']
+            if sid is not None:
+                linked_store = session.query(ShopifyStore).filter(ShopifyStore.id == sid).first()
+                if not linked_store:
+                    raise HTTPException(status_code=400, detail="Podłączony sklep nie istnieje.")
+            timer.store_id = sid
 
         session.commit()
         session.refresh(timer)
@@ -223,6 +239,20 @@ async def delete_timer(timer_id: int):
 
 def _email_payload(timer: GmcTimer) -> dict:
     """Everything the mail needs, read while the session is still open."""
+    store_name = None
+    if timer.store_id:
+        store_session = get_session()
+        try:
+            store = store_session.query(ShopifyStore).filter(
+                ShopifyStore.id == timer.store_id
+            ).first()
+            if store:
+                store_name = store.name
+        finally:
+            store_session.close()
+    note = timer.note
+    if store_name:
+        note = f"Sklep: {store_name}" + (f"\n{note}" if note else "")
     return {
         'timer_id': timer.id,
         'to_email': timer.notify_email,
@@ -230,7 +260,7 @@ def _email_payload(timer: GmcTimer) -> dict:
         'uploaded_at': _format_pl(timer.start_at),
         'ready_at': _format_pl(timer.target_at),
         'offset_hours': timer.offset_hours,
-        'note': timer.note,
+        'note': note,
     }
 
 
