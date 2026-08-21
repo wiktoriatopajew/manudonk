@@ -209,6 +209,69 @@
   #toast.show{opacity:1;transform:translate(-50%,0)}
   #toast.err{border-color:rgba(248,113,113,.5);color:#ffd7d7}
 
+  .lock-btn{
+    width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);
+    font-size:16px;transition:all .15s;
+  }
+  .lock-btn:hover{color:var(--text);border-color:var(--line-strong);background:rgba(255,255,255,.07)}
+  .lock-btn.unlocked{background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#0a0f1c;border-color:transparent;box-shadow:0 8px 22px rgba(91,124,250,.32)}
+
+  body.editing .card{border-color:rgba(124,156,255,.45)}
+  body.editing .card:hover{box-shadow:0 0 0 1px rgba(124,156,255,.4)}
+  body.is-dragging{user-select:none}
+
+  .panel-controls{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:-20px -20px 14px;padding:8px 12px;border-radius:var(--radius) var(--radius) 0 0;
+    background:rgba(124,156,255,.09);border-bottom:1px solid rgba(124,156,255,.25);
+    cursor:grab;user-select:none;touch-action:none;
+  }
+  .panel-controls:active{cursor:grabbing}
+  .drag-handle{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--accent);
+  }
+  .drag-handle em{font-style:normal;color:var(--muted);font-weight:600}
+  .panel-hide{
+    width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    color:var(--muted);font-size:14px;transition:all .15s;
+  }
+  .panel-hide:hover{background:rgba(255,255,255,.08);color:var(--text)}
+  .card.dragging,.side-card.dragging{
+    opacity:.9;box-shadow:0 24px 60px rgba(0,0,0,.6);border-color:var(--accent);
+    cursor:grabbing;pointer-events:none;z-index:80;
+  }
+
+  .edit-toolbar{
+    margin-top:22px;padding:14px 16px;border:1px dashed var(--line-strong);
+    border-radius:var(--radius);background:rgba(255,255,255,.03);
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .edit-hint{font-size:13px;color:var(--muted);line-height:1.5}
+  .hidden-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .hidden-list{display:flex;flex-wrap:wrap;gap:8px}
+  .hidden-chip{
+    display:inline-flex;align-items:center;gap:8px;padding:5px 6px 5px 14px;
+    background:var(--card);border:1px solid var(--line);border-radius:99px;font-size:12.5px;
+  }
+  .hidden-chip>span{color:var(--muted)}
+  .panel-show{
+    padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;
+    border:1px solid rgba(52,211,153,.45);background:rgba(52,211,153,.1);color:var(--ready);transition:filter .12s;
+  }
+  .panel-show:hover{filter:brightness(1.15)}
+
+  .side-controls{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:-16px -16px 12px;padding:6px 10px;border-radius:var(--radius) var(--radius) 0 0;
+    background:rgba(124,156,255,.09);border-bottom:1px solid rgba(124,156,255,.25);
+    cursor:grab;user-select:none;touch-action:none;
+  }
+  .side-controls:active{cursor:grabbing}
+  .side-card.side-hidden{display:none}
+  .side-toolbar{margin-top:0}
+
   @media (max-width:1100px){
     .layout{flex-direction:column}
     .side{width:100%;position:static;max-height:none}
@@ -231,6 +294,7 @@
     </div>
     <a class="link" href="/kalkulator">⏱ Kalkulator GMC</a>
     <div class="counter" id="counter">0 / 4</div>
+    <button id="lockBtn" class="lock-btn" title="Odblokuj panele" aria-pressed="false">🔒</button>
     <button class="btn" id="add-btn">＋ Dodaj sklep</button>
   </header>
 
@@ -245,7 +309,7 @@
 
     <aside class="side">
       <!-- Domains -->
-      <div class="side-card">
+      <div class="side-card" data-side-card="domain">
         <div class="side-head">
           <h3>🌐 Domeny kupione</h3>
           <span class="cnt" id="domain-cnt">0</span>
@@ -262,7 +326,7 @@
       </div>
 
       <!-- GMC accounts -->
-      <div class="side-card">
+      <div class="side-card" data-side-card="gmc">
         <div class="side-head">
           <h3>📦 Konta GMC</h3>
           <span class="cnt" id="gmc-cnt">0</span>
@@ -281,7 +345,7 @@
       </div>
 
       <!-- Ads accounts -->
-      <div class="side-card">
+      <div class="side-card" data-side-card="ads">
         <div class="side-head">
           <h3>🎯 Google Ads</h3>
           <span class="cnt" id="ads-cnt">0</span>
@@ -380,6 +444,7 @@
 
 <div id="toast"></div>
 
+<script src="/static/panel-layout.js"></script>
 <script>
 (function () {
   'use strict';
@@ -568,9 +633,10 @@
       document.getElementById('empty-add').addEventListener('click', function () { openModal(null); });
     }
 
-    state.stores.forEach(function (store, index) {
+    state.stores.filter(function (s) { return !s.hidden; }).forEach(function (store, index) {
       var card = document.createElement('article');
       card.className = 'card';
+      card.dataset.panelId = store.id;
       card.style.animationDelay = (index * 50) + 'ms';
       var calcs = connectedCalcs(store.id);
       var chips = '';
@@ -725,6 +791,54 @@
 
   function closeCalcModal() { calcOverlay.classList.add('hidden'); calcForm.reset(); calcError.textContent = ''; }
 
+  /* ---------- panel layout editing (lock) ---------- */
+
+  function handleStoreReorder(ids) {
+    var byId = {};
+    state.stores.forEach(function (s) { byId[s.id] = s; });
+    state.stores = ids.map(function (id) { return byId[Number(id)]; }).filter(Boolean);
+    state.stores.forEach(function (s, i) { s.position = i; });
+    api('/api/layout', 'POST', {
+      stores: state.stores.map(function (s) { return { id: s.id, position: s.position }; })
+    }).catch(function (err) { toast('Nie udało się zapisać układu: ' + err.message, true); });
+  }
+
+  function handleStoreSetHidden(id, hidden) {
+    var store = state.stores.find(function (s) { return s.id === Number(id); });
+    if (!store) return;
+    store.hidden = !!hidden;
+    api('/api/layout', 'POST', {
+      stores: state.stores.map(function (s) {
+        return { id: s.id, position: s.position, hidden: s.hidden ? true : false };
+      })
+    }).then(function () {
+      return load();
+    }).then(function () {
+      toast(hidden ? 'Panel ukryty' : 'Panel przywrócony');
+    }).catch(function (err) { toast(err.message, true); });
+  }
+
+  function initLayout() {
+    PanelLayout.init({
+      lockBtn: document.getElementById('lockBtn'),
+      grid: {
+        grid: grid,
+        host: grid.parentNode,
+        getPanels: function () { return state.stores; },
+        onReorder: handleStoreReorder,
+        onSetHidden: handleStoreSetHidden
+      },
+      side: {
+        aside: document.querySelector('.side'),
+        sections: [
+          { key: 'domain', el: document.querySelector('[data-side-card="domain"]'), name: 'Domeny kupione' },
+          { key: 'gmc', el: document.querySelector('[data-side-card="gmc"]'), name: 'Konta GMC' },
+          { key: 'ads', el: document.querySelector('[data-side-card="ads"]'), name: 'Google Ads' }
+        ]
+      }
+    });
+  }
+
   /* ---------- load ---------- */
 
   function load() {
@@ -739,6 +853,7 @@
       state.gmc = r[4].accounts || [];
       state.ads = r[5].accounts || [];
       render();
+      PanelLayout.refreshAll();
     }).catch(function (err) { toast('Nie udało się wczytać: ' + err.message, true); });
   }
 
@@ -891,6 +1006,7 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeDel(); closeCalcModal(); } });
 
   clockTimer = setInterval(updateClock, 1000);
+  initLayout();
   load();
 })();
 </script>

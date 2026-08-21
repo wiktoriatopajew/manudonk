@@ -272,6 +272,7 @@ class GmcTimer(Base):
     notified_at = Column(DateTime, nullable=True)  # set once the email went out
     store_id = Column(Integer, ForeignKey('shopify_stores.id'), nullable=True)  # optional link to a /panel store card
     position = Column(Integer, nullable=False, default=0)  # display order
+    hidden = Column(Boolean, nullable=False, default=False)  # hidden from the grid (lock unlocked on /kalkulator)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -293,6 +294,7 @@ class GmcTimer(Base):
             'notified_at': (self.notified_at.isoformat() + 'Z') if self.notified_at else None,
             'store_id': self.store_id,
             'position': self.position,
+            'hidden': bool(self.hidden),
         }
 
 
@@ -315,6 +317,7 @@ class ShopifyStore(Base):
     gmc_account_id = Column(Integer, ForeignKey('gmc_accounts.id'), nullable=True)  # GMC account assigned to this store
     ads_account_id = Column(Integer, ForeignKey('ads_accounts.id'), nullable=True)  # Google Ads account assigned to this store
     position = Column(Integer, nullable=False, default=0)  # display order
+    hidden = Column(Boolean, nullable=False, default=False)  # hidden from the grid (lock unlocked on /panel)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -329,6 +332,7 @@ class ShopifyStore(Base):
             'gmc_account_id': self.gmc_account_id,
             'ads_account_id': self.ads_account_id,
             'position': self.position,
+            'hidden': bool(self.hidden),
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
         }
 
@@ -643,6 +647,7 @@ def init_db():
             'notify_email': 'VARCHAR(255)',
             'notified_at': 'TIMESTAMP' if DATABASE_URL.startswith("postgresql") else 'DATETIME',
             'store_id': 'INTEGER',
+            'hidden': 'BOOLEAN',
         }
         with engine.connect() as conn:
             for col_name, col_type in timer_columns.items():
@@ -661,6 +666,7 @@ def init_db():
         store_columns = {
             'gmc_account_id': 'INTEGER',
             'ads_account_id': 'INTEGER',
+            'hidden': 'BOOLEAN',
         }
         with engine.connect() as conn:
             for col_name, col_type in store_columns.items():

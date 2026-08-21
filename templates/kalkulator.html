@@ -203,6 +203,59 @@
   }
   #toast.show{opacity:1;transform:translate(-50%,0)}
   #toast.err{border-color:rgba(248,113,113,.5);color:#ffd7d7}
+  .lock-btn{
+    width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);
+    font-size:16px;transition:all .15s;
+  }
+  .lock-btn:hover{color:var(--text);border-color:var(--line-strong);background:rgba(255,255,255,.07)}
+  .lock-btn.unlocked{background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#0a0f1c;border-color:transparent;box-shadow:0 8px 22px rgba(91,124,250,.32)}
+
+  body.editing .card{border-color:rgba(124,156,255,.45)}
+  body.editing .card:hover{box-shadow:0 0 0 1px rgba(124,156,255,.4)}
+  body.is-dragging{user-select:none}
+
+  .panel-controls{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:-20px -20px 14px;padding:8px 12px;border-radius:var(--radius) var(--radius) 0 0;
+    background:rgba(124,156,255,.09);border-bottom:1px solid rgba(124,156,255,.25);
+    cursor:grab;user-select:none;touch-action:none;
+  }
+  .panel-controls:active{cursor:grabbing}
+  .drag-handle{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--accent);
+  }
+  .drag-handle em{font-style:normal;color:var(--muted);font-weight:600}
+  .panel-hide{
+    width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    color:var(--muted);font-size:14px;transition:all .15s;
+  }
+  .panel-hide:hover{background:rgba(255,255,255,.08);color:var(--text)}
+  .card.dragging{
+    opacity:.9;box-shadow:0 24px 60px rgba(0,0,0,.6);border-color:var(--accent);
+    cursor:grabbing;pointer-events:none;z-index:80;
+  }
+
+  .edit-toolbar{
+    margin-top:22px;padding:14px 16px;border:1px dashed var(--line-strong);
+    border-radius:var(--radius);background:rgba(255,255,255,.03);
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .edit-hint{font-size:13px;color:var(--muted);line-height:1.5}
+  .hidden-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .hidden-list{display:flex;flex-wrap:wrap;gap:8px}
+  .hidden-chip{
+    display:inline-flex;align-items:center;gap:8px;padding:5px 6px 5px 14px;
+    background:var(--card);border:1px solid var(--line);border-radius:99px;font-size:12.5px;
+  }
+  .hidden-chip>span{color:var(--muted)}
+  .panel-show{
+    padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;
+    border:1px solid rgba(52,211,153,.45);background:rgba(52,211,153,.1);color:var(--ready);transition:filter .12s;
+  }
+  .panel-show:hover{filter:brightness(1.15)}
+
   @media (max-width:560px){
     .wrap{padding:18px 14px 70px}
     .grid{grid-template-columns:1fr}
@@ -223,6 +276,7 @@
     <div class="clock" id="clock">—</div>
     <a class="link" href="/panel" style="display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;transition:all .15s;">🛍 Panel sklepów</a>
     <div class="counter" id="counter">0 / 50</div>
+    <button id="lockBtn" class="lock-btn" title="Odblokuj panele" aria-pressed="false">🔒</button>
     <button class="btn ghost off" id="sound-btn" title="Dźwięk po zakończeniu odliczania">🔇 Dźwięk</button>
     <button class="btn" id="add-btn">＋ Dodaj kalkulator</button>
   </header>
@@ -232,6 +286,7 @@
 
 <div id="toast"></div>
 
+<script src="/static/panel-layout.js"></script>
 <script>
 (function () {
   'use strict';
@@ -370,6 +425,7 @@
     var el = document.createElement('article');
     el.className = 'card';
     el.dataset.id = timer.id;
+    el.dataset.panelId = timer.id;
     el.innerHTML =
       '<div class="card-top">' +
         '<input class="name" maxlength="80" spellcheck="false">' +
@@ -529,7 +585,7 @@
 
   function renderEmpty() {
     var existing = grid.querySelector('.empty');
-    if (state.timers.length === 0 && !existing) {
+    if (state.timers.filter(function (t) { return !t.hidden; }).length === 0 && !existing) {
       var box = document.createElement('div');
       box.className = 'empty';
       box.innerHTML =
@@ -538,13 +594,16 @@
         '<button class="btn" id="empty-add">＋ Dodaj kalkulator</button>';
       grid.appendChild(box);
       box.querySelector('#empty-add').addEventListener('click', addTimer);
-    } else if (state.timers.length > 0 && existing) {
+    } else if (state.timers.filter(function (t) { return !t.hidden; }).length > 0 && existing) {
       existing.remove();
     }
   }
 
   function render() {
+    var shown = {};
     state.timers.forEach(function (timer) {
+      if (timer.hidden) return;
+      shown[timer.id] = true;
       var el = cards.get(timer.id);
       if (!el) {
         el = buildCard(timer);
@@ -552,6 +611,9 @@
         grid.appendChild(el);
       }
       syncInputs(el, timer);
+    });
+    cards.forEach(function (el, id) {
+      if (!shown[id]) { el.remove(); cards.delete(id); }
     });
     renderEmpty();
     syncCounter();
@@ -562,6 +624,52 @@
     counterEl.innerHTML = '<b>' + state.timers.length + '</b> / ' + MAX;
     counterEl.className = 'counter' + (state.timers.length >= MAX ? ' full' : '');
     addBtn.disabled = state.timers.length >= MAX;
+  }
+
+  /* ---------- panel layout editing (lock) ---------- */
+
+  function handleTimerReorder(ids) {
+    var byId = {};
+    state.timers.forEach(function (t) { byId[t.id] = t; });
+    state.timers = ids.map(function (id) { return byId[Number(id)]; }).filter(Boolean);
+    api('/api/layout', 'POST', {
+      timers: state.timers.map(function (t, i) { return { id: t.id, position: i }; })
+    }).catch(function (err) { toast('Nie udało się zapisać układu: ' + err.message, true); });
+  }
+
+  function rebuildTimerCards() {
+    cards.forEach(function (el) { el.remove(); });
+    cards.clear();
+    render();
+    populateStoreSelects();
+    PanelLayout.refreshAll();
+  }
+
+  function handleTimerSetHidden(id, hidden) {
+    var t = state.timers.find(function (x) { return x.id === Number(id); });
+    if (!t) return;
+    t.hidden = !!hidden;
+    api('/api/layout', 'POST', {
+      timers: state.timers.map(function (x, i) {
+        return { id: x.id, position: i, hidden: x.hidden ? true : false };
+      })
+    }).then(function () {
+      rebuildTimerCards();
+      toast(hidden ? 'Panel ukryty' : 'Panel przywrócony');
+    }).catch(function (err) { toast(err.message, true); });
+  }
+
+  function initLayout() {
+    PanelLayout.init({
+      lockBtn: document.getElementById('lockBtn'),
+      grid: {
+        grid: grid,
+        host: grid.parentNode,
+        getPanels: function () { return state.timers; },
+        onReorder: handleTimerReorder,
+        onSetHidden: handleTimerSetHidden
+      }
+    });
   }
 
   /* ---------- the ticking part ---------- */
@@ -695,6 +803,7 @@
   });
 
   syncSoundBtn();
+  initLayout();
   load();
   setInterval(tick, 1000);
   // Pull from the DB now and then, so another device's edits - and the mail

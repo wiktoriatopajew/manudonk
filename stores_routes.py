@@ -14,7 +14,7 @@ Domain lifecycle (matches how Google burns domains):
 
 Everything lives in its own tables so nothing here can touch the shop's data.
 """
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -180,6 +180,17 @@ class AccountUpdate(BaseModel):
     password: Optional[str] = Field(default=None, max_length=255)
 
 
+class LayoutItem(BaseModel):
+    id: int
+    position: Optional[int] = None
+    hidden: Optional[bool] = None
+
+
+class LayoutPayload(BaseModel):
+    stores: Optional[List[LayoutItem]] = None
+    timers: Optional[List[LayoutItem]] = None
+
+
 # ---------------------------------------------------------------------------
 # stores
 # ---------------------------------------------------------------------------
@@ -319,6 +330,35 @@ async def delete_store(store_id: int):
         session.delete(store)
         session.commit()
         return {"deleted": store_id}
+    finally:
+        session.close()
+
+
+@router.post("/api/layout")
+async def update_layout(data: LayoutPayload):
+    """Persist panel layout: display order + hidden flags for store cards and GMC timers."""
+    session = get_session()
+    try:
+        if data.stores:
+            for item in data.stores:
+                store = session.query(ShopifyStore).filter(ShopifyStore.id == item.id).first()
+                if not store:
+                    continue
+                if item.position is not None:
+                    store.position = item.position
+                if item.hidden is not None:
+                    store.hidden = item.hidden
+        if data.timers:
+            for item in data.timers:
+                timer = session.query(GmcTimer).filter(GmcTimer.id == item.id).first()
+                if not timer:
+                    continue
+                if item.position is not None:
+                    timer.position = item.position
+                if item.hidden is not None:
+                    timer.hidden = item.hidden
+        session.commit()
+        return {"ok": True}
     finally:
         session.close()
 
