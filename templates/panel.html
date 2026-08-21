@@ -796,7 +796,9 @@
   function handleStoreReorder(ids) {
     var byId = {};
     state.stores.forEach(function (s) { byId[s.id] = s; });
-    state.stores = ids.map(function (id) { return byId[Number(id)]; }).filter(Boolean);
+    var hidden = state.stores.filter(function (s) { return s.hidden; });
+    var reordered = ids.map(function (id) { return byId[Number(id)]; }).filter(Boolean);
+    state.stores = reordered.concat(hidden);
     state.stores.forEach(function (s, i) { s.position = i; });
     api('/api/layout', 'POST', {
       stores: state.stores.map(function (s) { return { id: s.id, position: s.position }; })

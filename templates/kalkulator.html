@@ -631,7 +631,9 @@
   function handleTimerReorder(ids) {
     var byId = {};
     state.timers.forEach(function (t) { byId[t.id] = t; });
-    state.timers = ids.map(function (id) { return byId[Number(id)]; }).filter(Boolean);
+    var hidden = state.timers.filter(function (t) { return t.hidden; });
+    var reordered = ids.map(function (id) { return byId[Number(id)]; }).filter(Boolean);
+    state.timers = reordered.concat(hidden);
     api('/api/layout', 'POST', {
       timers: state.timers.map(function (t, i) { return { id: t.id, position: i }; })
     }).catch(function (err) { toast('Nie udało się zapisać układu: ' + err.message, true); });
